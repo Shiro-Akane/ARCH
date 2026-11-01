@@ -19,9 +19,43 @@
 #define ARCH_D1_TEST_CUDA_BUILD 0
 #endif
 
+#if defined(_WIN32) && ARCH_D1_TEST_CUDA_BUILD && ARCH_HAS_CUDSS_PROVIDER
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
 namespace {
 
 using namespace arch::dispatch;
+
+#if defined(_WIN32) && ARCH_D1_TEST_CUDA_BUILD && ARCH_HAS_CUDSS_PROVIDER
+// The small probe test does not link the application's provider imports.
+// Supply that startup prerequisite explicitly; production only inspects it.
+class NativeSparseImports {
+    std::array<HMODULE, 3> handles_{
+        LoadLibraryA(ARCH_TEST_CUBLASLT_RUNTIME_LIBRARY),
+        LoadLibraryA(ARCH_TEST_CUBLAS_RUNTIME_LIBRARY),
+        LoadLibraryA(ARCH_TEST_CUDSS_RUNTIME_LIBRARY)};
+    void release() noexcept {
+        for (auto it = handles_.rbegin(); it != handles_.rend(); ++it)
+            if (*it) { FreeLibrary(*it); *it = nullptr; }
+    }
+public:
+    NativeSparseImports() {
+        for (const auto handle : handles_) {
+            if (!handle) {
+                release();
+                throw std::runtime_error("Cannot load the native probe test's configured sparse imports");
+            }
+        }
+    }
+    ~NativeSparseImports() { release(); }
+    NativeSparseImports(const NativeSparseImports&) = delete;
+    NativeSparseImports& operator=(const NativeSparseImports&) = delete;
+};
+#endif
 
 void expect(bool condition, const std::string& message)
 {
@@ -717,6 +751,9 @@ void test_native_probe()
                == native.device.primary_context_active_after,
            "native probe must not activate primary context");
 #if ARCH_HAS_CUDSS_PROVIDER
+#ifdef _WIN32
+    NativeSparseImports sparse_imports;
+#endif
     // The integration check may remove its own configured library copy. It
     // never alters a system installation or changes production resolution.
     const bool expect_missing = std::getenv("ARCH_TEST_EXPECT_MISSING_CUDSS") != nullptr;

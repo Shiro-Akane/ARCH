@@ -1,3 +1,12 @@
+# The probe-only executable does not retain the application's direct Windows
+# imports. Its fixture loads those same configured DLLs before checking them.
+if(WIN32 AND TARGET arch_cuda_sparse_provider)
+    target_compile_definitions(arch_runtime_probe_capabilities PRIVATE
+        ARCH_TEST_CUDSS_RUNTIME_LIBRARY="${CuDSS_RUNTIME_LIBRARY}"
+        ARCH_TEST_CUBLAS_RUNTIME_LIBRARY="${CUDA_cublas_RUNTIME_LIBRARY}"
+        ARCH_TEST_CUBLASLT_RUNTIME_LIBRARY="${CUDA_cublasLt_RUNTIME_LIBRARY}")
+endif()
+
 # Focused CUDA tests. Included only after the production CUDA targets exist.
 # Target-specific language, numerical options and ownership are intentional.
 
