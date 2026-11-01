@@ -9,16 +9,16 @@ from check_documentation import anchors, check_file, maintained
 
 
 class DocumentationTests(unittest.TestCase):
-    def test_reader_pages_are_selected_and_result_collections_are_excluded(self):
+    def test_reader_and_result_pages_are_selected_and_archives_are_excluded(self):
         for name in ("README.md", "docs/Reference.md",
                      "studio/README.md", "src/api/docs/PreviewApi.md", "docs/development/ImplementationOwnership.md",
                      "docs/releases/README.md", "docs/releases/PlatformSupport.md",
-                     "docs/development/P2PoissonMultigrid.zh-CN.md"):
+                     "docs/development/P2PoissonMultigrid.zh-CN.md", "validation/hydro/results/README.md"):
             self.assertTrue(maintained(name), name)
         for name in ("AGENTS.md", "ARCH_MODERNIZATION_PLAN.md", "ARCH_RELEASE_PLAN.md", "docs/histroy/notes.md",
                      "docs/histroy/README.md", "docs/development/archive/README.md",
                      "docs/histroy/science/README.md", "docs/development/archive/modernization/Original.md",
-                     "validation/hydro/results/README.md", "studio/docs/archive/README.md",
+                     "studio/docs/archive/README.md",
                      "docs/development/BuildOld-20261001.md", "docs/development/modernization/README.md"):
             self.assertFalse(maintained(name), name)
 

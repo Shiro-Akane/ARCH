@@ -18,9 +18,9 @@ DEVELOPER_PAGES = frozenset({
 
 
 def maintained(path):
-    """Select reader and contributor pages, excluding raw result collections."""
+    """Select reader, contributor and result pages, excluding retired archives."""
     parts = Path(path).parts
-    if any(part in ("archive", "histroy", "results") for part in parts):
+    if any(part in ("archive", "histroy") for part in parts):
         return False
     if path.startswith("validation/legacy/"):
         return False
