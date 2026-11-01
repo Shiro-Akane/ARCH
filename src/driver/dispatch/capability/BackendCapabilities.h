@@ -51,6 +51,7 @@ enum class BackendCapabilityCode : std::uint16_t
     UnsupportedGhostDepth,
     UnsupportedStateLayout,
     UnsupportedBoundaryFeature,
+    CuDssRuntimeUnavailable,
 };
 
 struct CapabilityResult
@@ -245,7 +246,9 @@ constexpr std::string_view capability_name(BackendCapabilityCode code) noexcept
     case BackendCapabilityCode::SparseKluBuildUnavailable:
         return "SparseKLU was selected, but this ARCH build has KLU disabled";
     case BackendCapabilityCode::CuDssProviderUnavailable:
-        return "cuDSS was selected, but this ARCH build has no CUDA cuDSS provider";
+        return "cuDSS was selected, but this ARCH build has no CUDA cuDSS provider. Install cuDSS and reconfigure with ARCH_ENABLE_CUDSS=ON, or select CPU KLU";
+    case BackendCapabilityCode::CuDssRuntimeUnavailable:
+        return "cuDSS or its cuBLAS runtime libraries are unavailable. Restore the configured cuDSS/CUDA installation and rebuild if its paths changed, or select CPU KLU";
     case BackendCapabilityCode::UnsupportedDimension: return "dimension unsupported";
     case BackendCapabilityCode::UnsupportedRootTopology: return "root topology unsupported";
     case BackendCapabilityCode::UnsupportedAmr: return "AMR unsupported";
@@ -377,6 +380,9 @@ inline CapabilityResult query_support(
                 ? BackendCapabilityCode::CuDssProviderUnavailable
                 : BackendCapabilityCode::UnsupportedBinding);
     }
+    if (cuda_plan.linear_solver == LinearSolverId::CuDss
+        && probe.cudss != ProviderProbeState::Available)
+        return reject_cuda(BackendCapabilityCode::CuDssRuntimeUnavailable);
     // Compact DenseLU's algorithm limit is not the sparse backend's state
     // extent. The registry/provider checks above still reject an unbuilt route.
     if (requirements.burn && !BurnLimits::uses_compact_matrix(

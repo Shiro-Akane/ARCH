@@ -18,7 +18,7 @@ namespace arch::api::contract {
 inline constexpr auto schema_version = "1.0";
 inline constexpr auto configuration_version = "3";
 inline constexpr auto initialization_version = "1";
-enum class Command { Fields, Capabilities, Schema, Configuration, Cases, Resources, Mesh, InspectCase, Session };
+enum class Command { Fields, Capabilities, Schema, Configuration, Cases, Resources, Mesh, InspectCase, Session, CheckRun };
 struct CommandDefinition { Command command; std::string_view flag, kind, version; bool takes_configuration; };
 inline constexpr std::array commands{
     CommandDefinition{Command::Fields, "--preview", "initial-state-preview", "1", true},
@@ -29,6 +29,7 @@ inline constexpr std::array commands{
     CommandDefinition{Command::Resources, "--amr-resources", "amr-resource-estimate", "1", true},
     CommandDefinition{Command::Mesh, "--preview-amr", "initial-amr-preview", "1", true},
     CommandDefinition{Command::InspectCase, "--inspect-case", "case-inspection", initialization_version, true},
+    CommandDefinition{Command::CheckRun, "--check-run", "execution-preflight", "1", true},
     CommandDefinition{Command::Session, "--preview-session", "preview-session", "1", false}
 };
 inline const CommandDefinition* find(std::string_view flag) {
@@ -42,6 +43,7 @@ inline constexpr int worker_address_space_mib = 1024, worker_cpu_seconds = 30, m
 inline constexpr int windows_worker_commit_mib = 1024;
 inline constexpr auto windows_preview_resource_policy = "windows-job-commit-user-v1";
 inline constexpr int case_cpu_seconds = 300, case_wall_seconds = 360;
+inline constexpr int execution_cpu_seconds = 300, execution_wall_seconds = 360;
 inline constexpr int session_max_requests = 256;
 inline constexpr int session_file_cache_mib = 128;
 inline constexpr std::size_t session_max_request_bytes = 8 * 1024 * 1024;
