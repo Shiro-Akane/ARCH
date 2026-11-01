@@ -6,6 +6,7 @@
 
 #include "api/protocol/LogCapture.h"
 #include "api/protocol/Response.h"
+#include "api/protocol/RequestInput.h"
 #include "api/resources/WorkerLimits.h"
 #include "core/config/RuntimeParams.h"
 #include "core/files/FileFingerprint.h"
@@ -52,6 +53,10 @@ PreviewResponse ExecutionPreflightInputError(
     const PreviewRequest& request, const std::string& message)
 {
     auto out = response_envelope(request);
+    // Invalid byte sequences cannot be represented as JSON identifiers. Keep
+    // each valid identity field and the hash of the exact configuration bytes.
+    if (!detail::ValidUtf8(request.case_id)) out["identity"]["caseId"] = "";
+    if (!detail::ValidUtf8(request.request_id)) out["identity"]["requestId"] = "";
     out["diagnostics"].push(Json::object({{"severity", "error"},
         {"code", "INVALID_REQUEST"}, {"message", message}}));
     return serialize(out, 3);

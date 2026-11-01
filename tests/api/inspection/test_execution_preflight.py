@@ -77,6 +77,29 @@ class ExecutionPreflight(unittest.TestCase):
                         command='--preview')
         self.assertEqual(out['status'], 'ok')
 
+    def test_invalid_utf8_config_retains_exact_identity(self):
+        payload = BASE.encode() + b'\n# invalid byte: \xff\n'
+        process = subprocess.run([str(ARCH), '--check-run', 'Sod', '--config-stdin',
+                                  '--request-id', 'invalid-config'], input=payload,
+                                 capture_output=True, timeout=10, cwd=self.cwd)
+        self.assertEqual(process.returncode, 3)
+        out = json.loads(process.stdout)
+        self.assertEqual(out['identity'], dict(caseId='Sod', requestId='invalid-config',
+            configRevision=hashlib.sha256(payload).hexdigest()))
+        self.assertIsNone(out['data'])
+
+    # Windows creates wide-character argv; only POSIX exposes raw invalid bytes.
+    if os.name == 'posix':
+        def test_invalid_utf8_identifier_still_emits_json(self):
+            process = subprocess.run([os.fsencode(ARCH), b'--check-run', b'\xff',
+                                      b'--config-stdin', b'--request-id', b'valid-id'],
+                                     input=b'', capture_output=True, timeout=10, cwd=self.cwd)
+            self.assertEqual(process.returncode, 3)
+            out = json.loads(process.stdout)
+            self.assertEqual(out['identity'], dict(caseId='', requestId='valid-id',
+                configRevision=hashlib.sha256(b'').hexdigest()))
+            self.assertIsNone(out['data'])
+
     def test_missing_cli_input_has_error_envelope(self):
         process = subprocess.run([str(ARCH), '--check-run', 'Sod'], capture_output=True,
                                  timeout=10, cwd=self.cwd)
