@@ -162,8 +162,14 @@ int main(int argc, char **argv)
     // All worker teams join before communication. On any rank's failure abort
     // the job, including peers that may be waiting in an exchange or reduction.
     const int result = run_arch(argc, argv);
-    if (result != 0)
-        MPI_Abort(MPI_COMM_WORLD, result);
+    if (result != 0) {
+        int size = 1;
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
+        // A single rank has no waiting peers. Finalize normally so structured
+        // CLI errors retain their buffered JSON and the requested exit code.
+        if (size > 1)
+            MPI_Abort(MPI_COMM_WORLD, result);
+    }
     MPI_Finalize();
     return result;
 #else
