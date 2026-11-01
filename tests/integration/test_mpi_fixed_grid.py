@@ -55,9 +55,9 @@ def snapshots(directory):
             with h5py.File(filename) as f:
                 assert f.attrs["plot_publication_state"] == "complete"
                 times.append(float(f.attrs["time"]))
-                coordinates.append(f["Grid/x"][:])
+                coordinates.append(np.column_stack([f["Grid/" + axis][:].reshape(-1) for axis in ("x", "y", "z")]))
                 measures.append(f["NativeGrid/cell_measure"][:])
-                roots.extend(f["NativeGrid/logical_x1"][:].tolist())
+                roots.extend(zip(*(f["NativeGrid/logical_x" + str(axis)][:].tolist() for axis in (1, 2, 3))))
                 fields = set(f["Data"].keys())
                 if data:
                     assert fields == set(data), "rank field-set mismatch"
@@ -65,12 +65,15 @@ def snapshots(directory):
                     data.setdefault(name, []).append(f["Data/" + name][:].reshape(-1))
         assert len(set(times)) == 1, "ranks advanced with different clocks"
         assert len(roots) == len(set(roots)), "duplicate owned roots"
-        assert sorted(roots) == list(range(max(roots) + 1)), "missing owned roots"
-        x = np.concatenate(coordinates)
-        order = np.argsort(x)
-        assert np.all(np.diff(x[order]) > 0), "overlapping or duplicate cells"
+        root_extent = [max(key[axis] for key in roots) + 1 for axis in range(3)]
+        assert len(roots) == int(np.prod(root_extent)), "missing owned roots"
+        xyz = np.concatenate(coordinates)
+        order = np.lexsort((xyz[:, 0], xyz[:, 1], xyz[:, 2]))
+        assert np.all(np.any(xyz[order][1:] != xyz[order][:-1], axis=1)), "overlapping or duplicate cells"
         values = {name: np.concatenate(parts)[order] for name, parts in data.items()}
-        values["coordinate"] = x[order]
+        values["coordinate"] = xyz[order, 0]
+        values["coordinate_y"] = xyz[order, 1]
+        values["coordinate_z"] = xyz[order, 2]
         values["cell_measure"] = np.concatenate(measures)[order]
         assembled.append((times[0], values))
     return assembled

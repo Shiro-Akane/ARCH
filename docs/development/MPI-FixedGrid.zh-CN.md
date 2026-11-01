@@ -1,5 +1,8 @@
 # MPI 固定网格实施记录
 
+本文保留首个 1D 切片的历史记录。后续多维设计与阶段计划见
+[MPI 下一阶段实施计划](MPI-NextSteps-20261101.zh-CN.md)。
+
 基线：上游 `main`，`5dc6d7bad3fcf37c1aa261d66ec1e8dcf6c5e21d`。
 `build/win11` 已通过 PR #21 合并；本实现按用户后续指示直接基于 main。
 

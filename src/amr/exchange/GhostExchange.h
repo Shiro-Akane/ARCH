@@ -718,9 +718,9 @@ private:
                                  int species)
     {
 #if ARCH_MPI_ENABLED
-        if (tree.GetRootGridDim() != 1 || views.empty() ||
-            views.front().logical.logical_x1 != static_cast<unsigned>(tree.RootBegin()) ||
-            views.back().logical.logical_x1 != static_cast<unsigned>(tree.RootEnd() - 1))
+        const auto &grid = tree.GetRootGrid();
+        const int dim = grid.dim;
+        if (dim < 1 || dim > 3 || views.empty() || tree.RootBegin() >= tree.RootEnd())
             throw std::logic_error("MPI exchange root ownership mismatch");
         int initialized = 0, rank = 0, size = 1;
         MPI_Initialized(&initialized);
@@ -732,11 +732,42 @@ private:
             throw std::logic_error("MPI communicator differs from root partition");
         const int lower = rank > 0 ? rank - 1 : (tree.PeriodicX() ? size - 1 : MPI_PROC_NULL);
         const int upper = rank + 1 < size ? rank + 1 : (tree.PeriodicX() ? 0 : MPI_PROC_NULL);
-        const std::array<std::int32_t, 3> extent{BLOCK_NX, 1, 1};
-        const auto count64 = static_cast<std::uint64_t>(6 + species) * MAX_NG;
-        if (count64 > static_cast<std::uint64_t>(std::numeric_limits<int>::max()))
+        const std::array<std::int32_t, 3> extent{
+            BLOCK_NX, dim >= 2 ? BLOCK_NY : 1, dim == 3 ? BLOCK_NZ : 1};
+        const auto rows = static_cast<std::uint64_t>(std::max(1, grid.nblockx2));
+        const auto planes = static_cast<std::uint64_t>(std::max(1, grid.nblockx3));
+        const auto faces = rows * planes;
+        const auto face_values = static_cast<std::uint64_t>(6 + species)
+            * MAX_NG * extent[1] * extent[2];
+        if (faces > static_cast<std::uint64_t>(std::numeric_limits<int>::max()) / face_values)
             throw std::overflow_error("MPI halo count exceeds the MPI int range");
+        const auto count64 = faces * face_values;
         const int count = static_cast<int>(count64);
+        if (views.size() != faces * static_cast<std::uint64_t>(tree.RootEnd() - tree.RootBegin()))
+            throw std::logic_error("MPI exchange has incomplete root slabs");
+        // Morton traversal differs across slabs. Pack by global (Z,Y) instead
+        // of relying on front/back or local pool indices to identify a face.
+        std::vector<std::array<const HostExchangeBlockView *, 2>> boundary(faces, {nullptr, nullptr});
+        for (const auto &view : views) {
+            const auto &key = view.logical;
+            if (key.dimension != dim || key.level != 0 ||
+                key.logical_x1 < static_cast<unsigned>(tree.RootBegin()) ||
+                key.logical_x1 >= static_cast<unsigned>(tree.RootEnd()) ||
+                key.logical_x2 >= rows || key.logical_x3 >= planes)
+                throw std::logic_error("MPI exchange root ownership mismatch");
+            auto &pair = boundary[key.logical_x3 * rows + key.logical_x2];
+            for (int side = 0; side < 2; ++side) {
+                const auto edge = static_cast<unsigned>(side ? tree.RootEnd() - 1 : tree.RootBegin());
+                if (key.logical_x1 == edge) {
+                    if (pair[side])
+                        throw std::logic_error("MPI exchange has duplicate boundary roots");
+                    pair[side] = &view;
+                }
+            }
+        }
+        for (const auto &pair : boundary)
+            if (!pair[0] || !pair[1])
+                throw std::logic_error("MPI exchange has missing boundary roots");
         // Reuse the existing executor's scratch, retaining no FluidState views.
         host_workspace_.values.resize(4 * count64);
         double *send_lower = host_workspace_.values.data();
@@ -747,7 +778,7 @@ private:
                               double *buffer) {
             // The source side is opposite the destination side in the native
             // plan recipe; use that same indexing and the same six+species fields.
-            const auto box = exchange_detail::make_box(1, extent, MAX_NG, 0, gather,
+            const auto box = exchange_detail::make_box(dim, extent, MAX_NG, 0, gather,
                                                        gather ? !upper_side : upper_side);
             exchange_detail::for_each_box_cell(box, [&](const auto &logical, std::uint64_t cell) {
                 const auto index = exchange_detail::flatten_host_exchange(view.layout, logical);
@@ -761,8 +792,10 @@ private:
                 }
             });
         };
-        copy(views.front(), false, true, send_lower);
-        copy(views.back(), true, true, send_upper);
+        for (std::size_t face = 0; face < boundary.size(); ++face) {
+            copy(*boundary[face][0], false, true, send_lower + face * face_values);
+            copy(*boundary[face][1], true, true, send_upper + face * face_values);
+        }
         MPI_Status status_lower{}, status_upper{};
         MPI_Sendrecv(send_upper, count, MPI_DOUBLE, upper, 310, receive_lower, count, MPI_DOUBLE, lower,
                      310, MPI_COMM_WORLD, &status_lower);
@@ -778,10 +811,14 @@ private:
         };
         require_count(lower, status_lower);
         require_count(upper, status_upper);
-        if (lower != MPI_PROC_NULL)
-            copy(views.front(), false, false, receive_lower);
-        if (upper != MPI_PROC_NULL)
-            copy(views.back(), true, false, receive_upper);
+        for (std::size_t face = 0; face < boundary.size(); ++face) {
+            if (lower != MPI_PROC_NULL)
+                copy(*boundary[face][0], false, false, receive_lower + face * face_values);
+            if (upper != MPI_PROC_NULL)
+                copy(*boundary[face][1], true, false, receive_upper + face * face_values);
+        }
+        // Remote X and local X write disjoint faces. The existing local Y/Z
+        // phases then propagate these X halos into edges/corners in order.
 #else
         (void)tree;
         (void)views;

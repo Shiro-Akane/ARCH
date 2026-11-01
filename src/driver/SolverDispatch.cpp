@@ -302,16 +302,21 @@ void DispatchSolver(ProblemGenerator &problem,
     }
 #endif
     if (rank_count > 1) {
-        if (max_blocks < config.grid.nblockx1)
+        const auto transverse_roots = static_cast<std::int64_t>(std::max(1, config.grid.nblockx2))
+            * std::max(1, config.grid.nblockx3);
+        // Check before multiplying by X, including inputs near the integer limit.
+        if (transverse_roots > max_blocks || config.grid.nblockx1 > max_blocks / transverse_roots)
             throw std::invalid_argument("MPI global max_blocks is smaller than the root mesh");
+        const int global_roots = static_cast<int>(config.grid.nblockx1 * transverse_roots);
         // Keep the original pool and free list. Only its per-rank capacity
         // changes; no shadow blocks or second field allocator is introduced.
         const int roots =
             static_cast<int>(static_cast<std::int64_t>(config.grid.nblockx1) * (rank + 1) / rank_count -
-                             static_cast<std::int64_t>(config.grid.nblockx1) * rank / rank_count);
+                             static_cast<std::int64_t>(config.grid.nblockx1) * rank / rank_count)
+            * static_cast<int>(transverse_roots);
         // Reserve owned roots first, then share spare slots. Clamping an
         // independently divided capacity could exceed the global max_blocks.
-        const int spare_blocks = max_blocks - config.grid.nblockx1;
+        const int spare_blocks = max_blocks - global_roots;
         const int local_spare =
             static_cast<int>(static_cast<std::int64_t>(spare_blocks) * (rank + 1) / rank_count -
                              static_cast<std::int64_t>(spare_blocks) * rank / rank_count);
@@ -365,7 +370,10 @@ void DispatchSolver(ProblemGenerator &problem,
         partition << "schema=1\nrank=" << rank << "\nsize=" << rank_count
                   << "\nroot_begin=" << amr_ctrl.tree->RootBegin()
                   << "\nroot_end=" << amr_ctrl.tree->RootEnd()
-                  << "\nglobal_root_blocks=" << config.grid.nblockx1
+                  << "\npartition_axis=0\ntransverse_root_blocks="
+                  << std::max(1, config.grid.nblockx2) * std::max(1, config.grid.nblockx3)
+                  << "\nglobal_root_blocks=" << static_cast<std::int64_t>(config.grid.nblockx1)
+                      * std::max(1, config.grid.nblockx2) * std::max(1, config.grid.nblockx3)
                   << "\nlocal_pool_capacity=" << max_blocks
                   << "\noutput_scope=rank-local\nrestart_supported=false\n";
         partition.close();

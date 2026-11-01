@@ -102,18 +102,23 @@ static int run_arch(int argc, char **argv)
             const auto supported_face = [](const std::string &face) {
                 return face == "periodic" || face == "outflow" || face == "reflecting";
             };
-            if (config.grid.dim != 1 || config.grid.geometry != "cartesian" ||
+            const auto supported_pair = [&](const std::string &lower, const std::string &upper) {
+                return supported_face(lower) && supported_face(upper)
+                    && ((lower == "periodic") == (upper == "periodic"));
+            };
+            if (config.grid.dim < 1 || config.grid.dim > 3 || config.grid.geometry != "cartesian" ||
                 config.amr.lrefinemin != 0 || config.amr.lrefinemax != 0 ||
                 config.grid.nblockx1 < mpi_size || config.execution.compute_backend != "cpu" ||
                 config.physics.burn.use_burn || config.physics.diffusion.use_diffusion ||
                 config.physics.gravity.type != "none" || config.io.restart ||
                 config.io.chk_dt > 0 || config.io.chk_dstep > 0 ||
-                !supported_face(config.grid.x1l_boundary_type) ||
-                !supported_face(config.grid.x1r_boundary_type) ||
-                ((config.grid.x1l_boundary_type == "periodic") !=
-                 (config.grid.x1r_boundary_type == "periodic")))
+                !supported_pair(config.grid.x1l_boundary_type, config.grid.x1r_boundary_type) ||
+                (config.grid.dim >= 2 &&
+                 !supported_pair(config.grid.x2l_boundary_type, config.grid.x2r_boundary_type)) ||
+                (config.grid.dim == 3 &&
+                 !supported_pair(config.grid.x3l_boundary_type, config.grid.x3r_boundary_type)))
                 throw std::invalid_argument(
-                    "MPI M1 requires CPU fixed Cartesian 1-D hydro, one or more blocks per rank, "
+                    "MPI M1 requires CPU fixed Cartesian 1-D/2-D/3-D hydro, one or more X slabs per rank, "
                     "built-in boundaries, no sources or checkpoint/restart");
         }
 #endif

@@ -1,0 +1,365 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "created_utc": "2026-11-01T07:49:50.702093+00:00",
+  "host": "gpu-273312",
+  "branch": "codex/mpi-multidimensional-fixed-grid-20261101",
+  "base_commit": "cb97c71fb83a8c5f080ff2ada1ebc20234900551",
+  "independent_baseline_commit": "5dc6d7bad3fcf37c1aa261d66ec1e8dcf6c5e21d",
+  "scope": "CPU Cartesian fixed root mesh, X slabs, single-host 1D/2D/3D",
+  "evidence_directory": "/home/ubuntu/projects/ARCH-mpi-evidence-multidim-20261101",
+  "protected_paths_unchanged_from_main": [
+    "src/numerics",
+    "src/physics",
+    "src/amr/transfer",
+    "src/amr/refinement",
+    "src/amr/storage"
+  ],
+  "application_comparisons": 108,
+  "expected_rejections": 20,
+  "ctest_passed": 22,
+  "builds": {
+    "debug-mpi": {
+      "path": "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug/bin/ARCH",
+      "sha256": "c875a1bc1612758163dfd11c6c1b77f1613ca476c5224bb5319a75c23952526f",
+      "links_mpi": true,
+      "config": {
+        "ARCH_ENABLE_CUDA:BOOL": "OFF",
+        "ARCH_ENABLE_MPI:BOOL": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY:PATH": "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug/bin",
+        "CMAKE_BUILD_TYPE:STRING": "Debug"
+      }
+    },
+    "debug-serial": {
+      "path": "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug-serial/bin/ARCH",
+      "sha256": "1fadd12be0b36ed7d734c694831eb9536967669acc0c9ed8aaeafa7d9061001a",
+      "links_mpi": false,
+      "config": {
+        "ARCH_ENABLE_CUDA:BOOL": "OFF",
+        "ARCH_ENABLE_MPI:BOOL": "OFF",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY:PATH": "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug-serial/bin",
+        "CMAKE_BUILD_TYPE:STRING": "Debug"
+      }
+    },
+    "release-mpi": {
+      "path": "/home/ubuntu/projects/ARCH-mpi/build-gpu-release/bin/ARCH",
+      "sha256": "4753d151ba64a7f36989b285647fa43447cf386430fb8fd9c8ac9e3c1e8e5f0b",
+      "links_mpi": true,
+      "config": {
+        "ARCH_ENABLE_CUDA:BOOL": "OFF",
+        "ARCH_ENABLE_MPI:BOOL": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY:PATH": "/home/ubuntu/projects/ARCH-mpi/build-gpu-release/bin",
+        "CMAKE_BUILD_TYPE:STRING": "Release"
+      }
+    },
+    "release-serial": {
+      "path": "/home/ubuntu/projects/ARCH-mpi/build-gpu-release-serial/bin/ARCH",
+      "sha256": "9483aa6135b8283da6a3592b01d6523d08c08b7608da0bca9531d20f438d9a97",
+      "links_mpi": false,
+      "config": {
+        "ARCH_ENABLE_CUDA:BOOL": "OFF",
+        "ARCH_ENABLE_MPI:BOOL": "OFF",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY:PATH": "/home/ubuntu/projects/ARCH-mpi/build-gpu-release-serial/bin",
+        "CMAKE_BUILD_TYPE:STRING": "Release"
+      }
+    }
+  },
+  "source_sha256": {
+    "src/amr/exchange/GhostExchange.h": "2562882c68fdf70d19ae5b92d1e36b686318ae4fab0e1404048856015f61b4ec",
+    "src/amr/topology/AmrTree.h": "fd13f8ba65ec6321938c4fd5855a52d29a9a7a9feb8be956623da84732b0d297",
+    "src/driver/SolverDispatch.cpp": "30350e9df4863a7b52e817cda74b720cd1efe339ebb01ed3fba8904224e698ca",
+    "src/main.cpp": "d0ec387b3e0ae54f219467c23a4f7454c842023dd915fe05cc505b9525241481",
+    "tests/host/amr/test_mpi_fixed_grid.cpp": "df137ed886873b49e92d233d559d556cc41a976709a95bd17a8ec37e75759b03",
+    "tests/integration/test_mpi_fixed_grid.py": "6cc1059ff5c6f4de1f4c9d1426b9ead53cfb6c7c9a1c77e125355a82531099b8",
+    "tests/integration/test_mpi_multidim.py": "af33e28a71ae5a70ad6a941e070702c2c84afb58dd040de64174e071539d9984",
+    "validation/mpi/multidim-20261101/summarize_conservation.py": "eb168d86a0238634bbb3fd05daa59ad8508cca0542a667dcaac8e9f690d371e5"
+  },
+  "suites": {
+    "debug": {
+      "1d_comparisons": 26,
+      "multidim_comparisons": 28,
+      "expected_rejections": 10,
+      "multidim_cases": [
+        "Sedov-2d-RK3-HLLC-axis0-outflow",
+        "Sedov-3d-RK3-HLLC-axis0-outflow",
+        "Sedov-2d-RK2-HLLC-axis0-reflecting",
+        "SmoothAdvection-2d-RK2-HLLC-axis1-periodic",
+        "SmoothAdvection-3d-RK3-HLLC-axis1-periodic",
+        "SmoothAdvection-2d-RK3-Roe-axis2-periodic",
+        "SmoothAdvection-3d-RK3-HLL-axis3-periodic"
+      ],
+      "steps_per_multidim_case": 16,
+      "snapshots_per_multidim_lane": 5
+    },
+    "release": {
+      "1d_comparisons": 26,
+      "multidim_comparisons": 28,
+      "expected_rejections": 10,
+      "multidim_cases": [
+        "Sedov-2d-RK3-HLLC-axis0-outflow",
+        "Sedov-3d-RK3-HLLC-axis0-outflow",
+        "Sedov-2d-RK2-HLLC-axis0-reflecting",
+        "SmoothAdvection-2d-RK2-HLLC-axis1-periodic",
+        "SmoothAdvection-3d-RK3-HLLC-axis1-periodic",
+        "SmoothAdvection-2d-RK3-Roe-axis2-periodic",
+        "SmoothAdvection-3d-RK3-HLL-axis3-periodic"
+      ],
+      "steps_per_multidim_case": 16,
+      "snapshots_per_multidim_lane": 5
+    }
+  },
+  "conservation": {
+    "debug": [
+      {
+        "case": "Sedov-2d-RK3-HLLC-axis0-outflow",
+        "max_relative_drift": {
+          "mass": 0.0,
+          "total_energy": 0.0
+        },
+        "max_density_change": 0.5674709741605737,
+        "max_energy_density_change": 11.622705672850314,
+        "lanes_equal_to_baseline": [
+          "mpi-1",
+          "mpi-2",
+          "mpi-4",
+          "serial"
+        ]
+      },
+      {
+        "case": "Sedov-3d-RK3-HLLC-axis0-outflow",
+        "max_relative_drift": {
+          "mass": 0.0,
+          "total_energy": 0.0
+        },
+        "max_density_change": 0.4458536124285526,
+        "max_energy_density_change": 66.284366031027,
+        "lanes_equal_to_baseline": [
+          "mpi-1",
+          "mpi-2",
+          "mpi-4",
+          "serial"
+        ]
+      },
+      {
+        "case": "Sedov-2d-RK2-HLLC-axis0-reflecting",
+        "max_relative_drift": {
+          "mass": 0.0,
+          "total_energy": 0.0
+        },
+        "max_density_change": 0.5467016302591696,
+        "max_energy_density_change": 12.71169611855764,
+        "lanes_equal_to_baseline": [
+          "mpi-1",
+          "mpi-2",
+          "mpi-4",
+          "serial"
+        ]
+      },
+      {
+        "case": "SmoothAdvection-2d-RK2-HLLC-axis1-periodic",
+        "max_relative_drift": {
+          "mass": 0.0,
+          "total_energy": 0.0
+        },
+        "max_density_change": 0.01209804033526285,
+        "max_energy_density_change": 0.006049020167631536,
+        "lanes_equal_to_baseline": [
+          "mpi-1",
+          "mpi-2",
+          "mpi-4",
+          "serial"
+        ]
+      },
+      {
+        "case": "SmoothAdvection-3d-RK3-HLLC-axis1-periodic",
+        "max_relative_drift": {
+          "mass": 0.0,
+          "total_energy": 0.0
+        },
+        "max_density_change": 0.010342069679983301,
+        "max_energy_density_change": 0.005171034839991595,
+        "lanes_equal_to_baseline": [
+          "mpi-1",
+          "mpi-2",
+          "mpi-4",
+          "serial"
+        ]
+      },
+      {
+        "case": "SmoothAdvection-2d-RK3-Roe-axis2-periodic",
+        "max_relative_drift": {
+          "mass": 0.0,
+          "total_energy": 0.0
+        },
+        "max_density_change": 0.01388148768807207,
+        "max_energy_density_change": 0.0069407438440372005,
+        "lanes_equal_to_baseline": [
+          "mpi-1",
+          "mpi-2",
+          "mpi-4",
+          "serial"
+        ]
+      },
+      {
+        "case": "SmoothAdvection-3d-RK3-HLL-axis3-periodic",
+        "max_relative_drift": {
+          "mass": 0.0,
+          "total_energy": 0.0
+        },
+        "max_density_change": 0.012377197874860135,
+        "max_energy_density_change": 0.0061885989374297345,
+        "lanes_equal_to_baseline": [
+          "mpi-1",
+          "mpi-2",
+          "mpi-4",
+          "serial"
+        ]
+      }
+    ],
+    "release": [
+      {
+        "case": "Sedov-2d-RK3-HLLC-axis0-outflow",
+        "max_relative_drift": {
+          "mass": 0.0,
+          "total_energy": 0.0
+        },
+        "max_density_change": 0.5674709741605737,
+        "max_energy_density_change": 11.622705672850314,
+        "lanes_equal_to_baseline": [
+          "mpi-1",
+          "mpi-2",
+          "mpi-4",
+          "serial"
+        ]
+      },
+      {
+        "case": "Sedov-3d-RK3-HLLC-axis0-outflow",
+        "max_relative_drift": {
+          "mass": 0.0,
+          "total_energy": 0.0
+        },
+        "max_density_change": 0.4458536124285526,
+        "max_energy_density_change": 66.284366031027,
+        "lanes_equal_to_baseline": [
+          "mpi-1",
+          "mpi-2",
+          "mpi-4",
+          "serial"
+        ]
+      },
+      {
+        "case": "Sedov-2d-RK2-HLLC-axis0-reflecting",
+        "max_relative_drift": {
+          "mass": 0.0,
+          "total_energy": 0.0
+        },
+        "max_density_change": 0.5467016302591696,
+        "max_energy_density_change": 12.71169611855764,
+        "lanes_equal_to_baseline": [
+          "mpi-1",
+          "mpi-2",
+          "mpi-4",
+          "serial"
+        ]
+      },
+      {
+        "case": "SmoothAdvection-2d-RK2-HLLC-axis1-periodic",
+        "max_relative_drift": {
+          "mass": 0.0,
+          "total_energy": 0.0
+        },
+        "max_density_change": 0.01209804033526285,
+        "max_energy_density_change": 0.006049020167631536,
+        "lanes_equal_to_baseline": [
+          "mpi-1",
+          "mpi-2",
+          "mpi-4",
+          "serial"
+        ]
+      },
+      {
+        "case": "SmoothAdvection-3d-RK3-HLLC-axis1-periodic",
+        "max_relative_drift": {
+          "mass": 0.0,
+          "total_energy": 0.0
+        },
+        "max_density_change": 0.010342069679983301,
+        "max_energy_density_change": 0.005171034839991595,
+        "lanes_equal_to_baseline": [
+          "mpi-1",
+          "mpi-2",
+          "mpi-4",
+          "serial"
+        ]
+      },
+      {
+        "case": "SmoothAdvection-2d-RK3-Roe-axis2-periodic",
+        "max_relative_drift": {
+          "mass": 0.0,
+          "total_energy": 0.0
+        },
+        "max_density_change": 0.01388148768807207,
+        "max_energy_density_change": 0.0069407438440372005,
+        "lanes_equal_to_baseline": [
+          "mpi-1",
+          "mpi-2",
+          "mpi-4",
+          "serial"
+        ]
+      },
+      {
+        "case": "SmoothAdvection-3d-RK3-HLL-axis3-periodic",
+        "max_relative_drift": {
+          "mass": 0.0,
+          "total_energy": 0.0
+        },
+        "max_density_change": 0.012377197874860135,
+        "max_energy_density_change": 0.0061885989374297345,
+        "lanes_equal_to_baseline": [
+          "mpi-1",
+          "mpi-2",
+          "mpi-4",
+          "serial"
+        ]
+      }
+    ]
+  },
+  "not_validated": [
+    "multinode",
+    "strong_scaling",
+    "AMR",
+    "GPU_MPI",
+    "distributed_checkpoint_restart",
+    "long_time_multidimensional_evolution"
+  ],
+  "early_3d_smoke": {
+    "state": "passed",
+    "snapshots": 3,
+    "fields": [
+      "DENS",
+      "ENER",
+      "ENTR",
+      "PRES",
+      "SedovGas",
+      "TEMP",
+      "VELX",
+      "VELY",
+      "VELZ",
+      "cell_measure",
+      "coordinate",
+      "coordinate_y",
+      "coordinate_z"
+    ],
+    "bitwise_equal": true,
+    "final_time": 0.00028099991449970755,
+    "cells": 122880
+  },
+  "design_plan_sha256_at_execution": "811e70bd89e5a1f9f8dd6f5759110a0b7e782a6853c849ad9aacd2fb8e89d540",
+  "raw_evidence_manifest": {
+    "manifest": "/home/ubuntu/preservation/arch-mpi-multidim-20261101/evidence-manifest.json",
+    "sha256": "08237f7d5e530db9209a74a34fb0bfb445826ab885cb034698ee84a059983197",
+    "file_count": 4675,
+    "bytes": 3463857507,
+    "created_utc": "2026-11-01T07:51:29.100208+00:00"
+  }
+}
