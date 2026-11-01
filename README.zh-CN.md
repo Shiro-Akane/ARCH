@@ -25,13 +25,13 @@ ARCH 统一使用 **CGS 单位**：长度 cm、时间 s、密度 g/cm³、压力
 
 ## 构建
 
-先按 [Linux／Windows 构建指南](docs/guides/Build.zh-CN.md)准备工具和匹配的依赖。以下命令均从仓库根目录执行。
+安装[对应平台的工具](docs/guides/Build.zh-CN.md#tools-and-dependencies)，再从仓库根目录执行以下命令。准备步骤会复用或构建同 ABI 的 HDF5；配置步骤通过共用 CMake 依赖入口提供 HighFive 和 KLU。
 
 | 要求 | Linux／WSL2 | 原生 Windows 11 x64 |
 | --- | --- | --- |
-| CPU | C++20 编译器、CMake 3.22+、Ninja、Git、HDF5 C++/HL 与 OpenMP | GCC/UCRT64、同 ABI 的 HDF5/KLU，以及原生 CMake/Ninja |
-| CUDA | CMake 3.25.2+、CUDA Toolkit 12.0+、兼容 Host 编译器和 GPU 驱动 | 独立 MSVC/NVCC 构建、Windows SDK 与同 MSVC ABI 的依赖 |
-| 可选 Studio | 原生 Node 24+、npm、Electron 和图形会话／WSLg | 原生 x64 Node 24+、npm 和 Electron |
+| CPU | C++20 GCC、CMake 3.22+、Ninja 和 Git | PowerShell PATH 中的 GCC/UCRT64、原生 CMake/Ninja 和 Git |
+| CUDA | CMake 3.25.2+、CUDA Toolkit 12.0+、兼容 Host 编译器和 GPU 驱动 | NVCC、MSVC 14.44 x64 Developer 终端、Windows SDK 与兼容 GPU 驱动 |
+| 可选 Studio | 原生 x64 Node 24+、npm 和图形会话／WSLg | 原生 x64 Node 24+、npm 和 GNU objdump |
 
 ### 获取源码
 
@@ -44,39 +44,93 @@ cd ARCH
 
 ### 方案 A：CPU
 
-Linux／WSL2 安装所需工具和库后：
+Linux／WSL2：
 
-```text
-cmake --preset cpu-release
-cmake --build build-cpu --target ARCH --parallel 1
+**准备依赖**
+
+```bash
+cmake -DARCH_PROFILE=linux-core -P cmake/dependencies/Prepare.cmake
 ```
 
-Windows 按 [CPU 构建说明](docs/guides/Build.zh-CN.md#cpu-构建)配置 GCC/UCRT64 和配套依赖，然后编译：
+**配置**
+
+```bash
+cmake --preset linux-core
+```
+
+**编译**
+
+```bash
+cmake --build --preset linux-core
+```
+
+Windows PowerShell，先将 [UCRT64 工具目录加入 PATH](docs/guides/Build.zh-CN.md#windows-cpu-installation)：
+
+**准备依赖**
 
 ```powershell
-cmake --build build-windows-cpu --target ARCH --parallel 1
+cmake -DARCH_PROFILE=windows-core -P cmake/dependencies/Prepare.cmake
 ```
 
-执行物分别为 `build-cpu/bin/ARCH` 和 `build-windows-cpu/bin/ARCH.exe`。两平台使用各自独立的构建目录。
+**配置**
+
+```powershell
+cmake --preset windows-core
+```
+
+**编译**
+
+```powershell
+cmake --build --preset windows-core
+```
+
+普通源码修改后只需重复编译命令。执行物为 `build/linux-core/bin/ARCH` 和 `build/windows-core/bin/ARCH.exe`，运行方法见下一节。
 
 ### 方案 B：CPU 与 CUDA
 
-Linux／WSL2 在实际运行 GPU 的机器上配置：
+Linux／WSL2，在 GPU 机器上执行：
 
-```text
-cmake --preset cuda-release
-cmake --build build-cuda --target ARCH --parallel 1
+**准备依赖**
+
+```bash
+cmake -DARCH_PROFILE=linux-core-with-cuda -P cmake/dependencies/Prepare.cmake
 ```
 
-Windows 按 [CUDA 构建说明](docs/guides/Build.zh-CN.md#cuda-构建)配置独立的 MSVC/NVCC 工具链，然后编译：
+**配置**
 
-```powershell
-cmake --build build-cuda-win --target ARCH --parallel 1
+```bash
+cmake --preset linux-core-with-cuda
 ```
 
-生成的 `build-cuda/bin/ARCH` 或 `build-cuda-win/bin/ARCH.exe` 同时提供 CPU 与 CUDA 执行能力。通过参数文件中的 `compute_backend = cpu`、`cuda` 或 `auto` 选择后端。CUDA 编译可能需要较多 Host 内存；构建指南说明并发限制和稀疏燃烧所用的可选 cuDSS。
+**编译**
 
-首次 Sod 算例不需要 EOS 表。Helmholtz 算例需要真实表数据：Git 仓库可执行 `git lfs pull`，源码压缩包请按 [EOS 表数据说明](docs/guides/Build.zh-CN.md#源码压缩包与-eos-表)准备。
+```bash
+cmake --build --preset linux-core-with-cuda
+```
+
+Windows，在 [MSVC 14.44 x64 Developer Command Prompt](docs/guides/Build.zh-CN.md#windows-cuda-installation) 中执行：
+
+**准备依赖**
+
+```bat
+cmake -DARCH_PROFILE=windows-core-with-cuda -P cmake/dependencies/Prepare.cmake
+```
+
+**配置**
+
+```bat
+cmake --preset windows-core-with-cuda
+```
+
+**编译**
+
+```bat
+cmake --build --preset windows-core-with-cuda
+```
+
+这些构建在 `build/<profile>/bin/` 生成**同时具备 CPU 和 CUDA 能力的执行物**，通过参数文件的 `compute_backend = cpu`、`cuda` 或 `auto` 在运行时选择后端。cuDSS 是稀疏 CUDA 燃烧的可选依赖；普通 GPU 计算和小型 DenseLU 燃烧不依赖它。工具路径、依赖和编译内存设置见[构建指南](docs/guides/Build.zh-CN.md)。
+
+首次 Sod 算例不需要 EOS 表。Helmholtz 算例需要真实表数据：Git 仓库可执行 `git lfs pull`，源码压缩包请按 [EOS 表数据说明](docs/guides/Build.zh-CN.md#source-archives-and-eos-tables)准备。
 
 ## 首次运行
 
@@ -86,15 +140,18 @@ Linux／WSL2：
 
 ```bash
 export OMP_NUM_THREADS=4
-./build-cpu/bin/ARCH Sod simulation/Sod/Sod_beginner.par
+./build/linux-core/bin/ARCH Sod simulation/Sod/Sod_beginner.par
 ```
 
-Windows PowerShell，需已设置原生依赖路径：
+Windows Command Prompt；CUDA 构建使用已初始化的 Developer 终端：
 
-```powershell
-$env:OMP_NUM_THREADS = '4'
-& .\build-windows-cpu\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
+```bat
+call build\windows-core\bin\arch-env.cmd
+set OMP_NUM_THREADS=4
+build\windows-core\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
 ```
+
+`arch-env.cmd` 设置配置时选定的运行库路径。使用 CUDA 构建时，将两处 `windows-core` 都换成 `windows-core-with-cuda`。
 
 `Sod` 选择已编译的问题定义，`.par` 文件提供参数，`OMP_NUM_THREADS` 控制 CPU 工作线程数。使用 CUDA 构建时，选择相应执行物，并在输入副本中修改已有的 `compute_backend` 赋值。
 
@@ -112,39 +169,51 @@ Studio 将参数编辑、Configure/Build、初始场与初始 AMR 预览、Run/R
 
 *查看演化后的密度场、显示自适应网格，并查询实际存储的单元值。[图解 Studio 指南](docs/guides/Studio.zh-CN.md)介绍配置、预览和结果查看。*
 
-在 CMake 配置时设置 `-DARCH_BUILD_STUDIO=ON`，按[构建指南](docs/guides/Build.zh-CN.md)编译桌面组件。从项目根目录直接启动 Studio，暂不选择模型或参数文件：
+在已经配置的 Core 构建目录中加入 Studio。安装[桌面前置依赖](docs/guides/Build.zh-CN.md#studio-desktop)后，启用选项、编译并启动：
 
 Linux／WSL2：
 
-```bash
-build-studio-cpu/bin/arch-studio
-```
-
-Windows PowerShell，先在同一终端设置[原生工具环境](docs/guides/Build.zh-CN.md#windows-工具配置)：
-
-```powershell
-& .\build-windows-cpu\bin\arch-studio.cmd
-```
-
-在空白启动页选择项目，并填写构建目录、程序、模型和 `.par`。若要直接打开 Sedov 示例，可以在命令行一次性指定这些选项：
-
-Linux／WSL2：
+**在该 Core 目录中启用 Studio**
 
 ```bash
-build-studio-cpu/bin/arch-studio --project "$PWD" --build-dir build-studio-cpu \
-  --binary build-studio-cpu/bin/ARCH --case Sedov \
-  --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
+cmake -S . -B build/linux-core -DARCH_BUILD_STUDIO=ON
 ```
 
-Windows PowerShell，需已设置[原生工具环境](docs/guides/Build.zh-CN.md#windows-工具配置)：
+**编译桌面**
+
+```bash
+cmake --build build/linux-core --target arch-studio
+```
+
+**打开空白启动页**
+
+```bash
+build/linux-core/bin/arch-studio
+```
+
+Windows PowerShell，使用构建 Core 时的同一编译器环境：
+
+**在该 Core 目录中启用 Studio**
 
 ```powershell
-& .\build-windows-cpu\bin\arch-studio.cmd --project "$PWD" --build-dir build-windows-cpu `
-  --binary build-windows-cpu/bin/ARCH.exe --case Sedov `
-  --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
+cmake -S . -B build/windows-core -DARCH_BUILD_STUDIO=ON
 ```
 
-`--config` 指定载入 **Config** 编辑工作区的参数文件；**Configure** 执行 CMake 配置，**Build** 编译程序。窗口打开后显示 Sedov 参数；Preview 就绪后选择 **Field → Pressure**，即可查看初始中心压力区域。保存并确认 Run 后进行时间推进，再在 Plotfile 中打开输出，可得到上图所示的密度视图。具体选项与初始界面见[启动说明](docs/guides/Studio.zh-CN.md#打开项目)。
+**编译桌面**
+
+```powershell
+cmake --build build/windows-core --target arch-studio
+```
+
+**打开空白启动页**
+
+```powershell
+& .\build\windows-core\bin\arch-studio.cmd
+```
+
+已有 CUDA 构建时，将路径中的 profile 换成 `linux-core-with-cuda` 或 `windows-core-with-cuda`。Studio 共用该执行物及其 CPU／CUDA 能力，Windows 启动器自动提供工具配置。
+
+空白启动页用于选择项目、构建目录、执行物、模型和 `.par`。直接打开模型可参考[一次性载入 Sedov 的命令](docs/guides/Studio.zh-CN.md#指定模型与参数启动)。`--config` 将参数文件载入 **Config**；**Configure** 执行 CMake 配置，**Build** 编译程序。[构建指南](docs/guides/Build.zh-CN.md#build-and-launch-the-desktop)也说明了如何给手工配置的构建目录加入 Studio。
 
 ## 扩展模型
 

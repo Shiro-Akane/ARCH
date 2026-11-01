@@ -6,18 +6,18 @@ Studio 是用于准备计算、预览初始状态、运行算例和查看 HDF5 �
 
 ## 打开项目
 
-按[构建指南](Build.zh-CN.md)安装可选桌面组件。从项目根目录运行不带参数的命令，即可打开空白启动页：
+按[构建指南](Build.zh-CN.md)安装可选桌面组件。以下示例使用已启用 Studio 的 `linux-core`／`windows-core` 构建目录；若选择其他 profile，替换成实际目录。从项目根目录运行不带参数的命令，即可打开空白启动页：
 
 Linux／WSL2：
 
 ```bash
-build-studio-cpu/bin/arch-studio
+build/linux-core/bin/arch-studio
 ```
 
-Windows PowerShell，先在同一终端按[构建指南](Build.zh-CN.md#windows-工具配置)设置工具环境，再启动 Studio：
+Windows PowerShell；生成的启动器自动载入本机工具配置：
 
 ```powershell
-& .\build-windows-cpu\bin\arch-studio.cmd
+& .\build\windows-core\bin\arch-studio.cmd
 ```
 
 ![Studio 空白启动页：选择项目、构建目录、程序、模型和参数文件](images/studio-start.png)
@@ -31,16 +31,16 @@ Windows PowerShell，先在同一终端按[构建指南](Build.zh-CN.md#windows-
 Linux／WSL2：
 
 ```bash
-build-studio-cpu/bin/arch-studio --project "$PWD" --build-dir build-studio-cpu \
-  --binary build-studio-cpu/bin/ARCH --case Sedov \
+build/linux-core/bin/arch-studio --project "$PWD" --build-dir build/linux-core \
+  --binary build/linux-core/bin/ARCH --case Sedov \
   --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
 ```
 
 Windows PowerShell：
 
 ```powershell
-& .\build-windows-cpu\bin\arch-studio.cmd --project "$PWD" --build-dir build-windows-cpu `
-  --binary build-windows-cpu/bin/ARCH.exe --case Sedov `
+& .\build\windows-core\bin\arch-studio.cmd --project "$PWD" --build-dir build/windows-core `
+  --binary build/windows-core/bin/ARCH.exe --case Sedov `
   --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
 ```
 
@@ -58,7 +58,7 @@ Windows PowerShell：
 
 启动后，Config 显示 Sedov 模型及其参数。输入与构建就绪时会生成初始预览，也可点击 **Preview** 手动更新；选择 **Field → Pressure** 即可看到下图中的中心压力沉积区域。保存参数并确认 **Run** 后开始时间推进，再加载生成的 Plotfile，可查看后文展示的扩展密度场。
 
-填写实际使用的构建目录与可执行文件；使用 CUDA 时选择对应的 CUDA 构建。便携桌面包在 Linux 下运行 `arch-studio`，在 Windows 下运行 `arch-studio-bin.exe`，启动页可填写相同的项目、构建、程序、模型和参数选项。保留整个包目录，科学计算 Core 及其运行库另行安装。
+填写实际使用的构建目录与可执行文件；使用 CUDA 时选择对应的 CUDA 构建。便携桌面包在 Linux 下运行 `arch-studio`，在 Windows 下运行 `arch-studio-bin.exe`，启动页可填写相同的项目、构建、程序、模型和参数选项。保留整个包目录，科学计算 Core 及其运行库另行安装。Windows 便携包需选择可信的本机[工具配置](Build.zh-CN.md#windows-tool-configuration)。
 
 <a id="workspaces"></a>
 ## 界面导航
@@ -94,13 +94,13 @@ Windows PowerShell：
 - **Download Copy…** 导出一个副本。用于实际运行的输入请通过项目保存动作关联。
 - 文件被外部程序修改时，可重新加载磁盘版本，或将工作副本另存为新文件。
 
-使用 GPU 时，在 Runtime 中选择 `compute_backend = cuda`，保存后用包含 CUDA 的程序开始新的 Run。`cpu` 指定 CPU，`auto` 在启动时选择可用后端。实际选择见运行日志和 `*_backend_plan.txt`。
+使用 GPU 时，在 Runtime 中选择 `compute_backend = cuda` 并保存，执行物需包含 CUDA。`cpu` 指定 CPU，`auto` 由 Run 准备选择受支持的路径。确认前核对请求后端、实际选择及原因，运行日志和 `*_backend_plan.txt` 记录实际路径。
 
 ## 预览与运行
 
 **Generate Real Preview / Update Preview** 使用当前工作副本计算模型初始状态，也可预览尚未保存的参数修改。选择 **Field**，再用 Fit、缩放或拖动查看。Plot presentation 调整坐标、配色和显示范围。**Initial AMR** 使用独立的块数与内存预算生成初始细化层级。Preview 采用 CPU 初始化；Run 开始时间推进。
 
-修改 C++ 后使用 **Configure / Build**，让程序包含源码变化。构建面板显示进度和输入状态。当完整依赖链无法核实时，构建成功后仍可能显示 `freshness-unknown`；操作区会说明哪些动作可用。
+修改 C++ 后使用 **Configure / Build**，让程序包含源码变化。构建面板显示进度与输入新鲜度。出现 `freshness-unknown` 时，打开诊断查看哪些依赖尚未核实。
 
 ![Run 准备界面，显示已保存参数、可执行文件和输出位置](images/studio-run.png)
 

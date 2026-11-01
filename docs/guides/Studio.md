@@ -6,18 +6,18 @@ Studio is a desktop workbench for preparing a calculation, previewing its initia
 
 ## Open a project
 
-Install the optional desktop using the [build guide](Build.md). From the project root, run the launcher without arguments to open the empty start page:
+Install the optional desktop using the [build guide](Build.md). These examples use the `linux-core` / `windows-core` tree with Studio enabled; substitute your actual build directory if different. From the project root, run the launcher without arguments to open the empty start page:
 
 Linux / WSL2:
 
 ```bash
-build-studio-cpu/bin/arch-studio
+build/linux-core/bin/arch-studio
 ```
 
-Windows PowerShell: set up the [tool environment](Build.md#windows-tool-configuration) in the same terminal before starting Studio:
+Windows PowerShell; the generated launcher loads its local tool configuration automatically:
 
 ```powershell
-& .\build-windows-cpu\bin\arch-studio.cmd
+& .\build\windows-core\bin\arch-studio.cmd
 ```
 
 ![Empty Studio start page with project, build, executable, model and parameter selections](images/studio-start.png)
@@ -31,16 +31,16 @@ You can also select the project, build, model and parameter file in one command.
 Linux / WSL2:
 
 ```bash
-build-studio-cpu/bin/arch-studio --project "$PWD" --build-dir build-studio-cpu \
-  --binary build-studio-cpu/bin/ARCH --case Sedov \
+build/linux-core/bin/arch-studio --project "$PWD" --build-dir build/linux-core \
+  --binary build/linux-core/bin/ARCH --case Sedov \
   --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
 ```
 
 Windows PowerShell:
 
 ```powershell
-& .\build-windows-cpu\bin\arch-studio.cmd --project "$PWD" --build-dir build-windows-cpu `
-  --binary build-windows-cpu/bin/ARCH.exe --case Sedov `
+& .\build\windows-core\bin\arch-studio.cmd --project "$PWD" --build-dir build/windows-core `
+  --binary build/windows-core/bin/ARCH.exe --case Sedov `
   --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
 ```
 
@@ -58,7 +58,7 @@ Relative file and build paths resolve from `--project` (the current directory wh
 
 On launch, Config shows the Sedov model and its parameters. When the input and build are ready, Studio generates the initial preview; **Preview** also updates it manually. Select **Field → Pressure** for the initial central spot shown below. Save and confirm **Run** to evolve the model, then open a generated Plotfile for the expanded density field shown later.
 
-Use the build directory and executable you actually compiled. For CUDA, select that CUDA build instead. A portable desktop package starts with `arch-studio` on Linux or `arch-studio-bin.exe` on Windows; its project screen accepts the same project, build, binary, model and parameter selections. Keep the package directory intact. The scientific Core and its runtime libraries are installed separately.
+Use the build directory and executable you actually compiled. For CUDA, select that CUDA build instead. A portable desktop package starts with `arch-studio` on Linux or `arch-studio-bin.exe` on Windows; its project screen accepts the same project, build, binary, model and parameter selections. Keep the package directory intact. The scientific Core and its runtime libraries are installed separately. For a portable Windows package, select its trusted local [tool configuration](Build.md#windows-tool-configuration).
 
 ## Workspaces
 
@@ -93,13 +93,13 @@ Edit a text field, select an option or toggle a switch. Review inline errors and
 - **Download Copy…** exports a copy; use the project save actions for the input you intend to run.
 - If the file changes outside Studio, reload the disk version or save the working copy under a new name.
 
-For GPU execution, select `compute_backend = cuda` in Runtime, save and start a new Run using a CUDA-enabled binary. `cpu` requests CPU execution and `auto` selects an available backend at startup. The Run log and `*_backend_plan.txt` report the selected route.
+For GPU execution, select `compute_backend = cuda` in Runtime and save, using a CUDA-enabled binary. `cpu` requests CPU execution; `auto` lets Run preparation select a supported route. Review the requested and selected backends and the selection reason before confirming. The Run log and `*_backend_plan.txt` record the route used.
 
 ## Preview and run
 
 **Generate Real Preview / Update Preview** evaluates the model's initial state using the current working copy, including unsaved parameter edits. Choose a **Field**, then use Fit, zoom or drag to inspect it. Plot presentation controls change axes, colors and display ranges. **Initial AMR** constructs an initial refinement hierarchy with its own block and memory limits. Preview uses CPU initialization; time evolution starts with Run.
 
-After editing C++, use **Configure / Build** so that the executable includes the change. The build panel reports its progress and input status. A successful build can still show `freshness-unknown` when the full dependency chain cannot be verified; the action controls explain which operation is available.
+After editing C++, use **Configure / Build** so that the executable includes the change. The build panel reports progress and input freshness. If it shows `freshness-unknown`, open its diagnostics to see which dependency could not be verified.
 
 ![Run preparation showing the saved configuration, executable and output selection](images/studio-run.png)
 

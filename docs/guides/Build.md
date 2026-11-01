@@ -2,29 +2,77 @@
 
 [中文](Build.zh-CN.md) · [Quick start](../../README.md#build) · [Studio](Studio.md)
 
-ARCH uses one CMake project for Linux, WSL2 and native Windows 11 x64. **Linux is recommended for scientific work.** Windows provides the same CPU, CUDA and Studio features within the documented [feature scope](../Features.md), with newer platform support that may still have instability or bugs. Studio is optional; the command-line application runs without Node or Electron.
+ARCH uses one CMake project for Linux, WSL2 and native Windows 11 x64. **Linux is recommended for scientific work.** Windows provides the same CPU, CUDA and Studio features within the documented [feature scope](../Features.md), with newer platform support that may still have instability or bugs.
 
-Follow the CPU or CUDA route below, then add Studio if needed. Linux examples use Bash; Windows examples use PowerShell unless marked **Developer Command Prompt**. Run project commands from the ARCH root. Keep separate build directories and dependency prefixes for each operating system and compiler ABI.
+## From source to CUDA and Studio
+
+With the [platform tools](#tools-and-dependencies) installed, run these four commands from the repository root.
+
+Linux / WSL2:
+
+```bash
+cmake -DARCH_PROFILE=linux-desktop-with-cuda -P cmake/dependencies/Prepare.cmake
+cmake --preset linux-desktop-with-cuda
+cmake --build --preset linux-desktop-with-cuda
+build/linux-desktop-with-cuda/bin/arch-studio
+```
+
+Windows, in an **MSVC 14.44 x64 Developer Command Prompt** with native Node 24+ and GNU objdump available:
+
+```bat
+cmake -DARCH_PROFILE=windows-desktop-with-cuda -P cmake/dependencies/Prepare.cmake
+cmake --preset windows-desktop-with-cuda
+cmake --build --preset windows-desktop-with-cuda
+build\windows-desktop-with-cuda\bin\arch-studio.cmd
+```
+
+Studio opens an empty project-selection page. Select your project, its build and executable, then a registered model and `.par`; see the [illustrated guide](Studio.md). Both builds provide CPU and CUDA execution. The parameter file's `compute_backend = cpu`, `cuda` or `auto` chooses the backend at runtime.
+
+| Step | What it does | When to repeat it |
+| --- | --- | --- |
+| Prepare | Selects native tools, validates an existing HDF5 C++/HL installation or builds matching HDF5, and records local choices | First setup or when changing tools/dependency locations |
+| Configure | Reads the selected profile, supplies HighFive/KLU through the existing dependency setup and generates build instructions | After changing CMake options |
+| Build | Compiles Core and, for a desktop profile, Studio and its native helpers | After source changes |
+| Launch | Opens Studio; Core can also run directly from `bin/ARCH` or `bin/ARCH.exe` | Each session |
+
+The initial preparation/configuration downloads dependencies when needed. Repeated builds reuse them. Build directories and compiler ABIs stay separate; source-checkout Studio dependencies also belong to their host OS.
+
+<a id="cpu-build"></a>
+<a id="cuda-build"></a>
+<a id="native-windows-cpu-and-cuda"></a>
+## Choose a profile
+
+Use the same profile name in the prepare, configure and build commands. Each writes to `build/<profile>/`, with executables under `bin/`.
+
+| Contents | Linux / WSL2 | Windows 11 x64 |
+| --- | --- | --- |
+| CPU Core | `linux-core` | `windows-core` |
+| CPU + CUDA Core | `linux-core-with-cuda` | `windows-core-with-cuda` |
+| CPU Core + Studio | `linux-desktop` | `windows-desktop` |
+| CPU + CUDA Core + Studio | `linux-desktop-with-cuda` | `windows-desktop-with-cuda` |
+
+Core profiles require neither Node nor objdump. Desktop profiles add the window and its tools; `with-cuda` adds CUDA to a program that also retains CPU execution. The [README](../../README.md#build) gives Core-only commands. To add Studio to an existing Core tree, use [the desktop section](#build-and-launch-the-desktop).
+
+<a id="presets-and-build-options"></a>
+All eight profiles use Release, Ninja, OpenMP and KLU; tests are off and the build uses one job by default. CUDA profiles target the GPU visible during configuration. GNU profiles retain build-input evidence for later use in Studio. `cmake --list-presets` lists these and the direct-configuration presets described under [advanced configuration](#advanced-configuration).
 
 ## Tools and dependencies
 
 | Component | Linux / WSL2 | Native Windows 11 x64 |
 | --- | --- | --- |
-| CPU compiler | C++20 GCC or Clang; matching C/C++ toolchain | MSYS2 **UCRT64** GCC and its libgomp runtime |
-| CUDA compiler | NVCC with a compatible GCC/Clang host | NVCC with MSVC x64, Visual Studio C++ common tools and Windows SDK |
-| Build tools | Git, Ninja, CMake 3.22+ for CPU or 3.25.2+ for CUDA | Native Git and Ninja; UCRT64 CMake for GCC or complete Kitware Windows CMake for MSVC |
-| Required libraries | HDF5 C++/HL, OpenMP | HDF5 C++/HL and OpenMP built for the chosen compiler ABI |
-| Shared headers / sparse CPU solver | HighFive 2.9.0; KLU from an installed package or SuiteSparse 7.13.0 | The same versions, with separate GCC and MSVC library builds |
-| CUDA runtime | CUDA Toolkit 12.0+, compatible NVIDIA driver | Windows CUDA Toolkit and compatible NVIDIA driver |
-| Sparse CUDA burning | Optional cuDSS **0.8**, matching the CUDA major version | cuDSS 0.8 DLL/import library plus matching cuBLAS/cuBLASLt DLLs |
-| Optional desktop | Native x64 Node 24+, npm, Electron, graphical session | Native x64 Node 24+, npm, Electron, Windows desktop |
-| Test tools | Python 3.10+; NumPy and h5py for scientific checks | Native Python 3.10+; NumPy and h5py for scientific checks |
+| CPU compiler | C++20 GCC; manual builds can also select Clang | MSYS2 **UCRT64** GCC and its libgomp runtime |
+| CUDA compiler | NVCC with a compatible GCC host | NVCC, MSVC 14.44 x64, Visual Studio C++ common tools and Windows SDK |
+| Build tools | Git, Ninja, CMake 3.22+ for CPU or 3.25.2+ for CUDA | Native Git/Ninja; UCRT64 CMake for GCC or complete Kitware Windows CMake for MSVC |
+| Required libraries | HDF5 C++/HL with zlib and OpenMP | The same libraries built for the selected compiler ABI |
+| Shared headers / sparse CPU solver | HighFive 2.9.0 and KLU; SuiteSparse 7.13.0 provides the source fallback | The same versions, with separate GCC and MSVC library builds |
+| CUDA runtime | CUDA Toolkit 12.0+ and compatible NVIDIA driver | Windows CUDA Toolkit and compatible NVIDIA driver |
+| Sparse CUDA burning | Optional cuDSS **0.8**, matching the CUDA major version | cuDSS 0.8 import library/DLL and matching cuBLAS/cuBLASLt DLLs |
+| Optional desktop | Native x64 Node 24+, npm, graphical session and Electron libraries | Native x64 Node 24+, npm and **GNU objdump** |
+| Tests | Python 3.10+; NumPy and h5py for scientific checks | Native Python 3.10+; NumPy and h5py for scientific checks |
 
-HighFive and the SuiteSparse fallback are fetched on first configuration unless local source overrides are supplied. The versions are declared in [Dependencies.cmake](../../cmake/dependencies/Dependencies.cmake). OpenMP and KLU are enabled by default. `ARCH_ENABLE_OPENMP=OFF` disables CPU threading; `ARCH_ENABLE_KLU=OFF` removes the CPU sparse solver.
+Preparation checks HDF5 by compiling and running a C++/HL/zlib probe. When an installation is unavailable, it builds HDF5 1.14.6 with zlib 1.3.1 in a compiler-specific prefix. HighFive and KLU retain their shared owner in [Dependencies.cmake](../../cmake/dependencies/Dependencies.cmake). `ARCH_ENABLE_OPENMP=OFF` disables CPU threading; `ARCH_ENABLE_KLU=OFF` removes the CPU sparse solver.
 
-Tested toolchain combinations include Linux CUDA 12.3/GCC 12; Windows CPU GCC 16.2.0 with CMake 4.4.4; and Windows CUDA 12.9.86 with MSVC 19.44.35229 (toolset 14.44), SDK 10.0.26100 and CMake 3.31.11. The Windows library builds use HDF5 1.14.6 and SuiteSparse 7.13.0. MSYS2 is a rolling distribution, so its current packages may differ.
-
-For the Windows CUDA recipe, use the tested MSVC 14.44 toolset: 14.38 fails an existing NaN contract check. NVIDIA's [CUDA 12.9 compiler table](https://docs.nvidia.com/cuda/archive/12.9.1/cuda-installation-guide-microsoft-windows/index.html) lists the 193x compiler family; the 14.44 combination above is ARCH's separately tested configuration. Check compiler compatibility when choosing a different toolkit/toolset, without using `--allow-unsupported-compiler`.
+Tested combinations include Linux CUDA 12.3/GCC 12; Windows CPU GCC 16.2.0/CMake 4.4.4; and Windows CUDA 12.9.86 with MSVC 19.44.35229 (toolset 14.44), SDK 10.0.26100 and CMake 3.31.11. The Windows dependency builds use HDF5 1.14.6 and SuiteSparse 7.13.0. MSYS2 packages change with its rolling distribution.
 
 ### Linux / WSL2 installation
 
@@ -32,323 +80,202 @@ On Ubuntu 24.04:
 
 ```bash
 sudo apt-get update
-sudo apt-get install --no-install-recommends \
-  build-essential cmake ninja-build git git-lfs libhdf5-dev
+sudo apt-get install --no-install-recommends build-essential cmake ninja-build git git-lfs libhdf5-dev
 ```
 
-For CUDA, install NVIDIA's Linux CUDA Toolkit and use its compatible host compiler. Under WSL2, the GPU driver belongs on Windows; follow [NVIDIA's WSL guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html) for the toolkit inside WSL.
+For CUDA, install NVIDIA's Linux CUDA Toolkit and a compatible host compiler. The preparation script prefers GCC 12 when available; [custom paths](#custom-tools-and-offline-preparation) can select another supported installation. Under WSL2, install the GPU driver on Windows and follow [NVIDIA's WSL guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html) for the Linux toolkit.
 
 ### Windows CPU installation
 
-Install [MSYS2](https://www.msys2.org/docs/installer/) at a short local path such as `C:/msys64`. Open its **UCRT64** terminal and update/install the tools:
+Install [MSYS2](https://www.msys2.org/docs/installer/) at a short local path such as `C:/msys64`. In its **UCRT64** terminal:
 
 ```bash
 pacman -Syu
-# Reopen UCRT64 if the update asks you to close the terminal.
-pacman -Syu --needed mingw-w64-ucrt-x86_64-gcc \
-  mingw-w64-ucrt-x86_64-libgomp mingw-w64-ucrt-x86_64-cmake \
-  mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-pkgconf \
-  mingw-w64-ucrt-x86_64-zlib
+pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-libgomp mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja
 ```
 
-Use native PowerShell for the remaining Windows commands. Install native Git, then prepare the upstream sources below. Adjust these example paths to your installation:
+Reopen UCRT64 if the update requests it. Install native Git, then use **PowerShell** for the ARCH commands. Add the UCRT64 tools to that terminal before preparation, configuration and compilation:
 
 ```powershell
-$repo = 'C:/src/ARCH'
-$ucrt = 'C:/msys64/ucrt64'
-$sources = 'C:/src/arch-dependencies'
-$deps = 'C:/tools/arch-ucrt-deps'
-New-Item -ItemType Directory -Force $sources | Out-Null
-git clone --depth 1 --branch hdf5_1.14.6 https://github.com/HDFGroup/hdf5.git "$sources/hdf5"
-git clone --depth 1 --branch v2.9.0 https://github.com/BlueBrain/HighFive.git "$sources/highfive"
-git clone --depth 1 --branch v7.13.0 https://github.com/DrTimothyAldenDavis/SuiteSparse.git "$sources/suitesparse"
-$env:Path = "$deps/bin;$ucrt/bin;$env:SystemRoot\System32;$env:SystemRoot"
-$env:ComSpec = Join-Path $env:SystemRoot 'System32\cmd.exe'
-$env:PATHEXT = '.COM;.EXE;.BAT;.CMD'
-$common = @('-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release',
-  "-DCMAKE_C_COMPILER:FILEPATH=$ucrt/bin/gcc.exe",
-  "-DCMAKE_CXX_COMPILER:FILEPATH=$ucrt/bin/g++.exe",
-  "-DCMAKE_MAKE_PROGRAM:FILEPATH=$ucrt/bin/ninja.exe",
-  "-DCMAKE_INSTALL_PREFIX:PATH=$deps", '-DCMAKE_CXX_STANDARD=20',
-  '-DCMAKE_POLICY_VERSION_MINIMUM=3.5')
+$env:Path = 'C:/msys64/ucrt64/bin;' + $env:Path
 ```
 
-Build HDF5 with C++/HL and zlib, and the minimal KLU dependency set, using that same compiler. Check each command's exit status before continuing (`$LASTEXITCODE` in PowerShell).
-
-```powershell
-cmake -S "$sources/hdf5" -B "$sources/build-hdf5-ucrt" @common `
-  -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=OFF -DBUILD_TESTING=OFF `
-  -DHDF5_BUILD_CPP_LIB=ON -DHDF5_BUILD_HL_LIB=ON -DHDF5_BUILD_FORTRAN=OFF `
-  -DHDF5_BUILD_TOOLS=OFF -DHDF5_BUILD_EXAMPLES=OFF -DHDF5_ENABLE_PARALLEL=OFF `
-  -DHDF5_ENABLE_Z_LIB_SUPPORT=ON -DHDF5_ENABLE_SZIP_SUPPORT=OFF `
-  -DHDF5_ENABLE_NONSTANDARD_FEATURE_FLOAT16=OFF "-DZLIB_ROOT:PATH=$ucrt"
-cmake --build "$sources/build-hdf5-ucrt" --parallel 2
-cmake --install "$sources/build-hdf5-ucrt"
-
-cmake -S "$sources/suitesparse" -B "$sources/build-klu-ucrt" @common `
-  '-DSUITESPARSE_ENABLE_PROJECTS=klu;amd;colamd' -DKLU_USE_CHOLMOD=OFF `
-  -DSUITESPARSE_USE_CUDA=OFF -DSUITESPARSE_USE_FORTRAN=OFF -DSUITESPARSE_REQUIRE_BLAS=OFF `
-  -DBLA_VENDOR=Generic -DSUITESPARSE_USE_OPENMP=OFF -DSUITESPARSE_USE_PYTHON=OFF `
-  -DSUITESPARSE_DEMOS=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_STATIC_LIBS=ON
-cmake --build "$sources/build-klu-ucrt" --parallel 2
-cmake --install "$sources/build-klu-ucrt"
-```
-
-HighFive is header-only; ARCH can use the checked-out source directly. HDF5's optional `_Float16` extension is disabled because this GCC configuration lacks `FLT16_MAX`. The CMake policy setting supports the pinned dependencies with CMake 4. Keep MSYS `usr/bin`, Anaconda libraries and other C++ runtimes out of this build's PATH.
+Preparation supplies matching HDF5; CMake supplies HighFive/KLU. For a different MSYS2 location, pass `-DARCH_UCRT_ROOT=C:/your/msys64/ucrt64` to preparation and put that directory's `bin` on PATH. Keep MSYS `usr/bin`, Anaconda libraries and other C++ runtimes out of this compiler environment.
 
 ### Windows CUDA installation
 
-Install Visual Studio 2022 Build Tools with the C++ x64/x86 tools, MSVC toolset 14.44 and Windows SDK. Keep the VC common tools containing `VC/Auxiliary/Build/vcvarsall.bat`, which NVCC uses. Install a complete [Kitware Windows CMake](https://cmake.org/download/) distribution, native Ninja and the matching Windows CUDA Toolkit. MSVC resource tracking needs Kitware's `cmcldeps.exe`.
+Install Visual Studio 2022 Build Tools with the C++ x64/x86 tools, **MSVC 14.44** and Windows SDK. Keep the VC common tools containing `VC/Auxiliary/Build/vcvarsall.bat`, which NVCC uses. Install a complete [Kitware Windows CMake](https://cmake.org/download/) distribution, native Ninja and the Windows CUDA Toolkit; MSVC resource tracking needs CMake's `cmcldeps.exe`.
 
-Use a separate prefix such as `C:/tools/arch-msvc-deps` for HDF5 and KLU. GCC/UCRT64 libraries cannot be reused here. The following **Developer Command Prompt** example initializes the selected toolset and builds HDF5 from the source prepared above:
+Open an x64 **Developer Command Prompt** initialized for 14.44. For a custom installation, for example:
 
 ```bat
 call "C:\Tools\VS2022\Common7\Tools\VsDevCmd.bat" -arch=x64 -host_arch=x64 -vcvars_ver=14.44
-set "ARCH_CMAKE=C:\Tools\cmake"
-set "ARCH_CUDA=C:\Tools\cuda-12.9"
-set "ARCH_MSVC_DEPS=C:\Tools\arch-msvc-deps"
-set "PATH=%ARCH_CMAKE%\bin;C:\Tools\ninja;%ARCH_CUDA%\bin;%ARCH_MSVC_DEPS%\bin;%PATH%"
-cmake -S C:/src/arch-dependencies/hdf5 -B C:/src/arch-dependencies/build-hdf5-msvc -G Ninja ^
-  -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe ^
-  "-DCMAKE_INSTALL_PREFIX=%ARCH_MSVC_DEPS%" ^
-  -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=OFF -DBUILD_TESTING=OFF ^
-  -DHDF5_BUILD_CPP_LIB=ON -DHDF5_BUILD_HL_LIB=ON -DHDF5_BUILD_FORTRAN=OFF ^
-  -DHDF5_BUILD_TOOLS=OFF -DHDF5_BUILD_EXAMPLES=OFF -DHDF5_ENABLE_PARALLEL=OFF ^
-  -DHDF5_ENABLE_Z_LIB_SUPPORT=OFF -DHDF5_ENABLE_SZIP_SUPPORT=OFF ^
-  -DHDF5_ENABLE_NONSTANDARD_FEATURE_FLOAT16=OFF
-cmake --build C:/src/arch-dependencies/build-hdf5-msvc --parallel 2
-cmake --install C:/src/arch-dependencies/build-hdf5-msvc
 ```
 
-ARCH's normal SuiteSparse fallback builds KLU with the same MSVC compiler. Keep Git available in this Developer terminal for dependency fetching. An installed MSVC KLU package may be used instead through `CMAKE_PREFIX_PATH`.
+Make CMake, Ninja, Git and NVCC available in that terminal, then run the Windows CUDA profile. Preparation builds or selects MSVC-ABI HDF5 and records the matching compiler, SDK and OpenMP runtime directories. GCC/UCRT64 libraries use a separate ABI and prefix.
 
-ARCH uses `/openmp:llvm /openmp:experimental` on MSVC. Add the selected toolset's `Microsoft.VC143.OpenMP.LLVM` directory containing `libomp140.x86_64.dll` to the runtime PATH. It is usually under `VC/Redist/MSVC/<installed-version>/debug_nonredist/x64/`. This [Microsoft OpenMP runtime](https://learn.microsoft.com/en-us/cpp/build/reference/openmp-enable-openmp-2-0-support?view=msvc-170) is nonredistributable; it stays in the user's toolchain installation.
+MSVC 14.38 fails an existing NaN contract check. NVIDIA's [CUDA 12.9 compiler table](https://docs.nvidia.com/cuda/archive/12.9.1/cuda-installation-guide-microsoft-windows/index.html) lists the 193x family; the 14.44 configuration above is ARCH's separately tested combination. Select another toolkit/toolset only after checking compatibility, without `--allow-unsupported-compiler`.
 
-## Configure first, then compile
-
-Configuration locates the compiler and libraries, writes `CMakeCache.txt` and generates Ninja instructions. Compilation then builds the application. Repeat the build command after editing source; reconfigure when changing options. Select a new build directory when changing operating systems, compilers or generators.
-
-### CPU build
-
-Linux / WSL2:
-
-```bash
-cmake --preset cpu-release
-cmake --build build-cpu --target ARCH --parallel 1
-```
-
-Windows PowerShell, using the UCRT64 variables and PATH above:
-
-```powershell
-Set-Location $repo
-$build = "$repo/build-windows-cpu"
-cmake -S . -B $build -G Ninja -DCMAKE_BUILD_TYPE=Release `
-  "-DCMAKE_C_COMPILER:FILEPATH=$ucrt/bin/gcc.exe" `
-  "-DCMAKE_CXX_COMPILER:FILEPATH=$ucrt/bin/g++.exe" `
-  "-DCMAKE_RC_COMPILER:FILEPATH=$ucrt/bin/windres.exe" `
-  "-DCMAKE_PREFIX_PATH:PATH=$deps" "-DHDF5_ROOT:PATH=$deps" `
-  "-DFETCHCONTENT_SOURCE_DIR_HIGHFIVE:PATH=$sources/highfive" `
-  -DARCH_ENABLE_CUDA=OFF -DARCH_ENABLE_OPENMP=ON `
-  -DARCH_ENABLE_KLU=ON -DARCH_FETCH_SUITESPARSE=OFF `
-  -DARCH_BUILD_STUDIO=OFF -DBUILD_TESTING=OFF `
-  "-DARCH_RUNTIME_OUTPUT_DIRECTORY:PATH=$build/bin"
-cmake --build $build --target ARCH --parallel 1
-```
-
-The resulting executables are `build-cpu/bin/ARCH` and `build-windows-cpu/bin/ARCH.exe`. `ARCH_RUNTIME_OUTPUT_DIRECTORY` controls that location; without it, the executable goes to the source tree's `bin/` directory.
-
-<a id="native-windows-cpu-and-cuda"></a>
-### CUDA build
-
-Linux / WSL2:
-
-```bash
-cmake --preset cuda-release
-cmake --build build-cuda --target ARCH --parallel 1
-```
-
-Use matching GCC major versions for C and C++; select the CUDA host compiler from that same installation. Set compiler paths on the first configuration, for example `-DCMAKE_C_COMPILER=/usr/bin/gcc-12 -DCMAKE_CXX_COMPILER=/usr/bin/g++-12 -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-12`.
-
-Windows **Developer Command Prompt**, after the environment and HDF5 setup above:
-
-```bat
-cd /d C:\src\ARCH
-cmake -S . -B build-cuda-win -G Ninja ^
-  -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe ^
-  "-DCMAKE_CUDA_COMPILER=%ARCH_CUDA%/bin/nvcc.exe" ^
-  "-DCMAKE_RC_COMPILER=C:/Program Files (x86)/Windows Kits/10/bin/10.0.26100.0/x64/rc.exe" ^
-  "-DCUDAToolkit_ROOT=%ARCH_CUDA%" -DCMAKE_CUDA_ARCHITECTURES=native ^
-  "-DCMAKE_PREFIX_PATH=%ARCH_MSVC_DEPS%" "-DHDF5_ROOT=%ARCH_MSVC_DEPS%" ^
-  "-DFETCHCONTENT_SOURCE_DIR_HIGHFIVE=C:/src/arch-dependencies/highfive" ^
-  -DARCH_ENABLE_CUDA=ON -DARCH_ENABLE_OPENMP=ON ^
-  -DARCH_CUDA_HEAVY_COMPILE_JOBS=1 -DBUILD_TESTING=OFF ^
-  "-DARCH_RUNTIME_OUTPUT_DIRECTORY=%CD%/build-cuda-win/bin"
-cmake --build build-cuda-win --target ARCH --parallel 1
-```
-
-Adjust the SDK path to the installed version. Native CUDA uses shared `cudart`. Runtime PATH must contain its CUDA DLLs, matching HDF5, the installed LLVM OpenMP runtime and cuDSS/cuBLAS when used.
-
-The Linux CUDA preset writes `build-cuda/bin/ARCH`; the Windows example writes `build-cuda-win/bin/ARCH.exe`. Both executables can run CPU or CUDA cases. `compute_backend = cpu`, `cuda` or `auto` selects the backend when a simulation starts. A CPU-only build cannot enable CUDA through a parameter change. GPU-target and memory options are described below.
-
-### Presets and build options
-
-`cmake --list-presets` lists the shared recipes in [CMakePresets.json](../../CMakePresets.json). Use them with the platform's compiler/dependency environment, or pass the explicit options above.
-
-| Preset | Directory | Purpose |
-| --- | --- | --- |
-| `cpu-release` | `build-cpu` | CPU application |
-| `studio-cpu-release` | `build-studio-cpu` | GNU CPU application and desktop, with build-input evidence |
-| `cuda-release` | `build-cuda` | CPU/CUDA application targeting the visible GPU |
-| `cuda-debug` | `build-cuda-debug` | CUDA development build with tests |
-
-Release presets omit tests; `cuda-debug` enables them. All presets use Ninja and OpenMP. `studio-cpu-release` enables GNU linker evidence and LTO input retention; for an MSVC CUDA desktop, enable Studio in the existing CUDA tree as described below. `ARCH_BUILD_STUDIO` defaults to `OFF`.
+ARCH uses `/openmp:llvm /openmp:experimental` on MSVC. Preparation locates `libomp140.x86_64.dll` under the selected toolset's `Microsoft.VC143.OpenMP.LLVM` directory. This [Microsoft runtime](https://learn.microsoft.com/en-us/cpp/build/reference/openmp-enable-openmp-2-0-support?view=msvc-170) is nonredistributable and remains in the installed toolchain.
 
 ## Run and select paths
 
-Linux / WSL2:
+Linux / WSL2, using the CPU profile:
 
 ```bash
 export OMP_NUM_THREADS=4
-./build-cpu/bin/ARCH Sod simulation/Sod/Sod_beginner.par
+build/linux-core/bin/ARCH Sod simulation/Sod/Sod_beginner.par
 ```
 
-Windows PowerShell:
+Windows Command Prompt; keep the initialized Developer environment for CUDA:
 
-```powershell
-$env:OMP_NUM_THREADS = '4'
-& .\build-windows-cpu\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
+```bat
+call build\windows-core\bin\arch-env.cmd
+set OMP_NUM_THREADS=4
+build\windows-core\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
 ```
 
-For CUDA, substitute that build's executable and change the existing `compute_backend` assignment in a copy of the input. `cuda_device` selects the GPU ordinal. The Run log and `*_backend_plan.txt` report the selected backend.
+For CUDA, replace the profile in both paths with `linux-core-with-cuda` or `windows-core-with-cuda`, and edit the existing `compute_backend` assignment in a copy of the input. `cuda_device` selects the GPU ordinal. Core's `--check-run` and Studio's Run preparation show the selected backend and its reason; the Run log and `*_backend_plan.txt` record execution.
 
-The `.par` format is shared. Relative table, output and restart paths resolve against the **simulation's working directory**, not the parameter file's directory. Studio uses the project root. Prefer relative values such as `out_dir = output/first_sod`; absolute paths must match the executing OS. `/mnt/c/src/ARCH` is a WSL path, while `C:/src/ARCH` is a Windows path. Changing separators alone does not translate between them.
+Windows configuration generates `bin/arch-env.cmd` from the selected dependency and compiler directories. Calling it sets the CLI environment and checks the required cuDSS DLLs when that provider is linked. Studio uses the same runtime data automatically.
 
-Save `.par` files as UTF-8. Windows executables include a process-local UTF-8 manifest, so changing the system locale is unnecessary. Use short ASCII source/build paths for GNU LTO. Spaces and Unicode in ordinary local input/output paths are supported; UNC/network filesystems and arbitrary long paths are not part of the tested configuration. Studio's project-relative fields use `/` on both platforms; see [Studio paths](Studio.md#paths-on-linux-and-windows).
+**Relative paths inside `.par` resolve from the calculation's working directory, not the parameter file's directory.** Studio uses the project root; a CLI run uses the terminal's current directory. Prefer values such as `out_dir = output/first_sod`. `/mnt/c/src/ARCH` is a WSL path; native Windows uses `C:/src/ARCH`. Changing separators alone does not translate between them.
+
+Save `.par` files as UTF-8. LF and CRLF are accepted. Windows executables carry a process-local UTF-8 manifest. Use short ASCII source/build paths for GNU LTO; ordinary local input/output paths support spaces and Unicode. UNC/network filesystems and arbitrary long paths are outside the tested configuration. Studio's project-relative fields use `/` on both platforms; see [Studio paths](Studio.md#paths-on-linux-and-windows).
 
 ## Studio desktop
 
 <a id="linux-studio-desktop"></a>
-Studio needs native x64 Node **24+** with npm and the locked Electron version. Use an official Node distribution or an existing Node manager. Retain the distribution's license for packaging. Node, Electron, build caches and `studio/node_modules` belong to their host OS; use separate checkouts when building the desktop on both systems.
-
-Linux / WSL2 also needs a graphical session (WSLg under WSL) and Electron's shared libraries. On Ubuntu 24.04:
+Install native x64 Node **24+** with npm. Linux / WSL2 also needs a graphical session, WSLg when applicable, and Electron's system libraries. On Ubuntu 24.04:
 
 ```bash
-sudo apt-get install --no-install-recommends \
-  libgtk-3-0t64 libnss3 libgbm1 libasound2t64 libx11-xcb1 libxkbcommon0 \
-  xterm util-linux
+sudo apt-get install --no-install-recommends libgtk-3-0t64 libnss3 libgbm1 libasound2t64 libx11-xcb1 libxkbcommon0 xterm util-linux
 ```
 
-Run/Restart opens an independent terminal: `/usr/bin/xterm` and `/usr/bin/flock` on Linux, or Windows Terminal on Windows. Editing and Preview do not require this terminal.
+Run/Restart opens an independent terminal: `/usr/bin/xterm` with `/usr/bin/flock` on Linux, or the native Windows terminal. Editing and Preview can be used without an independent Run terminal.
+
+Windows Studio needs GNU `objdump.exe` for build-input inspection. GCC/UCRT64 includes it; an MSVC/CUDA desktop can install only MSYS2's `mingw-w64-ucrt-x86_64-binutils`. This does not require building a GCC Core. The validated inspection format is GNU objdump; LLVM objdump and MSVC dumpbin are different interfaces. Use `ARCH_STUDIO_OBJDUMP` to select an absolute GNU objdump path if needed.
 
 ### Build and launch the desktop
 
-Linux / WSL2, with native Node 24+ on PATH:
+To add Studio to an existing Core profile, enable the option in **that same tree**:
+
+Linux / WSL2:
 
 ```bash
-node --version
-cmake --preset studio-cpu-release -DARCH_STUDIO_NODE="$(command -v node)"
-cmake --build build-studio-cpu --parallel 1
-build-studio-cpu/bin/arch-studio --project "$PWD" --build-dir build-studio-cpu \
-  --binary build-studio-cpu/bin/ARCH --case Sod --config simulation/Sod/Sod_beginner.par
+cmake -S . -B build/linux-core -DARCH_BUILD_STUDIO=ON
+cmake --build build/linux-core --target arch-studio
+build/linux-core/bin/arch-studio
 ```
 
-Windows: enable Studio in the CPU or CUDA build you configured above. In PowerShell, set `$build` and `$cmake` to that tree and toolchain; for CUDA, launch PowerShell from the initialized Developer Command Prompt to inherit its compiler environment.
+Windows PowerShell, using the Core compiler environment:
 
 ```powershell
-$build = 'C:/src/ARCH/build-windows-cpu'
-$cmake = 'C:/msys64/ucrt64/bin/cmake.exe'
-$node = 'C:/tools/node/node.exe'
-& $cmake -S . -B $build -DARCH_BUILD_STUDIO=ON "-DARCH_STUDIO_NODE:FILEPATH=$node" `
-  -DARCH_EMIT_LINK_DEPENDENCIES=ON -DARCH_RETAIN_LTO_LINK_INPUTS=ON
-& $cmake --build $build --target arch-studio arch_windows_process arch_windows_build_publish --parallel 1
+cmake -S . -B build/windows-core -DARCH_BUILD_STUDIO=ON
+cmake --build build/windows-core --target arch-studio
+& .\build\windows-core\bin\arch-studio.cmd
 ```
 
-The two GNU options record linker inputs used by the CPU Studio Build checks. For CUDA, use the existing MSVC tree without these options:
+Use the existing `*-core-with-cuda` directory for a CUDA build. For Windows CUDA, start PowerShell from its initialized Developer terminal. `arch-studio` builds Core, assets, the locked Electron runtime and the two Windows helpers it needs. It reuses npm dependencies after ordinary source edits and repairs a removed `node_modules` directory. Windows invokes npm through Node, independently of PowerShell's `npm.ps1` policy.
 
-```powershell
-$build = 'C:/src/ARCH/build-cuda-win'
-$cmake = 'C:/Tools/cmake/bin/cmake.exe'
-$node = 'C:/tools/node/node.exe'
-& $cmake -S . -B $build -DARCH_BUILD_STUDIO=ON "-DARCH_STUDIO_NODE:FILEPATH=$node"
-& $cmake --build $build --target arch-studio arch_windows_process arch_windows_build_publish --parallel 1
-```
-
-The same targets build both desktops. `arch-studio-dependencies` checks the shared npm installation against the package files and Node runtime; it installs when these change or `node_modules` is removed. `arch-studio-assets` builds the UI, so ordinary source edits reuse installed dependencies. `arch-studio-runtime` prepares Electron. CMake invokes `npm-cli.js` on Windows, so PowerShell's `npm.ps1` execution policy does not affect these commands.
+The Core profiles retain GNU build-input evidence. Adding Studio to an arbitrary manual GNU tree also needs the [two evidence options](#advanced-configuration). Launch without arguments for the empty start page, or use the [model/configuration CLI options](Studio.md#launch-with-a-model-and-parameter-file).
 
 ### Windows tool configuration
 
-Set `ARCH_STUDIO_WINDOWS_TOOLS` in the launching shell so Studio can find the selected compiler tools, DLLs and native process/file helpers. Paths must be absolute local paths. The following is a complete GCC/UCRT64 example:
+The generated source launcher automatically selects `build/<profile>/studio/windows-tools.json`. This local file records CMake/Ninja/resource compiler, GNU objdump, native helpers, DLL paths and MSVC `INCLUDE`/`LIB`/`LIBPATH`. Required linked cuDSS DLLs are checked when opening a project. No project is opened or Core library checked by the empty start page.
 
-```powershell
-$repo = 'C:/src/ARCH'
-$build = "$repo/build-windows-cpu"
-$ucrtBin = 'C:/msys64/ucrt64/bin'
-$deps = 'C:/tools/arch-ucrt-deps'
-$tools = @{
-  cmake = "$ucrtBin/cmake.exe"
-  supervisor = "$build/arch_windows_process.exe"
-  ninja = "$ucrtBin/ninja.exe"
-  objdump = "$ucrtBin/objdump.exe"
-  publisher = "$build/arch_windows_build_publish.exe"
-  rc = "$ucrtBin/windres.exe"
-  terminal = (Join-Path $env:LOCALAPPDATA 'Microsoft/WindowsApps/wt.exe')
-  path = "$deps/bin;$ucrtBin;$env:SystemRoot/System32;$env:SystemRoot"
-}
-$env:ARCH_STUDIO_WINDOWS_TOOLS = $tools | ConvertTo-Json -Depth 4 -Compress
-& "$build/bin/arch-studio.cmd" --project $repo --build-dir build-windows-cpu `
-  --binary build-windows-cpu/bin/ARCH.exe --case Sod --config simulation/Sod/Sod_beginner.par
-```
-
-Use the actual Windows Terminal alias location if different. These settings belong to the local launch environment, not to `.par` files. Source launchers select the configured Node; portable packages use their bundled Node unless `ARCH_STUDIO_NODE` explicitly selects another runtime.
-
-For **MSVC/CUDA**, start PowerShell from the initialized Developer Command Prompt and replace the tool configuration with the following. Adjust every installation path, especially the OpenMP runtime directory and SDK `rc.exe`; the latter must match `CMAKE_RC_COMPILER` in the selected tree.
-
-```powershell
-$repo = 'C:/src/ARCH'
-$build = "$repo/build-cuda-win"
-$vc = Split-Path (Get-Command cl.exe).Source
-$sdk = 'C:/Program Files (x86)/Windows Kits/10/bin/10.0.26100.0/x64'
-$omp = 'C:/Tools/VS2022/VC/Redist/MSVC/14.44.35112/debug_nonredist/x64/Microsoft.VC143.OpenMP.LLVM'
-$tools = @{
-  cmake = 'C:/Tools/cmake/bin/cmake.exe'
-  supervisor = "$build/arch_windows_process.exe"
-  ninja = 'C:/Tools/ninja/ninja.exe'
-  objdump = 'C:/msys64/ucrt64/bin/objdump.exe'
-  publisher = "$build/arch_windows_build_publish.exe"
-  rc = "$sdk/rc.exe"
-  terminal = (Join-Path $env:LOCALAPPDATA 'Microsoft/WindowsApps/wt.exe')
-  path = "$vc;$sdk;C:/Tools/arch-msvc-deps/bin;C:/Tools/cuda-12.9/bin;$omp;C:/msys64/ucrt64/bin;$env:SystemRoot/System32;$env:SystemRoot"
-  compilerEnvironment = @{
-    INCLUDE = (($env:INCLUDE -split ';' | Where-Object { $_ }) -join ';')
-    LIB = (($env:LIB -split ';' | Where-Object { $_ }) -join ';')
-    LIBPATH = (($env:LIBPATH -split ';' | Where-Object { $_ }) -join ';')
-  }
-}
-$env:ARCH_STUDIO_WINDOWS_TOOLS = $tools | ConvertTo-Json -Depth 4 -Compress
-& "$build/bin/arch-studio.cmd" --project $repo --build-dir build-cuda-win `
-  --binary build-cuda-win/bin/ARCH.exe --case Sod --config simulation/Sod/Sod_beginner.par
-```
-
-Include cuDSS's `bin` directory in `tools.path` when using sparse CUDA burning. `objdump.exe` is the PE inspection utility; it does not select GCC as the CUDA host compiler. The compiler's `INCLUDE`, `LIB` and `LIBPATH` lists carry the MSVC header/library search paths.
+For a custom setup or portable package, set `ARCH_STUDIO_WINDOWS_TOOLS_FILE` to that trusted local JSON file. An explicit `ARCH_STUDIO_WINDOWS_TOOLS` JSON value takes precedence. These settings belong to the launch environment, not the `.par` or workbench fields. Configured absolute machine paths stay outside portable packages.
 
 ### Package the desktop
 
-Build the portable directory on its target operating system:
+Build a portable directory on its target OS, using the configured desktop tree:
 
-```bash
-cmake --build build-studio-cpu --target arch-studio-package --parallel 1
+```text
+cmake --build build/linux-desktop-with-cuda --target arch-studio-package
 ```
 
-On Windows, use the same command with `build-windows-cpu` or `build-cuda-win` from the corresponding compiler shell. Output is under `studio/.local/desktop-release/`:
+On Windows, use `build/windows-desktop-with-cuda` from the matching compiler environment. Output is under `studio/.local/desktop-release/`:
 
 | System | Directory | Entry |
 | --- | --- | --- |
 | Linux | `arch-studio-bin-linux-x64` | `arch-studio` |
 | Windows | `arch-studio-bin-win32-x64` | `arch-studio-bin.exe` |
 
-Keep the entire directory together. It includes Electron, standalone Host Node, h5wasm and licenses. Core, its compiler tools/runtime libraries and the independent terminal remain external. Set the Windows tool configuration before launching the portable entry too. The generated `bin/arch-studio` or `.cmd` source launcher instead depends on its checkout.
+Keep the directory intact. It includes Electron, standalone Host Node, h5wasm and licenses. Core, compiler/runtime dependencies and the independent Run terminal remain external. For Windows, select the local tool configuration described above. Source launchers under a build's `bin/` instead use their checkout.
 
-The packager reads Electron's exact version from `package.json` and checks the lockfile and installed package. `electron_config_cache` can select an offline cache populated with official, checksum-matching Electron archives. Preserve Node, Electron/Chromium and h5wasm/HDF5 license files. Packaging creates a portable directory; signing, installers and automatic updates are not configured.
+The packager reads Electron's exact version from `package.json` and checks the lockfile and installed package. `electron_config_cache` can select official checksum-matching cached archives. Preserve Node, Electron/Chromium and h5wasm/HDF5 licenses. Signing, installers and automatic updates are not configured.
+
+## Custom tools and offline preparation
+
+Pass tool or dependency choices to preparation, before `-P`, then configure normally. For example:
+
+```bash
+cmake -DARCH_PROFILE=linux-core-with-cuda \
+  -DCMAKE_C_COMPILER=/usr/bin/gcc-12 -DCMAKE_CXX_COMPILER=/usr/bin/g++-12 \
+  -DHDF5_ROOT=/opt/arch-deps -P cmake/dependencies/Prepare.cmake
+cmake --preset linux-core-with-cuda
+```
+
+| Preparation option | Purpose |
+| --- | --- |
+| `CMAKE_C_COMPILER`, `CMAKE_CXX_COMPILER`, `CMAKE_CUDA_COMPILER` | Select a matching native toolchain; Linux NVCC uses the selected C++ host |
+| `CMAKE_MAKE_PROGRAM`, `CMAKE_RC_COMPILER` | Select Ninja and the Windows resource compiler |
+| `ARCH_UCRT_ROOT` | UCRT64 installation, default `C:/msys64/ucrt64` |
+| `ARCH_STUDIO_NODE`, `ARCH_STUDIO_OBJDUMP` | Desktop runtime and Windows GNU PE inspector |
+| `HDF5_ROOT`, `HDF5_DIR`, `KLU_DIR`, `CMAKE_PREFIX_PATH` | Reuse compatible installed dependencies |
+| `CUDAToolkit_ROOT`, `CUDSS_ROOT` | Select CUDA and optional cuDSS installations |
+| `ARCH_DEPENDENCY_ROOT` | Download, source and ABI-specific build cache; default `build/dependencies` |
+| `ARCH_PREPARE_JOBS` | HDF5 dependency-build concurrency; default 2 |
+| `ARCH_HDF5_SOURCE_DIR`, `ARCH_ZLIB_ARCHIVE` | Existing HDF5 1.14.6 source and pinned zlib 1.3.1 archive |
+| `FETCHCONTENT_SOURCE_DIR_HIGHFIVE`, `FETCHCONTENT_SOURCE_DIR_SUITESPARSE` | Existing source trees for the normal CMake dependency owner |
+| `ARCH_PREPARE_OFFLINE=ON` | Use existing dependency installations, sources and archives |
+
+An explicit HDF5 prefix must pass the native C++/HL/zlib probe. Preparation writes `build/<profile>/prepared-toolchain.cmake`; regenerate it when selections change. A compiler/ABI change needs a fresh profile build directory. Offline preparation requires local HighFive and either installed KLU or local SuiteSparse; EOS tables are handled [separately](#offline-tables-and-lfs-bandwidth).
+
+## cuDSS and sparse burning
+
+cuDSS **0.8** is optional and is discovered when `ARCH_ENABLE_CUDSS=ON`. Select an installation with `CUDSS_ROOT`, containing `include/cudss.h` and its matching library; Windows also requires the import library, `bin/cudss64_0.dll`, and CUDA's cuBLAS/cuBLASLt DLLs. Configuration records these Windows DLLs in the shared runtime environment.
+
+| Requested route | When cuDSS is unavailable |
+| --- | --- |
+| Ordinary CUDA hydrodynamics and compact DenseLU burning | Remain available |
+| Sparse burning with explicit CUDA execution or explicit `cudss` solver | Rejected during Run preparation |
+| Sparse burning with `compute_backend = auto` and automatic solver selection | Can select CPU KLU when its compiled route is available |
+
+Core and Studio use the same Run checks and report the actual backend and selection reason. Keep KLU enabled for CPU sparse burning, and compile the needed network/EOS route; see [generated networks](../../validation/network/README.md). Linux loads vendor libraries only when a selected route needs them; unrelated Preview does not preload them.
+
+For a distribution that promises cuDSS support, require it and run its four GPU checks with their existing numerical thresholds:
+
+```bash
+cmake --preset linux-core-with-cuda -DARCH_REQUIRE_CUDSS=ON -DBUILD_TESTING=ON
+cmake --build build/linux-core-with-cuda --target arch-check-cudss
+```
+
+Use the corresponding Windows profile and directory on Windows. `ARCH_REQUIRE_CUDSS=ON` makes a missing provider a configuration error. `arch-check-cudss` builds and runs the checks; an unavailable GPU is a failed verification.
+
+## Advanced configuration
+
+The preparation profiles are conveniences around the same CMake project. A manually managed environment can configure it directly, for example:
+
+```bash
+cmake -S . -B build/custom -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DARCH_ENABLE_CUDA=OFF -DCMAKE_PREFIX_PATH=/opt/arch-deps \
+  -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build/custom/bin"
+cmake --build build/custom --target ARCH --parallel 1
+```
+
+Select matching C/C++ compilers on the first configure. On Windows CPU, set `CMAKE_C_COMPILER`, `CMAKE_CXX_COMPILER` and `CMAKE_RC_COMPILER` to UCRT64 `gcc.exe`, `g++.exe` and `windres.exe`. For Windows CUDA, use `cl.exe`, SDK `rc.exe` and NVCC from the initialized MSVC 14.44 terminal, enable `ARCH_ENABLE_CUDA=ON`, and supply MSVC-ABI dependencies. `ARCH_RUNTIME_OUTPUT_DIRECTORY` controls the executable location; its direct-CMake default is the source tree's `bin/`.
+
+To add Studio with build-input evidence to a manual GNU tree:
+
+```text
+cmake -S . -B build/custom -DARCH_BUILD_STUDIO=ON -DARCH_EMIT_LINK_DEPENDENCIES=ON -DARCH_RETAIN_LTO_LINK_INPUTS=ON
+cmake --build build/custom --target arch-studio
+```
+
+These options retain linker/LTO inputs for freshness checks without changing IPO or floating-point settings. MSVC builds use their existing evidence path and do not enable the GNU LTO option. Explicit user settings remain in the cache.
+
+The direct presets `cpu-release`, `cuda-release`, `studio-cpu-release` and `cuda-debug` remain available for manually prepared environments, using `build-cpu`, `build-cuda`, `build-studio-cpu` and `build-cuda-debug`. They do not run dependency preparation; `cuda-debug` enables tests. To tune the prepared profiles, add ordinary CMake `-D` options to configuration, or use `CMakeUserPresets.json` for local choices.
 
 ## Source archives and EOS tables
 
@@ -400,41 +327,26 @@ These commands also work in PowerShell. Download missing objects with the scoped
 
 ## Install a runtime package
 
-After building ARCH, materialize all three tables listed above. On Windows, also build the native helpers with `cmake --build <build-directory> --target arch_windows_process arch_windows_build_publish`. Then install the Runtime component.
+After building the selected profile, materialize all three EOS tables listed above, then install the Runtime component.
 
 Linux / WSL2:
 
 ```bash
-cmake --install build-cpu --prefix "$PWD/arch-install" --component Runtime
+cmake --install build/linux-core --prefix "$PWD/arch-install" --component Runtime
 cd arch-install/share/arch
 ../../bin/ARCH Sod simulation/Sod/Sod_beginner.par
 ```
 
-Windows PowerShell:
+Windows Command Prompt:
 
-```powershell
-cmake --install build-windows-cpu --prefix "$PWD/arch-install" --component Runtime
-Set-Location arch-install/share/arch
-& ../../bin/ARCH.exe Sod simulation/Sod/Sod_beginner.par
+```bat
+call build\windows-core\bin\arch-env.cmd
+cmake --install build/windows-core --prefix "%CD%/arch-install" --component Runtime
+cd arch-install\share\arch
+..\..\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
 ```
 
-Use the CUDA build directory for that backend. The installation includes ARCH, sample inputs, EOS tables, licenses and Windows helpers. HDF5, OpenMP and CUDA/cuDSS runtime libraries must remain available in the selected environment. Relative paths continue to use the launch working directory.
-
-## cuDSS and sparse burning
-
-`ARCH_ENABLE_CUDSS=ON` enables discovery of cuDSS **0.8** in CUDA builds. Install it under a prefix containing `include/cudss.h` and `lib/` or `lib64/`; Windows additionally needs its import library and `bin/cudss64_0.dll`. For example:
-
-```bash
-cmake -S . -B build-cuda -DCUDSS_ROOT="$HOME/.local/cudss"
-```
-
-Windows PowerShell, in the MSVC environment:
-
-```powershell
-cmake -S . -B build-cuda-win -DCUDSS_ROOT:PATH=C:/Tools/cudss-0.8
-```
-
-Add its `bin` directory to the runtime PATH on Windows, along with matching CUDA cuBLAS/cuBLASLt DLLs. CMake prints the selected library. If cuDSS is unavailable or `ARCH_ENABLE_CUDSS=OFF`, compact DenseLU burning and other CUDA features remain available, while routes requiring the sparse provider report an unsupported configuration. Keep KLU enabled for CPU sparse burning. The network/EOS route must also be compiled; see [generated networks](../../validation/network/README.md).
+Use the CUDA build directory for that backend. The installation includes ARCH, sample inputs, EOS tables, licenses and Windows helpers. Keep the selected HDF5, OpenMP and CUDA/cuDSS runtime libraries available. Relative input paths continue to use the launch working directory.
 
 ## Parallel compilation and memory
 
@@ -445,7 +357,7 @@ On Linux / WSL2, the memory guard can stop the owned build before sustained memo
 ```bash
 python3 tools/run_memory_guarded.py --min-available-mib 1536 \
   --max-swap-growth-mib 256 --pressure-guard -- \
-  cmake --build build-cuda --target ARCH --parallel 1
+  cmake --build build/linux-core-with-cuda --target ARCH --parallel 1
 ```
 
 It checks available RAM, swap growth and Linux PSI full-stall counters. Defaults stop at less than 1.5 GiB available RAM, more than 256 MiB additional swap, or 20% memory / 50% I/O full-stall sustained for 10 seconds. It needs `/proc`, PSI, Python `os.pidfd_open`/`signal.pidfd_send_signal` and Linux child-subreaper support. `--log <new-file>` before `--` saves measurements. `Ctrl+C` stops the build's owned descendants.
@@ -469,12 +381,12 @@ Configuration reports the selected backend, optimization and libraries. To see d
 Set `BUILD_TESTING=ON` to register test targets. CTest executes them after they have been built. A focused example, on either OS, is:
 
 ```bash
-cmake -S . -B build-cpu -DBUILD_TESTING=ON
-cmake --build build-cpu --target arch_boundary_plan --parallel 1
-ctest --test-dir build-cpu -R '^boundary_plan$' --output-on-failure
+cmake -S . -B build/linux-core -DBUILD_TESTING=ON
+cmake --build build/linux-core --target arch_boundary_plan --parallel 1
+ctest --test-dir build/linux-core -R '^boundary_plan$' --output-on-failure
 ```
 
-Replace `build-cpu` with the selected Windows build directory and keep its compiler environment. Provide `-DPython3_EXECUTABLE=<absolute-path>` when selecting a specific Python. Scientific Python checks need NumPy and h5py. CUDA-enabled test builds add NVCC work; `--target ARCH` builds the application without the standalone tests.
+Replace `build/linux-core` with the selected Windows build directory and keep its compiler environment. Provide `-DPython3_EXECUTABLE=<absolute-path>` when selecting a specific Python. Scientific Python checks need NumPy and h5py. CUDA-enabled test builds add NVCC work; `--target ARCH` builds the application without the standalone tests.
 
 Linux tooling checks additionally use `mold`, `shellcheck` and a Python with pidfd support. On Ubuntu 24.04:
 
@@ -492,12 +404,12 @@ Use [Tests](../../tests/README.md) for target names and platform groups, and [Va
 | CMake selects another compiler/library | Start a fresh build directory with explicit compiler paths and the matching HDF5/KLU prefix |
 | Windows command-chain or resource compilation failure | Keep native backslashes in `ComSpec`, `.EXE` in `PATHEXT`, and the selected `rc.exe`/`windres.exe` on PATH |
 | MSVC resource dependency error | Use complete Kitware CMake, including `cmcldeps.exe` |
-| Missing Windows DLL | Put the selected ABI's HDF5, compiler/OpenMP, CUDA and optional cuDSS runtime directories on PATH |
+| Missing Windows DLL | Call the selected build's `arch-env.cmd` for CLI use, or regenerate the Studio tool configuration after moving dependencies |
 | GNU LTO fails in a Unicode build path | Move source/build/retained temporary directories to a short ASCII path |
 | Electron fails to open on Linux | Check the graphical session/WSLg, `DISPLAY`, and missing entries in `ldd studio/node_modules/electron/dist/electron` |
-| Windows Run cannot open a terminal | Install Windows Terminal and set its absolute `wt.exe` alias path in the tool configuration |
+| Windows Run cannot open a terminal | Check the native terminal; a custom Windows Terminal alias can be set through the trusted tool configuration |
 | Studio reports build freshness unknown | Full dependency coverage is unavailable for some toolchains, including MSVC/CUDA; keep the explicit build selection and inspect Build diagnostics |
 | Preview exceeds a resource limit | Reduce preview sampling or initial AMR size; Windows uses a 1024 MiB committed-memory limit and user CPU time, while Linux uses address-space and process CPU limits |
-| HDF5 data appears to be a short text file | Materialize the matching Git LFS table before using that EOS |
+| EOS table contains a short Git LFS pointer | Materialize the matching Git LFS table before using that EOS |
 
 The UCRT64/GCC 16.2.0 Plotfile test entry has a compiler-specific IPO workaround in CMake; production targets retain IPO. EOS input parsing also follows the host library's representable range: MSVC rejects tested literals below binary64 range such as `1e-500`, while the Linux extractor accepts signed zero. Use the supplied canonical tables and representable values.

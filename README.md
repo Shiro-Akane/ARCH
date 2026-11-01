@@ -25,13 +25,13 @@ ARCH uses **CGS units**: length in cm, time in s, density in g/cm³, pressure an
 
 ## Build
 
-Prepare the tools and matching libraries using the [Linux/Windows build guide](docs/guides/Build.md). All commands start at the repository root.
+Install the [platform tools](docs/guides/Build.md#tools-and-dependencies), then run these commands from the repository root. Preparation reuses or builds matching HDF5; configuration supplies HighFive and KLU through the shared CMake dependency setup.
 
 | Requirement | Linux / WSL2 | Native Windows 11 x64 |
 | --- | --- | --- |
-| CPU | C++20 compiler, CMake 3.22+, Ninja, Git, HDF5 C++/HL and OpenMP | GCC/UCRT64 with matching HDF5/KLU dependencies and native CMake/Ninja |
-| CUDA | CMake 3.25.2+, CUDA Toolkit 12.0+, compatible host compiler and GPU driver | Separate MSVC/NVCC build with Windows SDK and MSVC-ABI dependencies |
-| Optional Studio | Native Node 24+, npm, Electron and graphical session/WSLg | Native x64 Node 24+, npm and Electron |
+| CPU | C++20 GCC, CMake 3.22+, Ninja and Git | GCC/UCRT64 on the PowerShell PATH, native CMake/Ninja and Git |
+| CUDA | CMake 3.25.2+, CUDA Toolkit 12.0+, compatible host compiler and GPU driver | NVCC, MSVC 14.44 x64 Developer terminal, Windows SDK and compatible GPU driver |
+| Optional Studio | Native x64 Node 24+, npm and graphical session/WSLg | Native x64 Node 24+, npm and GNU objdump |
 
 ### Get the source
 
@@ -44,37 +44,91 @@ An existing checkout can use `git pull --ff-only` after local changes are saved.
 
 ### Option A: CPU
 
-Linux / WSL2, after installing the required tools and libraries:
+Linux / WSL2:
 
-```text
-cmake --preset cpu-release
-cmake --build build-cpu --target ARCH --parallel 1
+**Prepare dependencies**
+
+```bash
+cmake -DARCH_PROFILE=linux-core -P cmake/dependencies/Prepare.cmake
 ```
 
-On Windows, configure GCC/UCRT64 and its matching libraries with the [CPU build instructions](docs/guides/Build.md#cpu-build), then compile:
+**Configure**
+
+```bash
+cmake --preset linux-core
+```
+
+**Build**
+
+```bash
+cmake --build --preset linux-core
+```
+
+Windows PowerShell, with the [UCRT64 tool directory on PATH](docs/guides/Build.md#windows-cpu-installation):
+
+**Prepare dependencies**
 
 ```powershell
-cmake --build build-windows-cpu --target ARCH --parallel 1
+cmake -DARCH_PROFILE=windows-core -P cmake/dependencies/Prepare.cmake
 ```
 
-The executables are `build-cpu/bin/ARCH` and `build-windows-cpu/bin/ARCH.exe`. Each OS uses its own build directory.
+**Configure**
+
+```powershell
+cmake --preset windows-core
+```
+
+**Build**
+
+```powershell
+cmake --build --preset windows-core
+```
+
+Repeat only the build command after ordinary source edits. Executables are `build/linux-core/bin/ARCH` and `build/windows-core/bin/ARCH.exe`; the first run is shown below.
 
 ### Option B: CPU and CUDA
 
-Linux / WSL2, on the machine with the GPU that will run the calculation:
+Linux / WSL2, on the GPU machine:
 
-```text
-cmake --preset cuda-release
-cmake --build build-cuda --target ARCH --parallel 1
+**Prepare dependencies**
+
+```bash
+cmake -DARCH_PROFILE=linux-core-with-cuda -P cmake/dependencies/Prepare.cmake
 ```
 
-On Windows, configure the separate MSVC/NVCC toolchain using the [CUDA build instructions](docs/guides/Build.md#cuda-build), then compile:
+**Configure**
 
-```powershell
-cmake --build build-cuda-win --target ARCH --parallel 1
+```bash
+cmake --preset linux-core-with-cuda
 ```
 
-This produces `build-cuda/bin/ARCH` or `build-cuda-win/bin/ARCH.exe`, with CPU and CUDA execution available in the same program. Set `compute_backend = cpu`, `cuda` or `auto` in the parameter file. CUDA compilation can require substantial host memory; the build guide covers parallel limits and optional cuDSS for sparse burning.
+**Build**
+
+```bash
+cmake --build --preset linux-core-with-cuda
+```
+
+Windows, in the [MSVC 14.44 x64 Developer Command Prompt](docs/guides/Build.md#windows-cuda-installation):
+
+**Prepare dependencies**
+
+```bat
+cmake -DARCH_PROFILE=windows-core-with-cuda -P cmake/dependencies/Prepare.cmake
+```
+
+**Configure**
+
+```bat
+cmake --preset windows-core-with-cuda
+```
+
+**Build**
+
+```bat
+cmake --build --preset windows-core-with-cuda
+```
+
+These builds provide **CPU and CUDA in the same executable**, under `build/<profile>/bin/`. Set `compute_backend = cpu`, `cuda` or `auto` in the parameter file to select execution at runtime. cuDSS is optional for sparse CUDA burning; ordinary GPU calculations and compact DenseLU burning work without it. The [build guide](docs/guides/Build.md) covers custom tool paths, dependencies and build memory.
 
 The first Sod case needs no EOS table. Helmholtz cases need table data: use `git lfs pull` in a checkout, or follow the [source-archive instructions](docs/guides/Build.md#source-archives-and-eos-tables).
 
@@ -86,15 +140,18 @@ Linux/WSL2:
 
 ```bash
 export OMP_NUM_THREADS=4
-./build-cpu/bin/ARCH Sod simulation/Sod/Sod_beginner.par
+./build/linux-core/bin/ARCH Sod simulation/Sod/Sod_beginner.par
 ```
 
-Windows PowerShell, with the native dependency paths set:
+Windows Command Prompt; use the initialized Developer terminal for a CUDA build:
 
-```powershell
-$env:OMP_NUM_THREADS = '4'
-& .\build-windows-cpu\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
+```bat
+call build\windows-core\bin\arch-env.cmd
+set OMP_NUM_THREADS=4
+build\windows-core\bin\ARCH.exe Sod simulation/Sod/Sod_beginner.par
 ```
+
+`arch-env.cmd` supplies the runtime DLL paths selected during configuration. For CUDA, replace `windows-core` with `windows-core-with-cuda` in both paths.
 
 `Sod` selects the compiled problem definition; the `.par` file supplies its parameters. `OMP_NUM_THREADS` controls CPU worker threads. To use a CUDA-enabled build, select its executable and change the existing `compute_backend` assignment in a copy of the input.
 
@@ -112,39 +169,51 @@ Studio brings parameter editing, Configure/Build, initial-field and initial-AMR 
 
 *Inspect an evolved density field, display the adaptive mesh and query stored cell values. The [illustrated Studio guide](docs/guides/Studio.md) walks through configuration, preview and output inspection.*
 
-Set `-DARCH_BUILD_STUDIO=ON` during CMake configuration and build the desktop using the [build guide](docs/guides/Build.md). From the project root, open Studio without selecting a model or parameter file:
+Add Studio to the Core build you already configured. Install its [desktop prerequisites](docs/guides/Build.md#studio-desktop), then enable the option, build and launch:
 
 Linux / WSL2:
 
-```bash
-build-studio-cpu/bin/arch-studio
-```
-
-Windows PowerShell, after setting the [native tool environment](docs/guides/Build.md#windows-tool-configuration) in the same terminal:
-
-```powershell
-& .\build-windows-cpu\bin\arch-studio.cmd
-```
-
-The empty start page lets you choose a project and enter its build, executable, model and `.par`. To open the Sedov example directly, supply those selections on the command line:
-
-Linux / WSL2:
+**Enable Studio in this Core tree**
 
 ```bash
-build-studio-cpu/bin/arch-studio --project "$PWD" --build-dir build-studio-cpu \
-  --binary build-studio-cpu/bin/ARCH --case Sedov \
-  --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
+cmake -S . -B build/linux-core -DARCH_BUILD_STUDIO=ON
 ```
 
-Windows PowerShell, with the [native tool environment](docs/guides/Build.md#windows-tool-configuration) set:
+**Build the desktop**
+
+```bash
+cmake --build build/linux-core --target arch-studio
+```
+
+**Open the empty start page**
+
+```bash
+build/linux-core/bin/arch-studio
+```
+
+Windows PowerShell, in the same compiler environment used for Core:
+
+**Enable Studio in this Core tree**
 
 ```powershell
-& .\build-windows-cpu\bin\arch-studio.cmd --project "$PWD" --build-dir build-windows-cpu `
-  --binary build-windows-cpu/bin/ARCH.exe --case Sedov `
-  --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
+cmake -S . -B build/windows-core -DARCH_BUILD_STUDIO=ON
 ```
 
-`--config` selects the parameter file loaded into **Config**, the editing workspace. **Configure** runs CMake configuration; **Build** compiles the program. The window opens with Sedov parameters; when Preview is ready, select **Field → Pressure** to inspect the initial central spot. Save and confirm Run to evolve the model, then open its output in Plotfile to obtain the density view illustrated above. See the [launch options and initial view](docs/guides/Studio.md#open-a-project).
+**Build the desktop**
+
+```powershell
+cmake --build build/windows-core --target arch-studio
+```
+
+**Open the empty start page**
+
+```powershell
+& .\build\windows-core\bin\arch-studio.cmd
+```
+
+For an existing CUDA build, use `linux-core-with-cuda` or `windows-core-with-cuda` in these paths. Studio reuses that executable and its CPU/CUDA capabilities. The Windows launcher supplies its tool configuration automatically.
+
+The empty start page lets you choose the project, build, executable, model and `.par`. To open a model directly, use the [one-command Sedov example](docs/guides/Studio.md#launch-with-a-model-and-parameter-file). `--config` loads a parameter file into **Config**; **Configure** runs CMake, and **Build** compiles the program. The [build guide](docs/guides/Build.md#build-and-launch-the-desktop) also covers adding Studio to a manually configured build.
 
 ## Extended models
 
