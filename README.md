@@ -112,7 +112,21 @@ Studio brings parameter editing, Configure/Build, initial-field and initial-AMR 
 
 *Inspect an evolved density field, display the adaptive mesh and query stored cell values. The [illustrated Studio guide](docs/guides/Studio.md) walks through configuration, preview and output inspection.*
 
-Set `-DARCH_BUILD_STUDIO=ON` during CMake configuration and build the desktop using the [build guide](docs/guides/Build.md). From the project root, open the Sedov example:
+Set `-DARCH_BUILD_STUDIO=ON` during CMake configuration and build the desktop using the [build guide](docs/guides/Build.md). From the project root, open Studio without selecting a model or parameter file:
+
+Linux / WSL2:
+
+```bash
+build-studio-cpu/bin/arch-studio
+```
+
+Windows PowerShell, after setting the [native tool environment](docs/guides/Build.md#windows-tool-configuration) in the same terminal:
+
+```powershell
+& .\build-windows-cpu\bin\arch-studio.cmd
+```
+
+The empty start page lets you choose a project and enter its build, executable, model and `.par`. To open the Sedov example directly, supply those selections on the command line:
 
 Linux / WSL2:
 

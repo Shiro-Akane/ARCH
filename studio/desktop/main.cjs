@@ -157,7 +157,9 @@ app.whenReady().then(async()=>{
  ipcMain.on('desktop:dirty',(event,value)=>{senderAllowed(event);dirty=value===true;});
  const {parseLaunchArgs}=await import('./arguments.mjs');
  try{const entryIndex=process.argv.findIndex((value,index)=>index>0&&path.resolve(value)===__filename);
-  const args=app.isPackaged?process.argv.slice(1):process.argv.slice(entryIndex>=1?entryIndex+1:2);await launch(parseLaunchArgs(args,process.cwd()));}
+  const args=app.isPackaged?process.argv.slice(1):process.argv.slice(entryIndex>=1?entryIndex+1:2);
+  if(args.length===0)await createWindow({},'/launcher.html');
+  else await launch(parseLaunchArgs(args,process.cwd()));}
  catch(e){await log('launch failed: '+e.message);await createWindow({error:e.message},'/launcher.html');}
 }).catch(async e=>{await log(e.message);app.quit();});
 app.on('window-all-closed',()=>{if(!closing)void shutdown();});

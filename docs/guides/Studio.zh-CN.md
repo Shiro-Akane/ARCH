@@ -6,7 +6,27 @@ Studio 是用于准备计算、预览初始状态、运行算例和查看 HDF5 �
 
 ## 打开项目
 
-按[构建指南](Build.zh-CN.md)安装可选桌面组件。从项目根目录启动已配置的 CPU 构建：
+按[构建指南](Build.zh-CN.md)安装可选桌面组件。从项目根目录运行不带参数的命令，即可打开空白启动页：
+
+Linux／WSL2：
+
+```bash
+build-studio-cpu/bin/arch-studio
+```
+
+Windows PowerShell，先在同一终端按[构建指南](Build.zh-CN.md#windows-工具配置)设置工具环境，再启动 Studio：
+
+```powershell
+& .\build-windows-cpu\bin\arch-studio.cmd
+```
+
+![Studio 空白启动页：选择项目、构建目录、程序、模型和参数文件](images/studio-start.png)
+
+此时尚未打开项目，也未载入模型或 `.par`。点击 **Choose project…** 选择 ARCH 项目目录，再填写构建目录、Core 程序、模型和参数文件，点击 **Open project** 进入工作台。
+
+### 指定模型与参数启动
+
+也可以一次性传入项目、构建、模型和参数文件。以下命令使用已配置的 CPU 构建打开 Sedov：
 
 Linux／WSL2：
 
@@ -16,7 +36,7 @@ build-studio-cpu/bin/arch-studio --project "$PWD" --build-dir build-studio-cpu \
   --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
 ```
 
-Windows PowerShell，先按[构建指南](Build.zh-CN.md#windows-工具配置)设置工具环境：
+Windows PowerShell：
 
 ```powershell
 & .\build-windows-cpu\bin\arch-studio.cmd --project "$PWD" --build-dir build-windows-cpu `

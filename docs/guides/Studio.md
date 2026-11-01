@@ -6,7 +6,27 @@ Studio is a desktop workbench for preparing a calculation, previewing its initia
 
 ## Open a project
 
-Install the optional desktop using the [build guide](Build.md). From the project root, launch a configured CPU build:
+Install the optional desktop using the [build guide](Build.md). From the project root, run the launcher without arguments to open the empty start page:
+
+Linux / WSL2:
+
+```bash
+build-studio-cpu/bin/arch-studio
+```
+
+Windows PowerShell: set up the [tool environment](Build.md#windows-tool-configuration) in the same terminal before starting Studio:
+
+```powershell
+& .\build-windows-cpu\bin\arch-studio.cmd
+```
+
+![Empty Studio start page with project, build, executable, model and parameter selections](images/studio-start.png)
+
+No project, model or `.par` is loaded yet. Click **Choose project…** to select an ARCH project, then enter the build directory, Core executable, model and parameter file. Click **Open project** to enter the workbench.
+
+### Launch with a model and parameter file
+
+You can also select the project, build, model and parameter file in one command. These examples open Sedov with a configured CPU build:
 
 Linux / WSL2:
 
@@ -16,7 +36,7 @@ build-studio-cpu/bin/arch-studio --project "$PWD" --build-dir build-studio-cpu \
   --source simulation/Sedov/Sedov.cpp --config simulation/Sedov/Sedov.par
 ```
 
-Windows PowerShell, after setting the tool environment in the [build guide](Build.md#windows-tool-configuration):
+Windows PowerShell:
 
 ```powershell
 & .\build-windows-cpu\bin\arch-studio.cmd --project "$PWD" --build-dir build-windows-cpu `

@@ -112,7 +112,21 @@ Studio 将参数编辑、Configure/Build、初始场与初始 AMR 预览、Run/R
 
 *查看演化后的密度场、显示自适应网格，并查询实际存储的单元值。[图解 Studio 指南](docs/guides/Studio.zh-CN.md)介绍配置、预览和结果查看。*
 
-在 CMake 配置时设置 `-DARCH_BUILD_STUDIO=ON`，按[构建指南](docs/guides/Build.zh-CN.md)编译桌面组件。随后从项目根目录打开 Sedov 示例：
+在 CMake 配置时设置 `-DARCH_BUILD_STUDIO=ON`，按[构建指南](docs/guides/Build.zh-CN.md)编译桌面组件。从项目根目录直接启动 Studio，暂不选择模型或参数文件：
+
+Linux／WSL2：
+
+```bash
+build-studio-cpu/bin/arch-studio
+```
+
+Windows PowerShell，先在同一终端设置[原生工具环境](docs/guides/Build.zh-CN.md#windows-工具配置)：
+
+```powershell
+& .\build-windows-cpu\bin\arch-studio.cmd
+```
+
+在空白启动页选择项目，并填写构建目录、程序、模型和 `.par`。若要直接打开 Sedov 示例，可以在命令行一次性指定这些选项：
 
 Linux／WSL2：
 
