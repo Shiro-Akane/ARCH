@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -89,6 +90,55 @@ class PrepareProfileTests(unittest.TestCase):
         result = self.prepare("-DHDF5_ROOT=" + str(wrong))
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("HDF5_ROOT failed", result.stderr)
+        self.assertFalse((self.root / "build/linux-core/prepared-toolchain.cmake").exists())
+
+    def hdf5_installation(self, nested_headers=False, foreign_cpp=False):
+        # Use real system HDF5 binaries and headers with an ordinary imported
+        # package, changing only the installation layout/selected library origin.
+        command = subprocess.check_output(["h5c++", "-show"], text=True)
+        tokens = shlex.split(command)
+        include = next(Path(p[2:]) for p in tokens if p.startswith("-I") and (Path(p[2:]) / "H5Cpp.h").exists())
+        library = next(Path(p).parent for p in tokens if p.endswith("/libhdf5_cpp.a"))
+        prefix = self.root / "installed hdf5"
+        headers = prefix / ("include/vendor/serial" if nested_headers else "include")
+        shutil.copytree(include, headers)
+        (prefix / "lib").mkdir()
+        locations = {}
+        for name in ("hdf5", "hdf5_cpp", "hdf5_hl", "hdf5_hl_cpp"):
+            source = (library / ("lib" + name + ".so")).resolve()
+            copied = prefix / "lib" / source.name
+            shutil.copy2(source, copied)
+            # Preserve the shared object's SONAME alias for the native run.
+            for candidate in source.parent.glob(source.name.split(".so")[0] + ".so*"):
+                if candidate.resolve() == source and candidate.name != copied.name:
+                    (prefix / "lib" / candidate.name).symlink_to(copied.name)
+            locations[name] = source if name == "hdf5_cpp" and foreign_cpp else copied
+        config = prefix / "cmake"
+        config.mkdir()
+        lines = [f'set(HDF5_INCLUDE_DIR "{headers}")', 'set(HDF5_VERSION "1.10.10")',
+                 'set(HDF5_ENABLE_PARALLEL OFF)', 'set(HDF5_CXX_FOUND TRUE)', 'set(HDF5_HL_FOUND TRUE)']
+        for name, location in locations.items():
+            lines += [f'add_library({name} SHARED IMPORTED)',
+                      f'set_target_properties({name} PROPERTIES IMPORTED_LOCATION "{location}" INTERFACE_INCLUDE_DIRECTORIES "{headers}")']
+        lines += ['set_property(TARGET hdf5_cpp PROPERTY INTERFACE_LINK_LIBRARIES hdf5)',
+                  'set_property(TARGET hdf5_hl PROPERTY INTERFACE_LINK_LIBRARIES hdf5)',
+                  'set_property(TARGET hdf5_hl_cpp PROPERTY INTERFACE_LINK_LIBRARIES "hdf5_cpp;hdf5_hl")']
+        (config / "hdf5-config.cmake").write_text("\n".join(lines) + "\n")
+        return prefix
+
+    def test_explicit_hdf5_root_accepts_nonstandard_header_subdirectory(self):
+        prefix = self.hdf5_installation(nested_headers=True)
+        result = self.prepare("-DHDF5_ROOT=" + str(prefix))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("Verified native HDF5", result.stdout)
+        self.assertIn(str(prefix), (self.root / "build/linux-core/prepared-toolchain.cmake").read_text())
+
+    def test_explicit_hdf5_root_rejects_foreign_selected_library(self):
+        prefix = self.hdf5_installation(foreign_cpp=True)
+        result = self.prepare("-DHDF5_ROOT=" + str(prefix))
+        self.assertNotEqual(result.returncode, 0)
+        logs = list((self.root / "build/linux-core/prepare").glob("hdf5-*/configure.log"))
+        self.assertTrue(any("outside it" in p.read_text() for p in logs), result.stderr)
         self.assertFalse((self.root / "build/linux-core/prepared-toolchain.cmake").exists())
 
     def test_profile_rejects_foreign_host_before_writing(self):
