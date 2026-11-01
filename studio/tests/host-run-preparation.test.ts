@@ -25,6 +25,18 @@ if(input.includes('restart-fixture')){
 if(input.includes('invalid-fixture')){result.status='error';result.completeness.state='invalid';process.exitCode=3;}
 setTimeout(()=>console.log(JSON.stringify(result)),input.includes('slow-fixture')?100:0);
 });
+}else if(process.argv[2]==='--check-run'){
+let input='';process.stdin.setEncoding('utf8');process.stdin.on('data',b=>input+=b);process.stdin.on('end',()=>{
+if(process.env.CUDA_VISIBLE_DEVICES==='')process.exit(98);
+const missing=input.includes('missing-cudss'), changed=require('node:fs').existsSync('backend-changed');
+const fallback=input.includes('auto-backend')||changed;
+console.log(JSON.stringify({schemaVersion:'1.0',version:'1',kind:'execution-preflight',status:missing?'error':'ok',
+ identity:{caseId:process.argv[3],requestId:process.argv[6],configRevision:crypto.createHash('sha256').update(input).digest('hex')},
+ execution:{meshConstruction:'not_executed',timeStepping:'not_executed'},
+ data:missing?null:{requestedBackend:fallback?'auto':'cpu',resolvedBackend:'cpu',linearSolver:'denselu',fallbackReason:fallback?'cuDSS unavailable; CPU KLU selected':''},
+ diagnostics:missing?[{severity:'error',code:'CUDSS_UNAVAILABLE',message:'Install cuDSS and rebuild with CUDSS_ROOT.'}]:[]}));
+if(missing||input.includes('contradict-exit'))process.exitCode=3;
+});
 }else if(process.argv[2]==='Sod')setTimeout(()=>process.exit(0),20);else process.exit(99);
 `;
  await mkdir(root+'/studio');
@@ -265,5 +277,23 @@ test('selected source is rechecked before preparation and before confirmed termi
   const plan=await f.runner.prepare(request);assert.equal(plan.canConfirm,true);assert.deepEqual(seen,['Sod']);
   f.runner.assertCase=async()=>{throw new Error('source changed after compilation');};
   await assert.rejects(f.runner.consume({projectId:'project',planId:plan.planId,confirmation:'run-saved-input-with-compiled-binary'}),/source changed after compilation/);
+ }finally{await rm(f.root,{recursive:true,force:true});}
+});
+
+test('Run preparation preserves Core sparse rejection and CPU fallback; confirmation rechecks availability',async()=>{
+ const f=await fixture();
+ const prepare=async()=>f.runner.prepare({projectId:'project',caseId:'Sod',configRevision:(await f.config()).fingerprint.sha256,mode:'run'});
+ try{
+  await writeFile(f.root+'/saved.par','missing-cudss\n');
+  const rejected=await prepare();assert.equal(rejected.canConfirm,false);assert.equal(rejected.backend?.status,'error');
+  assert.match(rejected.issues.join(' '),/Install cuDSS/);
+  await writeFile(f.root+'/saved.par','auto-backend\n');
+  const fallback=await prepare();assert.equal(fallback.canConfirm,true);assert.equal(fallback.backend?.data?.resolvedBackend,'cpu');
+  assert.match(fallback.backend!.data!.fallbackReason,/cuDSS/);
+  await writeFile(f.root+'/saved.par','saved fixture\n');
+  const saved=await prepare();await writeFile(f.root+'/backend-changed','changed');
+  await assert.rejects(f.runner.consume({projectId:'project',planId:saved.planId,confirmation:'run-saved-input-with-compiled-binary'}),/backend availability changed/);
+  await rm(f.root+'/backend-changed');await writeFile(f.root+'/saved.par','contradict-exit\n');
+  await assert.rejects(prepare(),/exit status contradicts/);
  }finally{await rm(f.root,{recursive:true,force:true});}
 });

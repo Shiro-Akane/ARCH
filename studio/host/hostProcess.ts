@@ -66,16 +66,21 @@ export function terminateOwned(child:ChildProcess,signal:NodeJS.Signals='SIGTERM
 }
 
 /** Capture one owned native request; failure settles only after the Job owner exits. */
-export interface CaptureLimits {timeoutMs?:number;stdoutBytes?:number;stderrBytes?:number;signal?:AbortSignal}
+export interface CaptureLimits {timeoutMs?:number;stdoutBytes?:number;stderrBytes?:number;signal?:AbortSignal;purpose?:'execution-preflight'}
 export async function captureOwned(program:string,args:string[],text:string,cwd:string,tools?:WindowsProcessTools,limits:CaptureLimits={}){
- const timeout=limits.timeoutMs??10000,stdoutLimit=limits.stdoutBytes??8*1024*1024,stderrLimit=limits.stderrBytes??8*1024*1024;
- if(!Number.isSafeInteger(timeout)||timeout<1||timeout>10000||
+ const execution=limits.purpose==='execution-preflight';
+ if(execution&&args[0]!=='--check-run')throw new Error('Execution preflight bounds require --check-run.');
+ const ceiling=execution?360000:10000;
+ const timeout=limits.timeoutMs??ceiling,stdoutLimit=limits.stdoutBytes??8*1024*1024,stderrLimit=limits.stderrBytes??8*1024*1024;
+ if(!Number.isSafeInteger(timeout)||timeout<1||timeout>ceiling||
   !Number.isSafeInteger(stdoutLimit)||stdoutLimit<1||stdoutLimit>8*1024*1024||
   !Number.isSafeInteger(stderrLimit)||stderrLimit<1||stderrLimit>8*1024*1024)
   throw new Error('Capture bounds may only tighten the existing command limits.');
  if(limits.signal?.aborted)throw new Error('Core command cancelled.');
  const started=performance.now();
- const child=spawnOwned(program,args,{cwd,shell:false,stdio:['pipe','pipe','pipe'],env:{OMP_NUM_THREADS:'1',CUDA_VISIBLE_DEVICES:''}},tools);
+ const env:NodeJS.ProcessEnv={OMP_NUM_THREADS:'1',...(execution?{}:{CUDA_VISIBLE_DEVICES:''})};
+ if(process.platform==='linux')Object.assign(env,{PATH:'/usr/bin:/bin',HOME:process.env.HOME??'',LANG:'C.UTF-8'});
+ const child=spawnOwned(program,args,{cwd,shell:false,stdio:['pipe','pipe','pipe'],env},tools);
  return new Promise<{stdout:string;code:number|null}>((resolve,reject)=>{
   const output:Buffer[]=[];let bytes=0,errors=0,failure:Error|undefined;
   const stop=(error:Error)=>{failure??=error;terminateOwned(child,'SIGKILL');};

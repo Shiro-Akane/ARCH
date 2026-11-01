@@ -176,6 +176,19 @@ if(ARCH_CUDA_HEAVY_JOB_POOL)
 endif()
 add_test(NAME cuda_burn_eos_failure COMMAND arch_cuda_burn_eos_failure)
 set_tests_properties(cuda_burn_eos_failure PROPERTIES SKIP_RETURN_CODE 77)
+if(ARCH_REQUIRE_CUDSS)
+    set(arch_cudss_checks cuda_cudss_sparse_solver cuda_sparse_burn_factory
+        cuda_sparse_be_nr_batch cuda_burn_eos_failure)
+    # Qualification requires a real GPU pass: code 77 is a failure here.
+    set_property(TEST ${arch_cudss_checks} PROPERTY SKIP_RETURN_CODE)
+    add_custom_target(arch-check-cudss
+        COMMAND "${CMAKE_CTEST_COMMAND}" --test-dir "${CMAKE_BINARY_DIR}"
+            --output-on-failure --no-tests=error -C "$<CONFIG>"
+            -R "^(cuda_cudss_sparse_solver|cuda_sparse_burn_factory|cuda_sparse_be_nr_batch|cuda_burn_eos_failure)$"
+        DEPENDS arch_cuda_cudss_sparse_solver arch_cuda_sparse_burn_factory
+            arch_cuda_sparse_be_nr_batch arch_cuda_burn_eos_failure
+        USES_TERMINAL VERBATIM)
+endif()
 add_executable(arch_cuda_regrid_migration
     tests/cuda/amr/test_cuda_regrid_migration.cu
     $<TARGET_OBJECTS:arch_cuda_backend_amr_migration>)

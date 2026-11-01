@@ -16,11 +16,12 @@ import {BuildError} from './buildRunner.ts';
 import {pathPreflight} from './pathPreflight.ts';
 import {validateRegistry} from '../src/host/workflowValidation.ts';
 import {validateConfigurationSchema,validateConfigurationInspection} from '../src/host/configurationValidation.ts';
+import {validateExecutionPreflight} from '../src/host/RunAdapter.ts';
 import type {ConfigReadResponse,FileFingerprint} from '../src/host/contracts.ts';
 import type {ConfigurationSchema} from '../src/host/configurationContracts.ts';
-import type {PrepareRunRequest,ConfirmRunRequest,RunPreparation} from '../src/host/runContracts.ts';
+import type {PrepareRunRequest,ConfirmRunRequest,RunPreparation,ExecutionPreflight} from '../src/host/runContracts.ts';
 export type {PrepareRunRequest,ConfirmRunRequest,RunPreparation} from '../src/host/runContracts.ts';
-/** Static run preflight on the selected binary, independent of Preview capability/freshness. */
+/** Saved-input and backend preflight on the selected binary, independent of Preview freshness. */
 export class RunPreparationRunner {
  assertCase?:(caseId:string)=>Promise<void>;
  private active=false;
@@ -56,6 +57,17 @@ export class RunPreparationRunner {
    if(![0,3,7].includes(result.code??-1))throw new Error('Core command failed.');
    return JSON.parse(result.stdout);
   }catch{throw new BuildError('Core run preflight failed or exceeded its bounds.',502);}
+ }
+
+ private async checkExecution(caseId:string,saved:ConfigReadResponse):Promise<ExecutionPreflight>{
+  const requestId=randomUUID(),executable=await checkedPath(this.root,this.binaryRelativePath);
+  const result=await captureOwned(executable,['--check-run',caseId,'--config-stdin','--request-id',requestId],saved.text,this.root,this.windowsTools,{purpose:'execution-preflight'});
+  if(![0,3].includes(result.code??-1))throw new BuildError('Core execution preflight failed. Rebuild the selected Core with --check-run support and check its runtime libraries.',502);
+  let value:unknown;
+  try{value=JSON.parse(result.stdout);}catch{throw new BuildError('Malformed Core execution preflight response.',502);}
+  const checked=validateExecutionPreflight(value,{caseId,requestId,configRevision:saved.fingerprint.sha256});
+  if((result.code===0)!==(checked.status==='ok'))throw new BuildError('Core execution preflight exit status contradicts its response.',502);
+  return checked;
  }
 
  async prepare(request:PrepareRunRequest):Promise<RunPreparation>{
@@ -94,14 +106,17 @@ export class RunPreparationRunner {
    else if(restart!==(request.mode==='restart'))issues.push(request.mode==='run'?'Saved configuration requests Restart; select Restart explicitly.':'Restart requires restart=true in the explicitly saved configuration.');
    const checkpointPath=request.mode==='restart'?pathChecks.find(p=>p.key==='restart_file')?.resolvedPath??null:null;
    if(request.mode==='restart'&&!checkpointPath)issues.push('Restart checkpoint path is unavailable.');
+   const backend=issues.length?null:await this.checkExecution(request.caseId,saved);
+   if(backend?.status==='error')for(const diagnostic of backend.diagnostics)
+    if(diagnostic.severity==='error')issues.push(diagnostic.message);
    const latest=await this.config();
    if(latest.relativePath!==saved.relativePath||!sameFingerprint(latest.fingerprint,saved.fingerprint)||!sameFingerprint(await this.binary(),binary))
     throw new BuildError('Configuration or executable changed during run preparation.',409);
    const plan:RunPreparation={planId:randomUUID(),projectId:this.projectId,caseId:request.caseId,mode:request.mode,createdAt:new Date().toISOString(),
     binary:{relativePath:this.binaryRelativePath,fingerprint:binary,sourceClaim:'compiled-version-only'},
-    config:{relativePath:saved.relativePath,fingerprint:saved.fingerprint},inspection,pathChecks,issues,
+    config:{relativePath:saved.relativePath,fingerprint:saved.fingerprint},inspection,pathChecks,issues,backend,
     canConfirm:issues.length===0,simulationReadiness:'core-startup-pending',checkpointPath,
-    pendingChecks:['Authoritative Core Setup and runtime configuration','EOS and network resource loading','Execution backend availability',
+    pendingChecks:['Core repeats Setup and backend checks at launch','Initial mesh and runtime allocation',
      ...(request.mode==='restart'?['Core checkpoint identity/layout and continuation compatibility']:[])]};
    const checkpointIdentity=checkpointPath&&plan.canConfirm?await checkpointFilesystemIdentity(checkpointPath):undefined;
    this.prepared={plan:structuredClone(plan),schema,checkpointIdentity};
@@ -136,6 +151,11 @@ export class RunPreparationRunner {
     if(!prepared.checkpointIdentity||identity!==prepared.checkpointIdentity)
      throw new BuildError('Restart checkpoint changed after preparation; prepare again.',409);
    }
+   const backend=await this.checkExecution(plan.caseId,saved);
+   if(backend.status!=='ok'||JSON.stringify(backend.data)!==JSON.stringify(plan.backend?.data))
+    throw new BuildError('Execution backend availability changed; prepare Run again to review the selection.',409);
+   if(!sameFingerprint((await this.config()).fingerprint,plan.config.fingerprint)||!sameFingerprint(await this.binary(),plan.binary.fingerprint))
+    throw new BuildError('Saved input or binary changed during execution preflight; prepare again.',409);
    const outputDirectories=await Promise.all(checks.filter(check=>check.role==='output-directory'&&check.resolvedPath&&check.status==='ok'&&
     plan.inspection.parameters.find(p=>p.key===check.key)?.applicability.state!=='not-applicable').map(async check=>
      ({path:check.resolvedPath!,canonicalPath:await canonicalOutputDirectory(check.resolvedPath!)})));
