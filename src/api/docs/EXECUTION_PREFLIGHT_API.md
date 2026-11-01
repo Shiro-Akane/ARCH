@@ -29,7 +29,7 @@ stdin 上限为 1 MiB；单个 JSON 响应上限为 8 MiB。正常完成返回 0
 | `data.fallbackReason` | Auto 选择 CPU 的原因；没有回退时为空字符串 |
 | `diagnostics` | 带 `severity`、`code`、`message` 的诊断 |
 
-失败响应的 `data` 为 `null`，包含至少一条 error 诊断。`execution.meshConstruction` 和 `execution.timeStepping` 均为 `not_executed`。客户端应同时核验退出码、响应状态和完整输入身份。
+失败响应的 `data` 为 `null`，包含至少一条 error 诊断。非法 UTF-8 标识返回空字符串；有效标识和已读取输入字节的 SHA-256 保留。`execution.meshConstruction` 和 `execution.timeStepping` 均为 `not_executed`。客户端应同时核验退出码、响应状态和完整输入身份。
 
 ## 后端选择与运行确认
 
