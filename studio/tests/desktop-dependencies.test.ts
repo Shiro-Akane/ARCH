@@ -17,6 +17,8 @@ test(`Studio ${generator} installs once per locked runtime, rebuilds assets inde
  const studio=path.join(root,'studio');
  await mkdir(path.join(studio,'src'),{recursive:true});
  await mkdir(path.join(root,'cmake','studio'),{recursive:true});
+ await mkdir(path.join(root,'cmake','project'),{recursive:true});
+ await cp(new URL('cmake/project/WindowsRuntime.cmake',repository),path.join(root,'cmake','project','WindowsRuntime.cmake'));
  for(const name of ['Studio.cmake','WindowsTools.cmake','EnsureDependencies.cmake','arch-studio.in','arch-studio.cmd.in'])
   await cp(new URL('cmake/studio/'+name,repository),path.join(root,'cmake','studio',name));
  for(const name of ['index.html','tsconfig.json','vite.config.ts'])await writeFile(path.join(studio,name),'');
@@ -51,6 +53,7 @@ else()
  add_custom_target(ARCH)
 endif()
 set(ARCH_RUNTIME_OUTPUT_DIRECTORY "\${CMAKE_BINARY_DIR}/bin")
+include(cmake/project/WindowsRuntime.cmake)
 include(cmake/studio/Studio.cmake)
 `);
  const configure=async(build:string)=>execute(cmake,['-S',root,'-B',path.join(root,build),'-G',generator,'-DARCH_BUILD_STUDIO=ON','-DARCH_STUDIO_NODE='+process.execPath,

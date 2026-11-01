@@ -31,8 +31,8 @@ set(ARCH_STUDIO_NODE [=[${node}]=])
 set(CMAKE_C_COMPILER [=[${node}]=])
 set(CMAKE_CXX_COMPILER [=[${node}]=])
 set(CMAKE_RC_COMPILER [=[${node}]=])
-# A selected MSVC dumpbin must not become the GNU-compatible PE inspector.
-set(CMAKE_OBJDUMP [=[${forward(path.join(root,'dumpbin.exe'))}]=])
+# The explicit inspector wins even when the compiler names another objdump.
+set(CMAKE_OBJDUMP [=[${forward(path.join(root,'objdump.exe'))}]=])
 set(ARCH_STUDIO_OBJDUMP [=[${node}]=])
 set(ARCH_PREPARED_RUNTIME_DIRS [=[${forward(runtime)}]=])
 set(ARCH_ENABLE_CUDA ON)
@@ -41,6 +41,7 @@ set(CuDSS_FOUND TRUE)
 set(CuDSS_RUNTIME_LIBRARY [=[${forward(libraries[0])}]=])
 set(CUDA_cublas_RUNTIME_LIBRARY [=[${forward(libraries[1])}]=])
 set(CUDA_cublasLt_RUNTIME_LIBRARY [=[${forward(libraries[2])}]=])
+include([=[${forward(fileURLToPath(new URL('../../cmake/project/WindowsRuntime.cmake',import.meta.url)))}]=])
 include([=[${forward(fileURLToPath(new URL('../../cmake/studio/WindowsTools.cmake',import.meta.url)))}]=])
 `);
  const cmake=process.env.ARCH_TEST_CMAKE??'cmake';
@@ -54,7 +55,10 @@ include([=[${forward(fileURLToPath(new URL('../../cmake/studio/WindowsTools.cmak
  assert.ok(value.path.split(';').includes(forward(runtime)));
  const command=`call "${path.join(build,'bin','arch-env.cmd')}" && set PATH && set INCLUDE`;
  const result=await execute(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{encoding:'utf8',timeout:10000,windowsVerbatimArguments:true});
- assert.ok(result.stdout.includes('PATH='+value.path));
+ const cliPath=result.stdout.split(/\r?\n/).find(line=>/^PATH=/i.test(line))?.slice(5);
+ assert.ok(cliPath);
+ const studioDirectories=value.path.split(';').map(dir=>path.win32.normalize(dir).toLowerCase());
+ for(const dir of cliPath.split(';'))assert.ok(studioDirectories.includes(path.win32.normalize(dir).toLowerCase()),dir);
  assert.ok(result.stdout.includes('INCLUDE='+forward(dirs.INCLUDE)));
  await rm(libraries[0]);
  await assert.rejects(execute(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{windowsVerbatimArguments:true}),error=>
@@ -65,5 +69,40 @@ include([=[${forward(fileURLToPath(new URL('../../cmake/studio/WindowsTools.cmak
   {env:{...process.env,...dirs},timeout:30000});
  const withoutCuDss=await loadWindowsTools(await readFile(path.join(build,'studio','windows-tools.json'),'utf8'));
  assert.deepEqual(withoutCuDss.runtimeLibraries,[]);
+ await execute(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{windowsVerbatimArguments:true});
+});
+
+test('native Core-only configure writes its CLI environment without Node or objdump',
+ {skip:process.platform!=='win32'},async t=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),'arch core runtime '));
+ t.after(()=>rm(root,{recursive:true,force:true}));
+ const forward=(value:string)=>value.replaceAll('\\','/');
+ const binary=path.join(root,'bin','ARCH.exe'),compiler=path.join(root,'compiler','cc.exe');
+ for(const file of [binary,compiler]){await mkdir(path.dirname(file),{recursive:true});await writeFile(file,'fixture executable');}
+ const build=path.join(root,'build');
+ await writeFile(path.join(root,'CMakeLists.txt'),`cmake_minimum_required(VERSION 3.22)
+project(CoreRuntime NONE)
+add_executable(ARCH IMPORTED)
+set_target_properties(ARCH PROPERTIES IMPORTED_LOCATION [=[${forward(binary)}]=])
+set(CMAKE_C_COMPILER [=[${forward(compiler)}]=])
+set(CMAKE_CXX_COMPILER [=[${forward(compiler)}]=])
+set(ARCH_RUNTIME_OUTPUT_DIRECTORY "\${CMAKE_BINARY_DIR}/bin")
+set(ARCH_BUILD_STUDIO OFF)
+set(ARCH_STUDIO_NODE "C:/unavailable-node/node.exe")
+set(ARCH_STUDIO_OBJDUMP "C:/unavailable-inspector/objdump.exe")
+include([=[${forward(fileURLToPath(new URL('../../cmake/project/WindowsRuntime.cmake',import.meta.url)))}]=])
+include([=[${forward(fileURLToPath(new URL('../../cmake/studio/Studio.cmake',import.meta.url)))}]=])
+`);
+ const systemRoot=process.env.SystemRoot??'C:/Windows';
+ const cmake=process.env.ARCH_TEST_CMAKE??(await execute('where.exe',['cmake'])).stdout.trim().split(/\r?\n/)[0];
+ const ninja=process.env.ARCH_TEST_NINJA??(await execute('where.exe',['ninja'])).stdout.trim().split(/\r?\n/)[0];
+ await execute(cmake,['-S',root,'-B',build,'-G','Ninja','-DCMAKE_MAKE_PROGRAM='+ninja],
+  {env:{...process.env,PATH:systemRoot+'/System32;'+systemRoot},timeout:30000});
+ const script=await readFile(path.join(build,'bin','arch-env.cmd'),'utf8');
+ assert.ok(script.includes(forward(path.dirname(compiler))));
+ assert.ok(script.includes(forward(path.dirname(binary))));
+ assert.doesNotMatch(script,/unavailable-node|unavailable-inspector/);
+ await assert.rejects(readFile(path.join(build,'studio','windows-tools.json')),/ENOENT/);
+ const command=`call "${path.join(build,'bin','arch-env.cmd')}" && set PATH`;
  await execute(process.env.ComSpec??'cmd.exe',['/d','/s','/c',command],{windowsVerbatimArguments:true});
 });
