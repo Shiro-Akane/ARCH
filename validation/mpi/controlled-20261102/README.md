@@ -90,3 +90,11 @@ and verify each archive member before removing only their own staging directory.
 ## Accepted result
 
 See [the November 2 validation report](../../../docs/development/MPI-Controlled-20261102.zh-CN.md) for all eight application comparisons, the small two-rank 2D local slowdown, regression counts and exact source/binary hashes. The accepted change uses both existing halo directions concurrently and waits before scattering or reusing the existing workspace.
+
+## Follow-up with up to 16 ranks
+
+The scale-up suite reuses the same measurement, bitwise comparator, affinity checks and verified archive path. scale-up-protocol.json fixes the new grid sizes, repeat count and limits. It is single-host strong scaling on a shared VM; it does not measure multi-node scalability or AMR. Run with a fresh evidence directory and work directory, after all build/regression jobs have finished.
+
+~~~sh
+python3 run.py --suite scale-up --repeats 5 --evidence /server/new-evidence --work /dev/shm/arch-mpi-controlled-scale-up
+~~~

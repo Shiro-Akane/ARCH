@@ -1,0 +1,42 @@
+{
+  "scope": "single-host fixed Cartesian CPU MPI; strong scaling only",
+  "ranks": [
+    1,
+    2,
+    4,
+    8,
+    16
+  ],
+  "omp_threads_per_rank": 1,
+  "warmups": 1,
+  "measured_repeats": 5,
+  "workloads": [
+    {
+      "name": "2d",
+      "root_shape": [
+        32,
+        16,
+        0
+      ],
+      "cells": 131072,
+      "steps": 128
+    },
+    {
+      "name": "3d",
+      "root_shape": [
+        16,
+        4,
+        2
+      ],
+      "cells": 524288,
+      "steps": 48
+    }
+  ],
+  "primary_metric": "max_rank(driver_seconds - output_seconds)",
+  "correctness": "all scheduled native fields and global clocks bitwise equal to unchanged independent serial baseline",
+  "placement": "one bound logical core per rank, unique affinity; alternate ascending/descending rank counts",
+  "conditions": "shared VM; no claim of exclusive CPU access or multi-node 16-rank performance",
+  "storage": "server tmpfs staging; lossless archive with member SHA256/readback before scoped removal",
+  "minimum_disk_free_gib": 20,
+  "amr": "deferred"
+}
