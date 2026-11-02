@@ -61,7 +61,14 @@ DRIVER_CUDA_COVERAGE_ANCHORS = frozenset({
     "cuda_refinement_indicators", "cuda_ppm_limiter_math", "cuda_flux_limiter",
     "cuda_conservative_acceptance", "eos_host_device_parity",
 })
-PROFILES = {"cpu": CPU_COVERAGE_ANCHORS, "driver-cuda": DRIVER_CUDA_COVERAGE_ANCHORS}
+MPI_OFF_COVERAGE_ANCHORS = frozenset({
+    "mpi_execution_preflight", "execution_preflight_contract", "runtime_probe_and_capabilities",
+})
+MPI_COVERAGE_ANCHORS = MPI_OFF_COVERAGE_ANCHORS | {
+    "mpi_fixed_grid_1", "mpi_fixed_grid_2", "mpi_fixed_grid_4",
+}
+PROFILES = {"cpu": CPU_COVERAGE_ANCHORS, "driver-cuda": DRIVER_CUDA_COVERAGE_ANCHORS,
+            "mpi": MPI_COVERAGE_ANCHORS, "mpi-off": MPI_OFF_COVERAGE_ANCHORS}
 
 
 def check_inventory(inventory, profile="cpu"):

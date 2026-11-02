@@ -43,3 +43,9 @@ Tooling and CPU diagnostic artifacts retain identity, logs, inventory and JUnit 
 Hosted CI does not execute CUDA, cuDSS, generated-network trajectories, sanitizers, long scientific campaigns, native Windows builds or desktop packaging/window tests. Use the applicable [validation guide](../../validation/README.md), [build guide](../../docs/guides/Build.md) and [platform coverage](../../docs/releases/PlatformSupport.md) for those checks.
 
 Actions are pinned to full commits; the actionlint archive has a fixed checksum. This workflow uses neither `pull_request_target` nor repository secrets and does not publish releases. Public pull-request code should run on disposable workers rather than persistent personal GPU machines.
+
+## MPI fixed-grid gate
+
+The MPI job builds separate ON/OFF applications, checks the intended rank count through the shared execution preflight, exercises real 1/2/4-rank Host exchange/reductions, and compares 1D/2D/3D production output against the MPI-OFF application bit for bit. The existing fixtures also cover uneven partitions, tight pool capacity, rank input disagreement and unsupported startup modes. Auto-to-CPU selection is checked in both the query and an evolved trajectory. The MPI gate participates in CI required.
+
+Hosted runners may oversubscribe ranks for correctness. Their timings are not scaling evidence. Only diagnostics and small comparison summaries are uploaded, not HDF5, binaries or build trees. AMR, GPU MPI and distributed checkpoint/restart remain unsupported.
