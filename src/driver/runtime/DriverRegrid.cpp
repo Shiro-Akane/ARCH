@@ -173,7 +173,8 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only)
                 : std::function<bool(const amr::Block&,std::span<const int>)>{})
         : amr_ctrl.tree->PrepareRegrid(config, {}, {}, {}, jeans_repair_only);
     auto topology_candidate = topology_registry.stage_reconciliation(
-        observe_blocks(prepared.proposed_active_blocks()));
+        topology::collect_topology_observations(observe_blocks(prepared.proposed_active_blocks()),
+            amr_ctrl.tree->PartitionRank(), amr_ctrl.tree->PartitionSize()));
     const auto& proposed = topology_candidate.reconciliation();
     if (proposed.topology_changed != prepared.topology_changed())
         throw std::logic_error(

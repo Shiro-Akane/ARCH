@@ -80,6 +80,7 @@ list(FILTER ARCH_APPLICATION_SOURCES EXCLUDE REGEX
 # Keep lifecycle consumers independent of the policy-template dispatch archive.
 set(ARCH_DRIVER_RUNTIME_SOURCES
     src/driver/runtime/DriverRuntime.cpp
+    src/driver/runtime/TopologyIdentityRegistry.cpp
     src/driver/runtime/DriverBoundary.cpp
     src/driver/runtime/DriverBoundaryDiagnostics.cpp
     src/physics/boundary/PhysicalBoundaryHandler.cpp

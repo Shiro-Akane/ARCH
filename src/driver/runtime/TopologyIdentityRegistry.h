@@ -47,7 +47,13 @@ struct TopologyDomainBounds {
 struct TopologyObservation {
     int pool_index = -1;
     LogicalBlockIdentity identity{};
+    int owner_rank = 0; // Remote observations have pool_index == -1.
 };
+
+// All ranks call at the same topology boundary. Only logical identities and
+// ownership cross the wire; pool indices and field storage remain local.
+std::vector<TopologyObservation> collect_topology_observations(
+    const std::vector<TopologyObservation>& local, int rank, int rank_count);
 
 struct TopologyReconciliation {
     bool initial_adoption = false;
@@ -65,13 +71,14 @@ public:
         Candidate(const Candidate&) = delete;
         Candidate& operator=(const Candidate&) = delete;
         Candidate(Candidate&& other) noexcept
-            : base_generation_(other.base_generation_),
+            : owner_(other.owner_), base_generation_(other.base_generation_),
               base_adopted_(other.base_adopted_),
               consumed_(other.consumed_), valid_(other.valid_),
               authority_(std::move(other.authority_)),
               identities_(std::move(other.identities_)),
               handles_(std::move(other.handles_)),
               lowering_(std::move(other.lowering_)),
+              owners_(std::move(other.owners_)),
               retired_(std::move(other.retired_)),
               result_(std::move(other.result_))
         {
@@ -91,29 +98,34 @@ public:
         friend class TopologyIdentityRegistry;
 
         Candidate(
+            const TopologyIdentityRegistry* owner,
             std::uint64_t base_generation, bool base_adopted,
             amr::BlockIdentityAuthority authority,
             std::map<LogicalBlockIdentity, amr::BlockUid> identities,
             std::map<LogicalBlockIdentity, amr::BlockHandle> handles,
             std::map<int, amr::BlockHandle> lowering,
+            std::map<LogicalBlockIdentity, int> owners,
             std::set<amr::BlockUid> retired,
             TopologyReconciliation result)
-            : base_generation_(base_generation),
+            : owner_(owner), base_generation_(base_generation),
               base_adopted_(base_adopted), authority_(std::move(authority)),
               identities_(std::move(identities)),
               handles_(std::move(handles)), lowering_(std::move(lowering)),
+              owners_(std::move(owners)),
               retired_(std::move(retired)), result_(std::move(result))
         {
         }
 
         void poison_moved_from() noexcept
         {
+            owner_ = nullptr;
             base_generation_ = std::numeric_limits<std::uint64_t>::max();
             base_adopted_ = false;
             consumed_ = true;
             valid_ = false;
         }
 
+        const TopologyIdentityRegistry* owner_ = nullptr;
         std::uint64_t base_generation_ = 0;
         bool base_adopted_ = false;
         bool consumed_ = false;
@@ -122,14 +134,18 @@ public:
         std::map<LogicalBlockIdentity, amr::BlockUid> identities_;
         std::map<LogicalBlockIdentity, amr::BlockHandle> handles_;
         std::map<int, amr::BlockHandle> lowering_;
+        std::map<LogicalBlockIdentity, int> owners_;
         std::set<amr::BlockUid> retired_;
         TopologyReconciliation result_;
     };
 
-    explicit TopologyIdentityRegistry(TopologyDomainBounds bounds)
-        : bounds_(bounds)
+    explicit TopologyIdentityRegistry(TopologyDomainBounds bounds,
+                                      int rank = 0, int rank_count = 1)
+        : bounds_(bounds), rank_(rank), rank_count_(rank_count)
     {
         validate_bounds(bounds_);
+        if (rank_count < 1 || rank < 0 || rank >= rank_count)
+            throw std::invalid_argument("invalid topology rank");
     }
 
     Candidate stage_adoption(
@@ -142,8 +158,8 @@ public:
         amr::BlockIdentityAuthority staged_authority = authority_;
         std::map<LogicalBlockIdentity, amr::BlockUid> identities;
         std::vector<amr::BlockUid> added;
-        for (const auto& [identity, pool_index] : snapshot.identity_to_pool) {
-            (void)pool_index;
+        for (const auto& [identity, owner_rank] : snapshot.owners) {
+            (void)owner_rank;
             const amr::BlockUid uid = staged_authority.issue_uid();
             identities.emplace(identity, uid);
             added.push_back(uid);
@@ -154,9 +170,9 @@ public:
         TopologyReconciliation result = make_result(
             snapshot, true, false, {}, std::move(added), staged_authority,
             handles);
-        return Candidate{generation_, false, std::move(staged_authority),
+        return Candidate{this, generation_, false, std::move(staged_authority),
                          std::move(identities), std::move(handles),
-                         std::move(lowering), retired_uids_,
+                         std::move(lowering), snapshot.owners, retired_uids_,
                          std::move(result)};
     }
 
@@ -165,22 +181,23 @@ public:
     {
         require_adopted();
         const Snapshot snapshot = validate_snapshot(observations);
-        const bool changed = logical_key_set_changed(snapshot);
+        const bool changed = logical_key_set_changed(snapshot)
+            || snapshot.owners != owners_;
         if (!changed) {
             auto lowering = build_pool_lowering(snapshot, active_handles_);
             TopologyReconciliation result = make_result(
                 snapshot, false, false, {}, {}, authority_, active_handles_);
-            return Candidate{generation_, true, authority_, identity_to_uid_,
+            return Candidate{this, generation_, true, authority_, identity_to_uid_,
                              active_handles_, std::move(lowering),
-                             retired_uids_, std::move(result)};
+                             snapshot.owners, retired_uids_, std::move(result)};
         }
 
         amr::BlockIdentityAuthority staged_authority = authority_;
         (void)staged_authority.commit_topology();
         std::map<LogicalBlockIdentity, amr::BlockUid> next_identities;
         std::vector<amr::BlockUid> added;
-        for (const auto& [identity, pool_index] : snapshot.identity_to_pool) {
-            (void)pool_index;
+        for (const auto& [identity, owner_rank] : snapshot.owners) {
+            (void)owner_rank;
             const auto survivor = identity_to_uid_.find(identity);
             if (survivor != identity_to_uid_.end()) {
                 next_identities.emplace(identity, survivor->second);
@@ -205,9 +222,9 @@ public:
         TopologyReconciliation result = make_result(
             snapshot, false, true, std::move(retired), std::move(added),
             staged_authority, handles);
-        return Candidate{generation_, true, std::move(staged_authority),
+        return Candidate{this, generation_, true, std::move(staged_authority),
                          std::move(next_identities), std::move(handles),
-                         std::move(lowering), std::move(next_retired),
+                         std::move(lowering), snapshot.owners, std::move(next_retired),
                          std::move(result)};
     }
 
@@ -233,40 +250,41 @@ public:
         return result;
     }
 
+    /** Validate this rank's storage without a collective or remote field views. */
     void validate_committed_snapshot(
         const std::vector<TopologyObservation>& observations) const
     {
         require_adopted();
-        const Snapshot snapshot = validate_snapshot(observations);
-        if (snapshot.identity_to_pool.size() != identity_to_uid_.size()
-            || snapshot.pool_to_identity.size() != pool_lowering_.size()
-            || active_handles_.size() != identity_to_uid_.size()) {
+        const Snapshot snapshot = validate_snapshot(observations, false);
+        if (snapshot.identity_to_pool.size() != pool_lowering_.size()
+            || active_handles_.size() != identity_to_uid_.size()
+            || owners_.size() != identity_to_uid_.size()) {
             throw std::invalid_argument(
-                "committed topology snapshot is incomplete");
+                "committed local topology snapshot is incomplete");
         }
-
         std::set<amr::BlockHandle> unique_handles;
         for (const auto& [identity, pool_index] : snapshot.identity_to_pool) {
             const auto active = active_handles_.find(identity);
             const auto lowering = pool_lowering_.find(pool_index);
+            const auto owner = owners_.find(identity);
             if (active == active_handles_.end()
                 || lowering == pool_lowering_.end()
+                || owner == owners_.end() || owner->second != rank_
                 || lowering->second != active->second
                 || !unique_handles.insert(active->second).second) {
                 throw std::invalid_argument(
-                    "committed topology snapshot is not bijective");
+                    "committed local topology snapshot is not bijective");
             }
         }
-        for (const auto& [identity, uid] : identity_to_uid_) {
-            const auto incoming = snapshot.identity_to_pool.find(identity);
-            const auto active = active_handles_.find(identity);
-            if (incoming == snapshot.identity_to_pool.end()
-                || active == active_handles_.end()
-                || active->second.uid != uid) {
-                throw std::invalid_argument(
-                    "committed topology snapshot has missing identity");
-            }
-        }
+    }
+
+    int owner_for(LogicalBlockIdentity identity) const
+    {
+        require_adopted();
+        const auto found = owners_.find(identity);
+        if (found == owners_.end())
+            throw std::invalid_argument("logical block identity has no owner");
+        return found->second;
     }
 
     amr::TopologyEpoch epoch() const
@@ -304,6 +322,7 @@ private:
         std::map<LogicalBlockIdentity, amr::BlockUid> identities;
         std::map<LogicalBlockIdentity, amr::BlockHandle> handles;
         std::map<int, amr::BlockHandle> lowering;
+        std::map<LogicalBlockIdentity, int> owners;
         std::set<amr::BlockUid> retired;
         TopologyReconciliation result;
     };
@@ -329,6 +348,7 @@ private:
     };
 
     struct Snapshot {
+        std::map<LogicalBlockIdentity, int> owners;
         std::map<LogicalBlockIdentity, int> identity_to_pool;
         std::map<int, LogicalBlockIdentity> pool_to_identity;
         std::vector<LogicalBlockIdentity> observation_order;
@@ -338,6 +358,8 @@ private:
     {
         if (commit_in_progress_)
             throw std::logic_error("topology commit is already in progress");
+        if (candidate.owner_ != this)
+            throw std::logic_error("topology candidate belongs to another registry");
         if (!candidate.valid_)
             throw std::logic_error("topology candidate was moved from");
         if (candidate.consumed_)
@@ -361,6 +383,7 @@ private:
             std::move(candidate.identities_),
             std::move(candidate.handles_),
             std::move(candidate.lowering_),
+            std::move(candidate.owners_),
             std::move(candidate.retired_),
             std::move(result)};
         candidate.consumed_ = true;
@@ -373,6 +396,7 @@ private:
         static_assert(noexcept(identity_to_uid_.swap(prepared.identities)));
         static_assert(noexcept(active_handles_.swap(prepared.handles)));
         static_assert(noexcept(pool_lowering_.swap(prepared.lowering)));
+        static_assert(noexcept(owners_.swap(prepared.owners)));
         static_assert(noexcept(retired_uids_.swap(prepared.retired)));
 
         using std::swap;
@@ -380,6 +404,7 @@ private:
         identity_to_uid_.swap(prepared.identities);
         active_handles_.swap(prepared.handles);
         pool_lowering_.swap(prepared.lowering);
+        owners_.swap(prepared.owners);
         retired_uids_.swap(prepared.retired);
         adopted_ = true;
         ++generation_;
@@ -435,40 +460,78 @@ private:
     }
 
     Snapshot validate_snapshot(
-        const std::vector<TopologyObservation>& observations) const
+        const std::vector<TopologyObservation>& observations,
+        bool global = true) const
     {
-        if (observations.empty())
+        if (observations.empty() && (global || rank_count_ == 1))
             throw std::invalid_argument("topology snapshot must not be empty");
-
         Snapshot snapshot;
         snapshot.observation_order.reserve(observations.size());
         for (const TopologyObservation& observation : observations) {
-            if (observation.pool_index < 0)
-                throw std::invalid_argument("active pool index must be nonnegative");
+            const bool local = observation.owner_rank == rank_;
+            if (observation.owner_rank < 0 || observation.owner_rank >= rank_count_
+                || (!global && !local))
+                throw std::invalid_argument("topology observation has invalid owner");
+            if ((local && observation.pool_index < 0)
+                || (!local && observation.pool_index != -1))
+                throw std::invalid_argument("topology observation has invalid local storage");
             validate_identity(observation.identity);
-            if (!snapshot.identity_to_pool
-                     .emplace(observation.identity, observation.pool_index)
-                     .second) {
-                throw std::invalid_argument(
-                    "topology snapshot has duplicate logical identity");
-            }
+            if (!snapshot.owners.emplace(observation.identity, observation.owner_rank).second)
+                throw std::invalid_argument("topology snapshot has duplicate logical identity");
+            if (!local) continue;
+            snapshot.identity_to_pool.emplace(observation.identity, observation.pool_index);
             if (!snapshot.pool_to_identity
-                     .emplace(observation.pool_index, observation.identity)
-                     .second) {
-                throw std::invalid_argument(
-                    "topology snapshot has duplicate pool index");
-            }
+                     .emplace(observation.pool_index, observation.identity).second)
+                throw std::invalid_argument("topology snapshot has duplicate pool index");
             snapshot.observation_order.push_back(observation.identity);
         }
+        if (global && rank_count_ > 1) validate_global_cover(snapshot);
         return snapshot;
+    }
+
+    // Collapse complete sibling families using integer topology only.
+    // A matching leaf count alone cannot rule out gaps or parent/child overlap.
+    void validate_global_cover(const Snapshot& snapshot) const
+    {
+        std::set<LogicalBlockIdentity> leaves;
+        for (const auto& [identity, owner] : snapshot.owners) {
+            (void)owner;
+            leaves.insert(identity);
+        }
+        const unsigned full_family = (1u << (1u << bounds_.dimension)) - 1u;
+        for (int level = bounds_.max_level; level > 0; --level) {
+            std::map<LogicalBlockIdentity, unsigned> families;
+            for (auto it = leaves.begin(); it != leaves.end();) {
+                if (it->level != level) { ++it; continue; }
+                const auto key = *it;
+                const unsigned child = (key.logical_x1 & 1u)
+                    | ((key.logical_x2 & 1u) << 1u)
+                    | ((key.logical_x3 & 1u) << 2u);
+                const LogicalBlockIdentity parent{key.dimension, level - 1,
+                    key.logical_x1 >> 1, key.logical_x2 >> 1, key.logical_x3 >> 1};
+                families[parent] |= 1u << child;
+                it = leaves.erase(it);
+            }
+            for (const auto& [parent, children] : families) {
+                if (children != full_family || !leaves.insert(parent).second)
+                    throw std::invalid_argument("distributed leaves overlap or leave a gap");
+            }
+        }
+        std::size_t roots = 1;
+        for (const auto extent : bounds_.root_extents) {
+            if (extent > std::numeric_limits<std::size_t>::max() / roots)
+                throw std::overflow_error("topology root count overflow");
+            roots *= extent;
+        }
+        if (leaves.size() != roots)
+            throw std::invalid_argument("distributed root coverage is incomplete");
     }
 
     bool logical_key_set_changed(const Snapshot& snapshot) const
     {
-        if (snapshot.identity_to_pool.size() != identity_to_uid_.size())
-            return true;
+        if (snapshot.owners.size() != identity_to_uid_.size()) return true;
         auto current = identity_to_uid_.begin();
-        auto incoming = snapshot.identity_to_pool.begin();
+        auto incoming = snapshot.owners.begin();
         for (; current != identity_to_uid_.end(); ++current, ++incoming) {
             if (current->first != incoming->first) return true;
         }
@@ -523,11 +586,13 @@ private:
     }
 
     TopologyDomainBounds bounds_;
+    int rank_ = 0, rank_count_ = 1;
     amr::BlockIdentityAuthority authority_;
     bool adopted_ = false;
     std::map<LogicalBlockIdentity, amr::BlockUid> identity_to_uid_;
     std::map<LogicalBlockIdentity, amr::BlockHandle> active_handles_;
     std::map<int, amr::BlockHandle> pool_lowering_;
+    std::map<LogicalBlockIdentity, int> owners_;
     std::set<amr::BlockUid> retired_uids_;
     std::uint64_t generation_ = 0;
     bool commit_in_progress_ = false;

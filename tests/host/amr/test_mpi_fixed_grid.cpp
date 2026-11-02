@@ -1,6 +1,7 @@
 /** Real MPI transport through the production pool/tree/ghost owner. */
 #include "amr/AMRControl.h"
 #include "driver/DriverUtils.h"
+#include "driver/runtime/TopologyIdentityRegistry.h"
 #include <mpi.h>
 #include <bit>
 #include <cmath>
@@ -43,13 +44,21 @@ void test_exchange(int rank, int size, int dim, int periodic_mask)
     require(control.pool->GetNumActiveBlocks() == (end - begin) * rows * planes,
             "nonlocal field storage allocated");
     require(control.tree->GetRootGrid().nblockx1 == config.grid.nblockx1, "global domain changed");
-    std::vector<amr::BlockHandle> handles;
+    arch::topology::TopologyIdentityRegistry registry(
+        {dim, {static_cast<std::uint32_t>(config.grid.nblockx1),
+               static_cast<std::uint32_t>(rows), static_cast<std::uint32_t>(planes)}, 0},
+        rank, size);
+    std::vector<arch::topology::TopologyObservation> local;
     for (int id : control.tree->GetActiveBlocks()) {
-        const auto &b = control.pool->GetBlock(id);
-        const auto key = 1 + b.logical_x1
-            + config.grid.nblockx1 * (b.logical_x2 + rows * b.logical_x3);
-        handles.push_back({{key}, {1}});
+        const auto& block = control.pool->GetBlock(id);
+        local.push_back({id, {dim, block.level, block.logical_x1,
+                             block.logical_x2, block.logical_x3}, rank});
     }
+    auto candidate = registry.stage_adoption(
+        arch::topology::collect_topology_observations(local, rank, size));
+    const auto handles = candidate.reconciliation().handles_in_observation_order;
+    registry.commit(std::move(candidate));
+    registry.validate_committed_snapshot(local);
     control.BindActiveHandles(handles);
     const std::array<FluidState amr::Block::*, 3> slots{
         &amr::Block::fluid_state, &amr::Block::state_next, &amr::Block::state_scratch};

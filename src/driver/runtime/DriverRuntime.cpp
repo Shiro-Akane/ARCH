@@ -56,7 +56,8 @@ DriverRuntime::DriverRuntime(amr::AMRControl& control, BCHandler& boundaries,
           {static_cast<std::uint32_t>(std::max(1, config.grid.nblockx1)),
            static_cast<std::uint32_t>(std::max(1, config.grid.nblockx2)),
            static_cast<std::uint32_t>(std::max(1, config.grid.nblockx3))},
-          config.amr.lrefinemax}) {
+          config.amr.lrefinemax}, control.tree->PartitionRank(),
+          control.tree->PartitionSize()) {
     if(const char* value=std::getenv("ARCH_TRACE_DIFFUSION_ACTIVITY")) {
         const std::string_view option(value);
         if(option!="0"&&option!="1")
@@ -190,7 +191,7 @@ std::vector<TopologyObservation> DriverRuntime::observe_blocks(std::span<const i
             pool_index,
             LogicalBlockIdentity{
                 config.grid.dim, block.level, block.logical_x1,
-                block.logical_x2, block.logical_x3}});
+                block.logical_x2, block.logical_x3}, amr_ctrl.tree->PartitionRank()});
     }
     return observations;
 }
@@ -310,7 +311,9 @@ void DriverRuntime::initialize_topology()
     for (int id:amr_ctrl.tree->GetActiveBlocks())
         (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
     auto initial_candidate =
-        topology_registry.stage_adoption(observe_topology());
+        topology_registry.stage_adoption(topology::collect_topology_observations(
+            observe_topology(), amr_ctrl.tree->PartitionRank(),
+            amr_ctrl.tree->PartitionSize()));
     std::unique_ptr<StateResidencyLedger> staged_initial_ledger;
     std::vector<amr::BlockHandle> staged_initial_handles;
     const auto initial_topology = topology_registry.commit_after_success(

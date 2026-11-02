@@ -2,13 +2,38 @@
 
 ## 当前起点与状态
 
-上游 main 为 2e05e66e（v1.4.1），固定网格 CPU MPI 候选为 e43183d0；扩大实验和证据提交为 c6b0d628。本次修改只更新设计与验收计划，不代表下面的 mixed-level、迁移或 CUDA MPI 已实现。
+2026-11-03 再次 fetch 后，上游 main 仍为 2e05e66e（v1.4.1）；固定网格 CPU MPI 候选为 e43183d0，扩大实验和证据提交为 c6b0d628。本次在 MPI/scaling-16 继续实现 A1：全局拓扑身份与所有权元数据。跨 rank mixed-level 流体交换、reflux、数据迁移和 CUDA MPI 尚未实现，应用预检仍拒绝 MPI-AMR。
 
 开发、构建、测试、原始证据和 Git 发布仍只在 gpu-273312 / 150.65.181.188 的 /home/ubuntu/projects/ARCH-mpi 进行。旧 ARCH 工作区与历史实验不覆盖。现有实现达到“已有自动回归和扩展证据的 CPU 固定网格 MPI 候选”，没有达到完整 MPI 支持。
 
-已完成共享 ExecutionPreflight、查询/真实运行的一致检查、MPI ON/OFF CI，以及 1/2/4/8/16 进程扩大实验。四种 Debug/Release × MPI ON/OFF 构建、22 项相关 CTest、110 组逐位回归对照、20 项预期失败场景、629 项工具测试通过；代码 PR #25 的 10 项检查通过。扩大实验共 62 次运行、60 组逐位对照；16 进程中位计算加速比分别为二维 11.58×、三维 12.91×。这是共享单机的特定工作负载结果，不能替代 AMR、GPU、多节点或长程演化验收。
+上一轮已完成共享 ExecutionPreflight、查询/真实运行的一致检查、MPI ON/OFF CI，以及 1/2/4/8/16 进程扩大实验。四种 Debug/Release × MPI ON/OFF 构建、22 项相关 CTest、110 组逐位回归对照、20 项预期失败场景、629 项工具测试通过；代码 PR #25 的 10 项检查通过。扩大实验共 62 次运行、60 组逐位对照；16 进程中位计算加速比分别为二维 11.58×、三维 12.91×。这是共享单机的特定工作负载结果，不能替代 AMR、GPU、多节点或长程演化验收。
 
 完整证据见 [执行预检与扩大实验报告](MPI-Preflight-20261102.zh-CN.md) 及其关联 JSON。该报告中“原池和数学实现未变”描述已完成版本的事实，不是下一阶段的永久设计限制。
+
+## 本轮实现：A1 身份与所有权
+
+[TopologyIdentityRegistry](../../src/driver/runtime/TopologyIdentityRegistry.h) 继续拥有 UID、epoch 和发布事务；新增的 [同目录实现](../../src/driver/runtime/TopologyIdentityRegistry.cpp) 仅在既有拓扑边界收集逻辑叶元数据，直接由 DriverRuntime 初始化与 DriverRegrid 调用。没有新建 MPI 管理器、分配器、远端 FluidState 或数学实现。
+
+每个 rank 保存全局逻辑身份与 owner，只有本地块拥有 pool-index lowering 和 residency handle 列表。首次采用和新增叶按全局逻辑 key 排序分配 UID；owner-only 变更保留 UID、推进 epoch，本地槽重绑定不改变 UID/epoch。完整叶覆盖通过整数 sibling 折叠检查，拒绝缺口、重叠和重复身份。序列化显式使用五个 uint64 字段，owner 来自发送进程，池槽号不跨进程传输；检查 MPI count 上限及单 rank 输入错误，后者由共同归约拒绝。
+
+[五叶测试](../../tests/host/amr/test_topology_ownership.cpp) 在真实双进程中调用同一个生产收集函数，覆盖初始归属、单叶 owner 往返、粗化后的 UID 退役、本地槽重绑定、旧候选/旧绑定拒绝、单 rank 错误以及空本地叶集合。迁移与粗化在这里是**身份元数据事件**，没有搬运流体字段；注入的 finalizer 失败只验证原 registry 的本地发布不变性，尚未建立跨 rank 原子提交。空 rank 仅为元数据边界测试，现有应用的非空固定分区约束保留。
+
+[固定网格 Host 测试](../../tests/host/amr/test_mpi_fixed_grid.cpp) 改为通过生产 registry 获取身份，替换原先手工拼装 handle 的夹具；原有所有字段、species、三种状态槽和 1D/2D/3D 通信检查保留。[CI](../../.github/workflows/ci.yml) 的 MPI ON/OFF inventory 加入所有权测试，pull_request 范围同时覆盖现有 MPI 分支作为 base 的堆叠 PR，使 #26 的代码增量得到真实回归。
+
+这一版每个 rank 收集并持有 O(全局叶数) 元数据，暂存和事务候选也计入该成本；它是小案例的具体实现，未作大规模目录或性能结论。rank 间域定义仍依赖现有启动输入一致性检查。远端邻接、2:1 平衡、局部容量/迁入预留、跨 rank 成功协调及字段迁移继续属于 A2/B/C；DriverRegrid 的本地发布逻辑尚不能当作分布式重网格已完成。
+
+### 本轮验收（2026-11-03）
+
+- Release MPI ON/OFF 完整应用重新构建；启动/预检/通信/所有权共 12 项 CTest、受影响的单进程 AMR/水动力/拓扑消费者共 8 项 CTest 通过。Debug MPI ON 的 8 项及 OFF 的 3 项相关契约测试通过；本轮未重建完整 Debug 应用。
+- 复用未改的生产积分脚本，对照冻结的独立串行基线：1D 的 27 组与 2D/3D 的 28 组，共 55 组按全局坐标重建后逐位一致；积分脚本另有 10 个预期拒绝场景通过。没有放宽数值门槛，也未重新声称 16-rank 性能。
+- 工具测试 629 项通过、无跳过；架构审计、actionlint、CI inventory/结果完整性与文档链接检查通过。这里记录服务器结果；GitHub 本提交的 CI 状态以 #26 为准，不沿用 #25 的旧绿灯。
+- 原始输出、输入和日志分为两个压缩归档，全部 2,340 个文件逐一读回校验，并实际重开 HDF5；仅在归档验证后移除本轮 RAM 暂存。服务器磁盘保留 20 GiB 下限。没有删除另一对话审核的历史目录或合并 Python 环境。
+- 证据目录为 /home/ubuntu/projects/ARCH-mpi-evidence-ownership-20261103，包含 source.json、validation-summary.json、acceptance.json、JUnit、逐文件 manifest 和 archives。二进制在提交前构建，内嵌 Git 标识仍来自 25a514cf 的 dirty 工作树；source.json 记录编译时输入与二进制哈希，发布前核对代码字节一致，不能把内嵌标识当作新的提交号。
+
+| 原始证据归档 | 字节 | SHA-256 |
+| --- | --- | --- |
+| production-fixed_grid.tar.gz | 38026448 | 21ffbe813237a1a482243733a2306a09b59a52942d96d9b9a6deb83713ea1ae0 |
+| production-multidim.tar.gz | 34171923 | 82ed992d82205871f4b15b31315eb3f22d3061af102cf13c87335d6c4b5fc617 |
 
 ## 本次审核确立的约束
 
@@ -21,7 +46,7 @@
 
 ## 源码审阅发现与修改归属
 
-以下是 e43183d0 的当前限制及下一阶段设计，不是已完成能力：
+以下记录 e43183d0 的起点限制及职责归属；本轮 A1 的已实现范围见上节，其余仍为待实现设计：
 
 | 具体缺口 | 现有职责归属与拟议调整 | 必须保留的验证 |
 | --- | --- | --- |
@@ -48,7 +73,7 @@
 
 | 顺序 | 实现与直接消费者 | 通过条件 |
 | --- | --- | --- |
-| A：远端身份与所有权 | AmrTree/registry/原计划生成器；两进程五叶拓扑夹具 | 全局 UID、owner、epoch 一致，远端端点不拥有本地 FluidState；唯一覆盖、邻接和旧 handle 检查通过 |
+| A1：身份与所有权元数据（本轮实现） | 原 registry 与 DriverRuntime/DriverRegrid；真实两进程五叶元数据夹具 | UID、owner、epoch 规则一致，本地存储绑定隔离；唯一叶覆盖及旧绑定/候选检查通过。不是字段迁移验收。 |\n| A2：远端邻接（下一步） | AmrTree、Block 邻居描述及原计划生成器 | 本地/远端端点并存，邻接互反、2:1 平衡、周期双向与旧 handle 检查通过。 |
 | B：粗细面交换与 reflux | GhostExchange、原 transfer/flux 执行器与原 scheduler | 与单进程同拓扑同序运算对照逐位一致；独立粗细贡献、守恒、组分测试继续通过；周期双向和角区正确 |
 | C：迁移与提交 | PreparedRegrid、MemoryPool、TopologyTransaction、DriverRegrid | 一个细叶跨 owner 往返，accepted 字段/身份不丢失；容量、故障、stale view 与提交顺序检查通过 |
 | D：应用入口与回归 | 原 ExecutionPreflight、真实运行和现有 CI | A–C 完成后只开放明确通过的能力范围，查询与运行一致；四种构建、固定网格及受影响单进程 AMR 回归通过 |
@@ -110,7 +135,7 @@ owner 变更即使不改变叶 key 集合，也必须触发新的拓扑发布；
 | 分支 / PR | 当前职责与推进方式 |
 | --- | --- |
 | MPI/execution-preflight / #25 | 保留已验收的固定网格候选及其 CI，供现有集成审阅。必要修复仍在此分支提交；不合并 main，除非得到明确合并指令。 |
-| MPI/scaling-16 / #26 | 继续承载扩大实验、当前设计及接下来的最小案例增量。它已经包含 #25；当前本次增量只有文档，后续有代码时同步重写 PR 标题/说明以反映实际内容。 |
+| MPI/scaling-16 / #26 | 继续承载扩大实验、当前设计及接下来的最小案例增量。它已经包含 #25；本轮新增 A1 身份/所有权代码与回归，沿用 #26 并同步更新标题/说明。 |
 | codex/mpi-fixed-grid-validated-20261102 / #24 | 已被上述历史包含。2026-11-03 核对时 #24 已关闭，朋友仓库旧分支已移除；个人仓库旧引用仅作历史快照，不再推进。 |
 
 所有新提交仍同步推送双方仓库。同一修改只在一条分支实现；必要时通过正常合并带入后继分支，不对两个分支分别维护两份实现。#25 集成后，再以实际 main 状态整理 #26 的 base 和差异；不为更名增加额外并行开发线，不随意重写已审阅历史。

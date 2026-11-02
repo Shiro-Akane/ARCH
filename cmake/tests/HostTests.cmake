@@ -569,7 +569,8 @@ set_tests_properties(mpi_execution_preflight PROPERTIES TIMEOUT 300 LABELS mpi)
 
 # Exercise the existing Host owners under real 1/2/4-rank communication.
 if(ARCH_ENABLE_MPI)
-    add_executable(arch_mpi_fixed_grid tests/host/amr/test_mpi_fixed_grid.cpp)
+    add_executable(arch_mpi_fixed_grid tests/host/amr/test_mpi_fixed_grid.cpp
+        src/driver/runtime/TopologyIdentityRegistry.cpp)
     arch_configure_host_test(arch_mpi_fixed_grid)
     foreach(ranks IN ITEMS 1 2 4)
         add_test(NAME mpi_fixed_grid_${ranks}
@@ -578,4 +579,21 @@ if(ARCH_ENABLE_MPI)
         set_tests_properties(mpi_fixed_grid_${ranks} PROPERTIES
             TIMEOUT 45 PROCESSORS ${ranks} ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
     endforeach()
+endif()
+
+
+# Identity/ownership uses the same metadata collector as production startup.
+add_executable(arch_topology_ownership
+    tests/host/amr/test_topology_ownership.cpp
+    src/driver/runtime/TopologyIdentityRegistry.cpp)
+arch_configure_host_test(arch_topology_ownership)
+target_link_libraries(arch_topology_ownership PRIVATE arch_build_contract)
+add_test(NAME topology_ownership COMMAND arch_topology_ownership)
+set_tests_properties(topology_ownership PROPERTIES TIMEOUT 45 LABELS mpi)
+if(ARCH_ENABLE_MPI)
+    add_test(NAME mpi_topology_ownership_2
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_topology_ownership> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(mpi_topology_ownership_2 PROPERTIES
+        TIMEOUT 45 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
 endif()
