@@ -6,7 +6,7 @@
  */
 #include "amr/AMRControl.h"
 #include "driver/runtime/TopologyIdentityRegistry.h"
-#include "fixtures/amr/regrid_migration_fixture.h"
+#include "fixtures/amr/partitioned_topology_fixture.h"
 #if ARCH_MPI_ENABLED
 #include <mpi.h>
 #endif
@@ -35,69 +35,7 @@ void rejects(Function&& function, const char* message, const char* expected_erro
     }
     require(rejected, message);
 }
-struct Fixture {
-    SimConfig config;
-    amr::AMRControl control;
-    TopologyIdentityRegistry registry;
-    std::vector<amr::BlockHandle> handles;
-    Fixture(int dim, int rank, int size, bool periodic)
-        : control(16, dim), registry({dim, {2, 1, 1}, 2}, rank, size) {
-        config.grid.dim = dim;
-        config.grid.geometry = "cartesian";
-        config.grid.nblockx1 = 2;
-        config.grid.nblockx2 = dim >= 2 ? 1 : 0;
-        config.grid.nblockx3 = dim == 3 ? 1 : 0;
-        config.grid.x1_min = config.grid.x2_min = config.grid.x3_min = 0.;
-        config.grid.x1_max = config.grid.x2_max = config.grid.x3_max = 1.;
-        const auto boundary = periodic ? "periodic" : "outflow";
-        config.grid.x1l_boundary_type = config.grid.x1r_boundary_type = boundary;
-        config.grid.x2l_boundary_type = config.grid.x2r_boundary_type = boundary;
-        config.grid.x3l_boundary_type = config.grid.x3r_boundary_type = boundary;
-        config.amr.lrefinemin = config.amr.lrefinemax = 0;
-        control.tree->SetRootPartition(rank, size);
-        control.tree->InitRootGrid(config, 2);
-        const auto observations = [&](std::span<const int> ids) {
-            std::vector<TopologyObservation> local;
-            for (int id : ids) {
-                const auto& b = control.pool->GetBlock(id);
-                local.push_back(
-                    {id, {dim, b.level, b.logical_x1, b.logical_x2, b.logical_x3}, rank});
-            }
-            // A serial reference inside an MPI process must not call WORLD.
-            return size == 1 ? local : collect_topology_observations(local, rank, size);
-        };
-        auto initial = registry.stage_adoption(observations(control.tree->GetActiveBlocks()));
-        handles = initial.reconciliation().handles_in_observation_order;
-        registry.commit(std::move(initial));
-        for (int id : control.tree->GetActiveBlocks())
-            amr::test::seed_regrid_parent(control.pool->GetBlock(id));
-        config.amr.lrefinemax = 1;
-        auto prepared = control.tree->PrepareRegrid(config, {}, {}, [&] {
-            for (int id : control.tree->GetActiveBlocks()) {
-                auto& b = control.pool->GetBlock(id);
-                b.refine_flag = b.logical_x1 == 1 ? 1 : 0;
-            }
-        });
-        auto candidate =
-            registry.stage_reconciliation(observations(prepared.proposed_active_blocks()));
-        const auto next = candidate.reconciliation().handles_in_observation_order;
-        if (prepared.topology_changed()) {
-            prepared.BuildMigrationPlans(handles, next,
-                                         {1, registry.epoch(), candidate.reconciliation().epoch});
-            prepared.ExecuteMigration();
-            prepared.ActivateForFinalization();
-            prepared.PublishNoexcept();
-            prepared.ReleaseRetired();
-        } else
-            prepared.PublishNoChangeNoexcept();
-        registry.commit(std::move(candidate));
-        handles = next;
-        control.tree->UpdateNeighbors(config, registry.blocks());
-        control.BindActiveHandles(handles);
-        require(control.pool->GetNumActiveBlocks() == static_cast<int>(handles.size()),
-                "nonlocal fluid storage exists");
-    }
-};
+using Fixture = amr::test::PartitionedTopologyFixture;
 
 void check_case(int dim, bool periodic) {
     Fixture serial(dim, 0, 1, periodic);
@@ -170,7 +108,7 @@ void check_case(int dim, bool periodic) {
                     a.source_count == b.source_count && a.rule == b.rule,
                 "cell recipe changed across partition");
     }
-    // Populate all slots so the failure reaches remote endpoint resolution.
+    // Populate all slots; a malformed plan on one rank must reject collectively.
     for (int id : c.tree->GetActiveBlocks()) {
         auto& block = c.pool->GetBlock(id);
         block.state_next = block.fluid_state;
@@ -193,13 +131,16 @@ void check_case(int dim, bool periodic) {
         return fields;
     };
     const auto before = snapshot();
+    auto invalid_plan = plans.coarse_fine;
+    if (world_rank == 0)
+        invalid_plan.operations.front().source.handle.epoch.value += 1;
     for (const auto slot : slots) {
         rejects(
             [&] {
-                c.ghost_exchange.ExecuteCoarseFinePlan(plans.coarse_fine, c.pool, c.tree, dim, slot,
+                c.ghost_exchange.ExecuteCoarseFinePlan(invalid_plan, c.pool, c.tree, dim, slot,
                                                        distributed.handles);
             },
-            "remote AMR execution unexpectedly accepted", "coarse-fine logical endpoint is stale");
+            "stale remote AMR plan unexpectedly accepted");
         require(snapshot() == before, "rejected remote execution wrote destination");
     }
     rejects([&] { (void)c.RequireFluxTopologyPlan(2); }, "remote AMR reflux unexpectedly accepted",

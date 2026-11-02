@@ -612,3 +612,18 @@ if(ARCH_ENABLE_MPI)
     set_tests_properties(mpi_topology_neighbors_2 PROPERTIES
         TIMEOUT 45 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
 endif()
+
+# Actual coarse/fine payloads use the same Host cell recipes on the source owner.
+add_executable(arch_coarse_fine_exchange tests/host/amr/test_coarse_fine_exchange.cpp
+    src/driver/runtime/TopologyIdentityRegistry.cpp)
+arch_configure_host_test(arch_coarse_fine_exchange "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_coarse_fine_exchange PRIVATE arch_build_contract)
+add_test(NAME coarse_fine_exchange COMMAND arch_coarse_fine_exchange)
+set_tests_properties(coarse_fine_exchange PROPERTIES TIMEOUT 60 LABELS mpi)
+if(ARCH_ENABLE_MPI)
+    add_test(NAME mpi_coarse_fine_exchange_2
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_coarse_fine_exchange> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(mpi_coarse_fine_exchange_2 PROPERTIES
+        TIMEOUT 60 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
+endif()

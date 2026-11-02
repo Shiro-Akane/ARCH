@@ -288,7 +288,7 @@ jobs:
             cmake --preset cpu-release -B "build-ci/mpi/$mode" \
               -DBUILD_TESTING=ON -DARCH_ENABLE_KLU=OFF -DARCH_ENABLE_MPI="$mode" \
               -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-ci/mpi/$mode/bin"
-            targets=(ARCH arch_runtime_probe_capabilities arch_topology_ownership arch_topology_neighbors)
+            targets=(ARCH arch_runtime_probe_capabilities arch_topology_ownership arch_topology_neighbors arch_coarse_fine_exchange)
             if test "$mode" = ON; then targets+=(arch_mpi_fixed_grid); fi
             python3 tools/run_memory_guarded.py \
               --min-available-mib 1536 --max-swap-growth-mib 512 --pressure-guard \
@@ -303,7 +303,7 @@ jobs:
           for mode in OFF ON; do
             profile=mpi-off
             if test "$mode" = ON; then profile=mpi; fi
-            pattern='^(mpi_.*|topology_(ownership|neighbors)|execution_preflight_contract|runtime_probe_and_capabilities)$'
+            pattern='^(mpi_.*|topology_(ownership|neighbors)|coarse_fine_exchange|execution_preflight_contract|runtime_probe_and_capabilities)$'
             ctest --test-dir "build-ci/mpi/$mode" -R "$pattern" --show-only=json-v1 \
               > "build-ci/mpi/reports/inventory-$mode.json"
             python3 tools/check_ci_results.py --profile "$profile" \

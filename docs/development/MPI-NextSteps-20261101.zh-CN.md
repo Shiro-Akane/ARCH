@@ -2,9 +2,9 @@
 
 ## 当前起点与状态
 
-2026-11-03 再次 fetch 后，上游 main 仍为 2e05e66e（v1.4.1）；固定网格 CPU MPI 候选为 e43183d0，扩大实验和证据提交为 c6b0d628。A1 全局拓扑身份与所有权已在 55708157 完成；本次在 MPI/scaling-16 继续实现 A2：远端邻接与粗细交换计划端点。跨 rank mixed-level 流体交换、reflux、数据迁移和 CUDA MPI 尚未实现，应用预检仍拒绝 MPI-AMR。
+2026-11-03 再次 fetch 后，上游 main 仍为 2e05e66e（v1.4.1）；固定网格 CPU MPI 候选为 e43183d0，扩大实验和证据提交为 c6b0d628。A1 全局拓扑身份与所有权已在 55708157 完成，A2 远端邻接在 d7bff58e 完成。本次在 MPI/scaling-16 继续实现 B1：实际跨 rank 粗细 ghost 字段交换。B2 reflux、完整 mixed-level 时间推进、数据迁移和 CUDA MPI 尚未完成，应用预检仍拒绝 MPI-AMR。
 
-开发、构建、测试、原始证据和 Git 发布仍只在 gpu-273312 / 150.65.181.188 的 /home/ubuntu/projects/ARCH-mpi 进行。旧 ARCH 工作区与历史实验不覆盖。现有实现达到“已有自动回归和扩展证据的 CPU 固定网格 MPI 候选”，没有达到完整 MPI 支持。
+开发、构建、测试、原始证据和 Git 发布仍只在 gpu-273312 / gpu-273312-ts（当前 100.97.101.5；直连 150.65.181.202） 的 /home/ubuntu/projects/ARCH-mpi 进行。旧 ARCH 工作区与历史实验不覆盖。现有实现达到“已有自动回归和扩展证据的 CPU 固定网格 MPI 候选”，没有达到完整 MPI 支持。
 
 上一轮已完成共享 ExecutionPreflight、查询/真实运行的一致检查、MPI ON/OFF CI，以及 1/2/4/8/16 进程扩大实验。四种 Debug/Release × MPI ON/OFF 构建、22 项相关 CTest、110 组逐位回归对照、20 项预期失败场景、629 项工具测试通过；代码 PR #25 的 10 项检查通过。扩大实验共 62 次运行、60 组逐位对照；16 进程中位计算加速比分别为二维 11.58×、三维 12.91×。这是共享单机的特定工作负载结果，不能替代 AMR、GPU、多节点或长程演化验收。
 
@@ -42,7 +42,7 @@
 
 [AmrTree::UpdateNeighbors](../../src/amr/topology/AmrTree.h) 使用同一逻辑坐标查找同层、粗一层与细一层邻居。完整全局叶集合路径检查 owner、本地绑定、handle/epoch、face 2:1 覆盖和邻接互反；全部验证成功后才替换本地缓存。局部构造/回滚仍由同一实现处理尚未获得 UID 的本地记录，不另设 MPI 拓扑算法。全局叶集合本身的完整体积覆盖仍由原 registry 验证。自动分布式细化标记传播尚未实现，遇到远端邻居且需要传播时拒绝。
 
-[GhostExchange](../../src/amr/exchange/GhostExchange.h) 的原粗细计划生成器可读取远端逻辑端点，并调用原有 coarse injection / fine average 盒坐标配方和 cell-plan 编译器；公式、权重、字段顺序及容差没有修改。本地同层复制计划只绑定本地存储。固定网格现有 MPI X 面执行器从同一邻接记录核对 peer 和 epoch，保留原来的打包次序、缓冲、tag、请求与完成顺序。远端粗细流体执行和 reflux 仍在写入前拒绝，应用 MPI-AMR 预检保持关闭。
+[GhostExchange](../../src/amr/exchange/GhostExchange.h) 的原粗细计划生成器可读取远端逻辑端点，并调用原有 coarse injection / fine average 盒坐标配方和 cell-plan 编译器；公式、权重、字段顺序及容差没有修改。本地同层复制计划只绑定本地存储。固定网格现有 MPI X 面执行器从同一邻接记录核对 peer 和 epoch，保留原来的打包次序、缓冲、tag、请求与完成顺序。A2 提交时远端粗细流体执行和 reflux 均在写入前拒绝；B1 的后续扩展见下节，应用 MPI-AMR 预检仍保持关闭。
 
 [新测试](../../tests/host/amr/test_topology_neighbors.cpp) 在真实双 rank 中使用生产元数据收集、原 MemoryPool/AmrTree、原本地细化与迁移配方生成最小 mixed-level 网格；每个 rank 另构造不调用 MPI 的同拓扑串行参考。覆盖 1D/2D/3D × 周期/非周期六种几何，逐项对照邻居顺序、UID/epoch、owner、本地绑定、粗细操作及所有 cell-transfer 记录，并验证旧 epoch、2:1 违规、无效维度输入和失败后缓存保持。三个状态槽的六个原生字段与 species 均用于远端执行拒绝后的不变性检查。
 
@@ -52,7 +52,9 @@
 
 ### A2 验收记录
 
-验收运行与原始证据保存在 /home/ubuntu/projects/ARCH-mpi-evidence-neighbors-20261103/final；上级目录的开发运行已标记为被最终修订替代。- Release MPI ON/OFF 完整应用重新构建；两种 Release 配置共 31 项 CTest、两种 Debug 配置共 21 项相关 CTest 通过。Debug 本轮只重建相关测试目标，没有宣称完整 Debug 应用验收。
+验收运行与原始证据保存在 /home/ubuntu/projects/ARCH-mpi-evidence-neighbors-20261103/final；上级目录的开发运行已标记为被最终修订替代。
+
+- Release MPI ON/OFF 完整应用重新构建；两种 Release 配置共 31 项 CTest、两种 Debug 配置共 21 项相关 CTest 通过。Debug 本轮只重建相关测试目标，没有宣称完整 Debug 应用验收。
 - 复用未改的积分脚本和冻结的独立串行基线，1D 27 组及 2D/3D 28 组共 55 组全局坐标重建后逐位一致；10 项预期拒绝场景通过。没有修改物理、公式、容差或验收阈值，没有新增 16-rank 性能结论。
 - 工具测试 629 项通过、无跳过；架构审计、actionlint、CI inventory/结果完整性和文档链接检查通过。GitHub 新提交的 CI 仍须按 #26 当前 SHA 单独查看，不能沿用 A1 的成功状态。
 - 两个原始归档全部 2,340 个文件逐一读回校验，并实际重开 HDF5；仅移除已验证的本轮 RAM 暂存。归档控制脚本曾误用缺少 h5py 的系统 Python，改用原 MPI 工具链 Python 续验，先前通过的实验没有因此重跑，失败与续验记录保留。
@@ -63,6 +65,35 @@
 | --- | ---: | ---: | --- |
 | production-fixed_grid.tar.gz | 38046231 | 1549 | ca15b473358ac80ead6298dd4bbdd7c0420c03df28c7d03f1cb1da6acdce73f0 |
 | production-multidim.tar.gz | 34174145 | 791 | fb8be3f03c536741b936ed3fe97f346091a97d47dcd8312ebde7446910a92554 |
+
+## 本轮：B1 实际跨 rank 粗细 ghost 交换
+
+[GhostExchange](../../src/amr/exchange/GhostExchange.h) 仍拥有交换的准备、通信与写入顺序。原本地粗细执行中的几何 lowering、gather 和 scatter 提取到 [CoarseFineHostExecution](../../src/amr/exchange/CoarseFineHostExecution.h)，本地和远端 source owner 共用。数学叶文件没有改动；gather 的算术主体忽略空白并将暂存类型改名后，与 d7bff58e 逐 token 相同，原运算和累加顺序保留。该文件是现有 Host 配方的具体执行实现，不是新的通信或资源管理层。
+
+目的 rank 按现有计划发出源/目的逻辑端点、UID、epoch 和 face 请求；不传池索引。source owner 检查归属、互反邻接后用同一 face/cell 配方计算，只返回目标 ghost 单元的六个原生场和 species。保留原先“收集全部结果后统一写入”的原则：每个可失败的准备/分配/gather/接收解码阶段均先汇合失败状态，所有 rank 都准备成功才 scatter。MPI 调用错误中止 WORLD；普通准备错误共同退出，通信器可继续用于下一次有效调用。这不提供进程崩溃下的分布式原子恢复。
+
+首版为 CPU Cartesian 集合算子，使用当前 WORLD communicator，要求所有参与 rank 有非空本地块，在初始化线程、Host worker 已结束后按同一顺序调用。头信息核对协议、维度、species、状态槽、epoch、块布局及根域；count/displacement 检查 INT_MAX 上限。没有粗细任务的 rank 仍参加阶段汇合。当前 Alltoall 请求计数和每次临时面结果暂存服务这个小案例，尚无大规模通信、RSS 峰值或性能结论；没有分配远端 FluidState，没有改原池容量策略。
+
+[原生测试](../../tests/host/amr/test_coarse_fine_exchange.cpp) 使用与邻接测试共用的 [拓扑夹具](../../tests/fixtures/amr/partitioned_topology_fixture.h)。覆盖 1D/2D/3D、周期/非周期、非均匀和常量场、三个状态槽；本轮跨 rank 界面沿 X，不能据此宣称远端 Y/Z 面或完整棱角次序已验收。逐位比较全部字段和 species，并独立检查常量、所有非目标单元及池活动块数保持不变。空粗细工作也进入集合调用。单 rank 旧计划/handle、字段长度、无效密度、槽不一致、species 不一致和错误 owner 必须让所有 rank 在任何写入前拒绝，之后有效交换继续成功。此前“合法远端粗细执行必须拒绝”的旧结构断言改为“旧计划必须共同拒绝”，字段不变性和 reflux 拒绝检查均保留。
+
+本轮没有打开 ExecuteExchange 的非根块同层 MPI 路径，也没有接入分布式 reflux 或 scheduler；因此这只是实际粗细面算子验收，**不等同完整 ghost 棱角同步、守恒时间推进或 MPI-AMR 应用支持**。固定根网格仍走原有 X 面通信，不额外调用空粗细集合操作。下一步 B2 才让远端细面贡献进入原 FluxRegister，并闭合同层/粗细交换与 reflux 的执行顺序；随后 C 验证细叶迁移、容量预留和一致提交，D 再按证据开放入口。
+
+### B1 验收记录
+
+最终证据在 /home/ubuntu/projects/ARCH-mpi-evidence-coarse-fine-20261103/final；上级开发运行已标记被最终版本替代。重复逻辑块的原拒绝检查在复查中补回，并增加空计划也必须拒绝重复逻辑块的测试；修正期间的编译失败日志保留，未计为通过。
+
+- Release MPI ON/OFF 完整应用构建通过；Release 34 项、Debug 24 项，共 58 项原生测试通过。Debug 只重建相关测试目标。CUDA/KLU 均为 OFF。
+- 未修改的生产积分脚本对照冻结串行基线：55 组按全局坐标重建后的逐位比较、10 项预期拒绝均通过。
+- 629 项工具测试无跳过通过；架构、文档、actionlint、CI inventory/结果完整性检查通过。CI 已要求 MPI ON/OFF 必跑新粗细交换测试。A2 提交 d7bff58e 的 GitHub CI 已另行核实全部成功；B1 新提交的托管 CI 必须按其 SHA 独立查看。
+- 两个原始归档的 2,340 个文件全部读回核对哈希，并实际重开 HDF5。仅清理验证后的本轮 RAM 暂存，保留此前证据及失败日志。
+- 二进制仍带实际构建时的 d7bff58e/dirty 身份；source.json 记录二进制与构建使用的代码、测试、CI 文件哈希，native-builds.json 记录四配置测试程序哈希，发布时与最终提交逐文件核对。文档在测试后补齐，不伪称二进制已在发布提交后重建。
+- 数学叶文件、物理定义、容差和验收阈值未改；没有新 AMR/GPU/多节点性能结论。完整 mixed-level 时间推进、reflux、迁移/一致提交、GPU 及输出/重启仍待验收。
+
+| 归档 | 字节数 | 文件数 | SHA-256 |
+| --- | ---: | ---: | --- |
+| production-fixed_grid.tar.gz | 38094903 | 1549 | 94ba90f72bcbb54f834d1ba06641ad2da8646228aa12293b2d0b7b208119cfce |
+| production-multidim.tar.gz | 34187846 | 791 | fa58e8ab94e53930e1cd95fe641fd0d11ca499792cf7d7fb0bf1d0007c7d57bd |
+
 
 ## 本次审核确立的约束
 
@@ -75,7 +106,7 @@
 
 ## 源码审阅发现与修改归属
 
-以下记录 e43183d0 的起点限制及职责归属；本轮 A1 的已实现范围见上节，其余仍为待实现设计：
+以下记录 e43183d0 的起点限制及职责归属；A1/A2/B1 的已实现范围见上节，其余仍为待实现设计：
 
 | 具体缺口 | 现有职责归属与拟议调整 | 必须保留的验证 |
 | --- | --- | --- |
@@ -89,7 +120,7 @@
 
 ## 下一个可交付单元：两进程、五个叶块
 
-这是最小验收案例的设计，还没有新的通过结果。先完成 CPU Cartesian 二维、两进程、一个粗细层差、同步时间推进，不同时扩大到任意维数、层数、源项或 CUDA。
+这是完整演化与迁移案例的设计，尚未完成该案例的整体验收。A1/A2 与 B1 已由下述原生夹具分别验证元数据、邻接和粗细面交换；先闭合 CPU Cartesian 二维、两进程、一个粗细层差、同步时间推进，再扩大层数、源项或 CUDA。
 
 1. 建立 2×1 个 level-0 根块。rank 0 持有左根块，rank 1 将右根块细化为四个 level-1 叶块，共五个活动叶块。先用原生块尺寸、全周期边界，检查内部与周期接缝两处粗细交界；两个方向可以连接同一 peer，不能依赖不同 peer 来消除消息歧义。
 2. 复用已有 [重网格字段夹具](../../tests/fixtures/amr/regrid_migration_fixture.h) 与 [组分夹具](../../tests/fixtures/amr/amr_composition_test_cases.h)。传输测试覆盖带符号 ENUC 和 trace species；演化另用满足既有 EOS/可容许性条件的恒定态与周期平滑流，不能将传输标记场直接当成物理解。
@@ -103,8 +134,9 @@
 | 顺序 | 实现与直接消费者 | 通过条件 |
 | --- | --- | --- |
 | A1：身份与所有权元数据（已完成） | 原 registry 与 DriverRuntime/DriverRegrid；真实两进程五叶元数据夹具 | UID、owner、epoch 规则一致，本地存储绑定隔离；唯一叶覆盖及旧绑定/候选检查通过。不是字段迁移验收。 |
-| A2：远端邻接（本轮实现） | AmrTree、Block 邻居描述及原计划生成器 | 本地/远端端点并存，邻接互反、2:1 平衡、周期双向与旧 handle 检查通过。 |
-| B：粗细面交换与 reflux | GhostExchange、原 transfer/flux 执行器与原 scheduler | 与单进程同拓扑同序运算对照逐位一致；独立粗细贡献、守恒、组分测试继续通过；周期双向和角区正确 |
+| A2：远端邻接（已完成） | AmrTree、Block 邻居描述及原计划生成器 | 本地/远端端点并存，邻接互反、2:1 平衡、周期双向与旧 handle 检查通过。 |
+| B1：粗细 ghost 字段交换（本轮实现） | GhostExchange、原粗细 cell 配方与 Host 执行 | 实际双 rank 结果与串行逐位一致；常量、trace species、三槽、空工作、单 rank 失败不写入与恢复；限算子面交换 |
+| B2：reflux 与完整交换/推进（下一步） | 原 flux 执行器、FluxRegister、同层交换与 scheduler | 粗细贡献按原顺序汇合、守恒/组分保持原门槛；补齐非根块同层通信、棱角顺序和 accepted-step 对照 |
 | C：迁移与提交 | PreparedRegrid、MemoryPool、TopologyTransaction、DriverRegrid | 一个细叶跨 owner 往返，accepted 字段/身份不丢失；容量、故障、stale view 与提交顺序检查通过 |
 | D：应用入口与回归 | 原 ExecutionPreflight、真实运行和现有 CI | A–C 完成后只开放明确通过的能力范围，查询与运行一致；四种构建、固定网格及受影响单进程 AMR 回归通过 |
 
@@ -165,7 +197,7 @@ owner 变更即使不改变叶 key 集合，也必须触发新的拓扑发布；
 | 分支 / PR | 当前职责与推进方式 |
 | --- | --- |
 | MPI/execution-preflight / #25 | 保留已验收的固定网格候选及其 CI，供现有集成审阅。必要修复仍在此分支提交；不合并 main，除非得到明确合并指令。 |
-| MPI/scaling-16 / #26 | 继续承载扩大实验、当前设计及接下来的最小案例增量。它已经包含 #25；本轮在 A1 身份/所有权之后增加 A2 远端邻接与计划回归，沿用 #26 并同步更新标题/说明。 |
+| MPI/scaling-16 / #26 | 继续承载扩大实验、当前设计及接下来的最小案例增量。它已经包含 #25；本轮在 A1 身份/所有权、A2 远端邻接之后增加 B1 实际粗细交换，沿用 #26 并同步更新标题/说明。 |
 | codex/mpi-fixed-grid-validated-20261102 / #24 | 已被上述历史包含。2026-11-03 核对时 #24 已关闭，朋友仓库旧分支已移除；个人仓库旧引用仅作历史快照，不再推进。 |
 
 所有新提交仍同步推送双方仓库。同一修改只在一条分支实现；必要时通过正常合并带入后继分支，不对两个分支分别维护两份实现。#25 集成后，再以实际 main 状态整理 #26 的 base 和差异；不为更名增加额外并行开发线，不随意重写已审阅历史。
