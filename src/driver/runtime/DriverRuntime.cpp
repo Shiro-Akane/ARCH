@@ -314,6 +314,7 @@ void DriverRuntime::initialize_topology()
         topology_registry.stage_adoption(topology::collect_topology_observations(
             observe_topology(), amr_ctrl.tree->PartitionRank(),
             amr_ctrl.tree->PartitionSize()));
+    amr_ctrl.tree->UpdateNeighbors(config, initial_candidate.blocks());
     std::unique_ptr<StateResidencyLedger> staged_initial_ledger;
     std::vector<amr::BlockHandle> staged_initial_handles;
     const auto initial_topology = topology_registry.commit_after_success(

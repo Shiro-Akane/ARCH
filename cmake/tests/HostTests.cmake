@@ -597,3 +597,18 @@ if(ARCH_ENABLE_MPI)
     set_tests_properties(mpi_topology_ownership_2 PROPERTIES
         TIMEOUT 45 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
 endif()
+
+# The same native topology and recipe owners cover mixed-level remote neighbors.
+add_executable(arch_topology_neighbors tests/host/amr/test_topology_neighbors.cpp
+    src/driver/runtime/TopologyIdentityRegistry.cpp)
+arch_configure_host_test(arch_topology_neighbors "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_topology_neighbors PRIVATE arch_build_contract)
+add_test(NAME topology_neighbors COMMAND arch_topology_neighbors)
+set_tests_properties(topology_neighbors PROPERTIES TIMEOUT 45 LABELS mpi)
+if(ARCH_ENABLE_MPI)
+    add_test(NAME mpi_topology_neighbors_2
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_topology_neighbors> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(mpi_topology_neighbors_2 PROPERTIES
+        TIMEOUT 45 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
+endif()

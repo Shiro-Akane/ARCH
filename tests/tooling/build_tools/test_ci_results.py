@@ -25,9 +25,9 @@ from check_ci_results import (CPU_COVERAGE_ANCHORS, DRIVER_CUDA_COVERAGE_ANCHORS
 class CiResultTests(unittest.TestCase):
     def test_mpi_profiles_require_launch_policy_and_every_rank_count(self):
         off = {"mpi_execution_preflight", "execution_preflight_contract",
-               "runtime_probe_and_capabilities", "topology_ownership"}
+               "runtime_probe_and_capabilities", "topology_ownership", "topology_neighbors"}
         on = off | {"mpi_fixed_grid_1", "mpi_fixed_grid_2", "mpi_fixed_grid_4",
-                    "mpi_topology_ownership_2"}
+                    "mpi_topology_ownership_2", "mpi_topology_neighbors_2"}
         for profile, names in (("mpi-off", off), ("mpi", on)):
             self.assertEqual(check_inventory(self.inventory(names), profile), names)
             for required in names:

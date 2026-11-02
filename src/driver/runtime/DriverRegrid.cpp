@@ -176,6 +176,7 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only)
         topology::collect_topology_observations(observe_blocks(prepared.proposed_active_blocks()),
             amr_ctrl.tree->PartitionRank(), amr_ctrl.tree->PartitionSize()));
     const auto& proposed = topology_candidate.reconciliation();
+    const auto proposed_blocks = topology_candidate.blocks();
     if (proposed.topology_changed != prepared.topology_changed())
         throw std::logic_error(
             "staged AMR topology disagrees with identity reconciliation");
@@ -397,6 +398,7 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only)
                                     throw std::logic_error(
                                         "AMR finalizer scope drifted");
                                 prepared.ActivateForFinalization();
+                                amr_ctrl.tree->UpdateNeighbors(config, proposed_blocks);
                                 StageExecutionContext staged_context{
                                     ExecutionSide::Host, *payload.ledger,
                                     scheduler_clock};

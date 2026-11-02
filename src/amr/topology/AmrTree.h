@@ -537,7 +537,14 @@ public:
                 for (int f = 0; f < 6; ++f) {
                     if (b.face_neighbors[f].count == 0) continue;
                     for (int n = 0; n < b.face_neighbors[f].count; ++n) {
-                        int n_id = b.face_neighbors[f].ids[n];
+                        const auto& neighbor = b.face_neighbors[f].blocks[n];
+                        if (neighbor.pool_index < 0) {
+                            if (b.refine_flag != 0)
+                                throw std::logic_error(
+                                    "distributed refinement propagation is not implemented");
+                            continue; // Fixed-grid no-change pass.
+                        }
+                        int n_id = neighbor.pool_index;
                         Block& nb = pool->GetBlock(n_id);
                         // Merging nb would lower it one more level.  If that
                         // would leave a gap larger than one level, keep the
@@ -1115,112 +1122,161 @@ public:
         return true;
     }
 
+    /** Refresh local topology during construction/regrid before UID publication. */
     void UpdateNeighbors(const SimConfig& config) {
-        const std::array<int, 3> root_extent = {
-            std::max(1, root_grid.nblockx1),
-            std::max(1, root_grid.nblockx2),
-            std::max(1, root_grid.nblockx3)
+        std::vector<BlockTopology> local;
+        local.reserve(active_blocks.size());
+        for (int id : active_blocks) {
+            const auto& block = pool->GetBlock(id);
+            local.push_back(
+                {{root_grid.dim, block.level, block.logical_x1, block.logical_x2, block.logical_x3},
+                 {},
+                 partition_rank_,
+                 id});
+        }
+        UpdateNeighborsImpl(config, local, false);
+    }
+
+    /** Bind the registry's complete leaf set without allocating remote fields.
+     * Validate every rank's face graph before replacing any local cache.
+     */
+    void UpdateNeighbors(const SimConfig& config, std::span<const BlockTopology> leaves) {
+        UpdateNeighborsImpl(config, leaves, true);
+    }
+
+  private:
+    void UpdateNeighborsImpl(const SimConfig& config, std::span<const BlockTopology> leaves,
+                             bool complete) {
+        const int dim = root_grid.dim;
+        if (dim < 1 || dim > 3)
+            throw std::invalid_argument("neighbor topology requires one to three dimensions");
+        const std::array<std::uint64_t, 3> roots{
+            static_cast<std::uint64_t>(std::max(1, root_grid.nblockx1)),
+            static_cast<std::uint64_t>(std::max(1, root_grid.nblockx2)),
+            static_cast<std::uint64_t>(std::max(1, root_grid.nblockx3))};
+        const std::array<bool, 3> periodic{
+            config.grid.x1l_boundary_type == "periodic" &&
+                config.grid.x1r_boundary_type == "periodic",
+            dim >= 2 && config.grid.x2l_boundary_type == "periodic" &&
+                config.grid.x2r_boundary_type == "periodic",
+            dim == 3 && config.grid.x3l_boundary_type == "periodic" &&
+                config.grid.x3r_boundary_type == "periodic"};
+        std::map<LogicalBlockKey, BlockTopology> ordered;
+        const std::set<int> active_slots(active_blocks.begin(), active_blocks.end());
+        std::set<int> local_slots;
+        std::set<BlockHandle> handles;
+        TopologyEpoch epoch{};
+        for (const auto& leaf : leaves) {
+            const auto& key = leaf.logical;
+            const bool local = leaf.owner_rank == partition_rank_;
+            if (key.dimension != dim || key.level < 0 || key.level >= 32 || leaf.owner_rank < 0 ||
+                leaf.owner_rank >= partition_size_ ||
+                (local ? leaf.pool_index < 0 : leaf.pool_index != -1) ||
+                !ordered.emplace(key, leaf).second)
+                throw std::invalid_argument("invalid or duplicate neighbor topology leaf");
+            const std::array<std::uint32_t, 3> xyz{key.logical_x1, key.logical_x2, key.logical_x3};
+            for (int axis = 0; axis < 3; ++axis)
+                if (xyz[axis] >= (roots[axis] << key.level) || (axis >= dim && xyz[axis] != 0))
+                    throw std::invalid_argument("neighbor leaf outside global domain");
+            if (complete) {
+                if (!is_valid(leaf.handle) || !handles.insert(leaf.handle).second ||
+                    (is_valid(epoch) && epoch != leaf.handle.epoch))
+                    throw std::invalid_argument("neighbor topology has stale or duplicate handles");
+                epoch = leaf.handle.epoch;
+            }
+            if (local) {
+                if (!local_slots.insert(leaf.pool_index).second ||
+                    !active_slots.contains(leaf.pool_index))
+                    throw std::invalid_argument("neighbor leaf has no unique local storage");
+                const auto& block = pool->GetBlock(leaf.pool_index);
+                if (key != LogicalBlockKey{dim, block.level, block.logical_x1, block.logical_x2,
+                                           block.logical_x3})
+                    throw std::invalid_argument("neighbor leaf local binding drifted");
+            }
+        }
+        if (local_slots.size() != active_blocks.size())
+            throw std::invalid_argument("neighbor topology omits local storage");
+        using Faces = std::array<Block::FaceNeighbors, 6>;
+        std::map<LogicalBlockKey, Faces> adjacency;
+        const auto find = [&](int level,
+                              const std::array<std::int64_t, 3>& xyz) -> const BlockTopology* {
+            if (level < 0 || level >= 32)
+                return nullptr;
+            for (auto coordinate : xyz)
+                if (coordinate < 0 || coordinate > std::numeric_limits<std::uint32_t>::max())
+                    return nullptr;
+            const LogicalBlockKey key{dim, level, static_cast<std::uint32_t>(xyz[0]),
+                                      static_cast<std::uint32_t>(xyz[1]),
+                                      static_cast<std::uint32_t>(xyz[2])};
+            const auto found = ordered.find(key);
+            return found == ordered.end() ? nullptr : &found->second;
         };
-        const std::array<bool, 3> periodic = {
-            config.grid.x1l_boundary_type == "periodic" && config.grid.x1r_boundary_type == "periodic",
-            root_grid.dim >= 2 && config.grid.x2l_boundary_type == "periodic" && config.grid.x2r_boundary_type == "periodic",
-            root_grid.dim == 3 && config.grid.x3l_boundary_type == "periodic" && config.grid.x3r_boundary_type == "periodic"
-        };
-
-        for (int block_id : active_blocks) {
-            Block& b = pool->GetBlock(block_id);
-            int offsets[6][3] = {
-                {-1, 0, 0}, {1, 0, 0},
-                {0, -1, 0}, {0, 1, 0},
-                {0, 0, -1}, {0, 0, 1}
-            };
-
-            for (int f = 0; f < 6; ++f) {
-                b.face_neighbors[f].count = 0;
-                b.face_neighbors[f].level_diff = 0;
-                b.grid.amr_coarse_fine_face[f] = false;
-
-                if (root_grid.dim < 2 && (f == 2 || f == 3)) continue;
-                if (root_grid.dim < 3 && (f == 4 || f == 5)) continue;
-
-                int nx = static_cast<int>(b.logical_x1) + offsets[f][0];
-                int ny = static_cast<int>(b.logical_x2) + offsets[f][1];
-                int nz = static_cast<int>(b.logical_x3) + offsets[f][2];
-
-                // Convert a face coordinate at this level to the equivalent
-                // periodic coordinate before every same/coarse/fine lookup.
-                // Without this, each edge patch applies a local boundary
-                // condition instead of exchanging with the patch across the
-                // global periodic seam, breaking flux conservation.
-                const int extent_x = root_extent[0] << b.level;
-                const int extent_y = root_extent[1] << b.level;
-                const int extent_z = root_extent[2] << b.level;
-                auto wrap_coordinate = [](int value, int extent, bool is_periodic, int& wrapped) {
-                    if (value >= 0 && value < extent) {
-                        wrapped = value;
-                        return true;
-                    }
-                    if (!is_periodic) return false;
-                    wrapped = value % extent;
-                    if (wrapped < 0) wrapped += extent;
-                    return true;
-                };
-                if (!wrap_coordinate(nx, extent_x, periodic[0], nx) ||
-                    !wrap_coordinate(ny, extent_y, periodic[1], ny) ||
-                    !wrap_coordinate(nz, extent_z, periodic[2], nz)) continue;
-
-                // 1. Try same level
-                int n_id = FindBlock(b.level, nx, ny, nz);
-                if (n_id != -1) {
-                    b.face_neighbors[f].ids[0] = n_id;
-                    b.face_neighbors[f].count = 1;
-                    b.face_neighbors[f].level_diff = 0;
+        for (const auto& [key, leaf] : ordered) {
+            (void)leaf;
+            auto& faces = adjacency[key];
+            for (int face = 0; face < 2 * dim; ++face) {
+                const int axis = face / 2;
+                std::array<std::int64_t, 3> xyz{key.logical_x1, key.logical_x2, key.logical_x3};
+                xyz[axis] += (face & 1) ? 1 : -1;
+                const auto extent = static_cast<std::int64_t>(roots[axis] << key.level);
+                if (xyz[axis] < 0 || xyz[axis] >= extent) {
+                    if (!periodic[axis])
+                        continue;
+                    xyz[axis] = (xyz[axis] + extent) % extent;
+                }
+                auto& neighbors = faces[face];
+                if (const auto* same = find(key.level, xyz)) {
+                    neighbors.blocks[0] = *same;
+                    neighbors.count = 1;
                     continue;
                 }
-
-                // 2. Try coarse level
-                int cx = nx >> 1;
-                int cy = ny >> 1;
-                int cz = nz >> 1;
-                n_id = FindBlock(b.level - 1, cx, cy, cz);
-                if (n_id != -1) {
-                    b.face_neighbors[f].ids[0] = n_id;
-                    b.face_neighbors[f].count = 1;
-                    b.face_neighbors[f].level_diff = -1;
-                    b.grid.amr_coarse_fine_face[f] = true;
+                std::array<std::int64_t, 3> coarse{xyz[0] >> 1, xyz[1] >> 1, xyz[2] >> 1};
+                if (const auto* parent = find(key.level - 1, coarse)) {
+                    neighbors.blocks[0] = *parent;
+                    neighbors.count = 1;
+                    neighbors.level_diff = -1;
                     continue;
                 }
-
-                // 3. Try fine level
-                int fx = nx << 1;
-                int fy = ny << 1;
-                int fz = nz << 1;
-
-                // A face can have up to 4 fine neighbors
-                int f_count = 0;
-                int dx_start = (f == 0) ? 1 : 0;
-                int dy_start = (f == 2) ? 1 : 0;
-                int dz_start = (f == 4) ? 1 : 0;
-
-                int len_x = (f == 0 || f == 1) ? 1 : 2;
-                int len_y = (f == 2 || f == 3) ? 1 : (root_grid.dim >= 2 ? 2 : 1);
-                int len_z = (f == 4 || f == 5) ? 1 : (root_grid.dim == 3 ? 2 : 1);
-
-                for (int dz = dz_start; dz < dz_start + len_z; ++dz) {
-                    for (int dy = dy_start; dy < dy_start + len_y; ++dy) {
-                        for (int dx = dx_start; dx < dx_start + len_x; ++dx) {
-                            n_id = FindBlock(b.level + 1, fx + dx, fy + dy, fz + dz);
-                            if (n_id != -1) {
-                                b.face_neighbors[f].ids[f_count++] = n_id;
-                            }
-                        }
+                const int starts[3]{face == 0 ? 1 : 0, face == 2 ? 1 : 0, face == 4 ? 1 : 0};
+                const int lengths[3]{axis == 0 ? 1 : 2, axis == 1 ? 1 : (dim >= 2 ? 2 : 1),
+                                     axis == 2 ? 1 : (dim == 3 ? 2 : 1)};
+                for (int z = starts[2]; z < starts[2] + lengths[2]; ++z)
+                    for (int y = starts[1]; y < starts[1] + lengths[1]; ++y)
+                        for (int x = starts[0]; x < starts[0] + lengths[0]; ++x)
+                            if (const auto* child =
+                                    find(key.level + 1,
+                                         {2 * xyz[0] + x, 2 * xyz[1] + y, 2 * xyz[2] + z}))
+                                neighbors.blocks[neighbors.count++] = *child;
+                if (neighbors.count)
+                    neighbors.level_diff = 1;
+                if (complete && neighbors.count != (1 << (dim - 1)))
+                    throw std::invalid_argument(
+                        "neighbor topology has a gap or violates face 2:1 balance");
+            }
+        }
+        if (complete) {
+            for (const auto& [key, faces] : adjacency)
+                for (int face = 0; face < 2 * dim; ++face) {
+                    const auto& neighbors = faces[face];
+                    for (int n = 0; n < neighbors.count; ++n) {
+                        const auto& back = adjacency.at(neighbors.blocks[n].logical)[face ^ 1];
+                        bool reciprocal = false;
+                        for (int b = 0; b < back.count; ++b)
+                            reciprocal |= back.blocks[b].logical == key;
+                        if (!reciprocal || back.level_diff != -neighbors.level_diff)
+                            throw std::invalid_argument("neighbor topology is not reciprocal");
                     }
                 }
-                if (f_count > 0) {
-                    b.face_neighbors[f].count = f_count;
-                    b.face_neighbors[f].level_diff = 1;
-                    b.grid.amr_coarse_fine_face[f] = true;
-                }
+        }
+        // All validation/allocation completes before changing existing caches.
+        for (const auto& [key, leaf] : ordered) {
+            if (leaf.owner_rank != partition_rank_)
+                continue;
+            auto& block = pool->GetBlock(leaf.pool_index);
+            const auto& faces = adjacency.at(key);
+            for (int face = 0; face < 6; ++face) {
+                block.face_neighbors[face] = faces[face];
+                block.grid.amr_coarse_fine_face[face] = faces[face].level_diff != 0;
             }
         }
     }

@@ -412,12 +412,16 @@ inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
                     continue;
                 }
                 if (neighbours.level_diff == 0) continue;
+                for (int n = 0; n < neighbours.count; ++n)
+                    if (neighbours.blocks[n].pool_index < 0)
+                        throw std::invalid_argument(
+                            "remote AMR reflux execution is not implemented");
                 if (neighbours.level_diff != -1
                     && neighbours.level_diff != 1)
                     throw std::invalid_argument(
                         "invalid coarse-fine flux level relation");
-                if (neighbours.level_diff == -1
-                    && (neighbours.count != 1 || neighbours.ids[0] < 0))
+                if (neighbours.level_diff == -1 &&
+                    (neighbours.count != 1 || neighbours.blocks[0].pool_index < 0))
                     throw std::invalid_argument(
                         "fine flux has no unique coarse endpoint");
                 if (neighbours.level_diff == 1) {
@@ -427,11 +431,11 @@ inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
                             "coarse flux has an incomplete fine face");
                     for (int neighbour = 0;
                          neighbour < neighbours.count; ++neighbour) {
-                        const auto found = active_index.find(
-                            neighbours.ids[neighbour]);
-                        if (found == active_index.end()
-                            || pool.GetBlock(neighbours.ids[neighbour]).level
-                                != block.level + 1)
+                        const auto found =
+                            active_index.find(neighbours.blocks[neighbour].pool_index);
+                        if (found == active_index.end() ||
+                            pool.GetBlock(neighbours.blocks[neighbour].pool_index).level !=
+                                block.level + 1)
                             throw std::invalid_argument(
                                 "coarse flux fine endpoint drifted");
                     }
@@ -463,7 +467,7 @@ inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
                                 {1, 1, 1}};
 
                             if (neighbours.level_diff == -1) {
-                                const int coarse_id = neighbours.ids[0];
+                                const int coarse_id = neighbours.blocks[0].pool_index;
                                 const auto coarse_index = active_index.find(
                                     coarse_id);
                                 if (coarse_index == active_index.end())

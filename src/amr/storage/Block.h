@@ -25,6 +25,7 @@
 
 #include "amr/transfer/ConservativeRestriction.h"
 #include "amr/topology/Morton.h"
+#include "amr/topology/BlockHandle.h"
 #include "amr/transfer/RegridTransferMath.h"
 
 #include "data/FluidState.h"
@@ -66,7 +67,7 @@ struct Block {
     struct FaceNeighbors {
         int count = 0;
         int level_diff = 0; // -1: coarse, 0: same, 1: fine
-        int ids[4] = {-1, -1, -1, -1};
+        BlockTopology blocks[4]{};
     };
     FaceNeighbors face_neighbors[6];
 
@@ -90,7 +91,8 @@ struct Block {
         for (int i = 0; i < 6; ++i) {
             face_neighbors[i].count = 0;
             face_neighbors[i].level_diff = 0;
-            for (int j = 0; j < 4; ++j) face_neighbors[i].ids[j] = -1;
+            for (auto& neighbor : face_neighbors[i].blocks)
+                neighbor = {};
         }
         active = true;
         refine_flag = 0;

@@ -59,6 +59,7 @@ void test_exchange(int rank, int size, int dim, int periodic_mask)
     const auto handles = candidate.reconciliation().handles_in_observation_order;
     registry.commit(std::move(candidate));
     registry.validate_committed_snapshot(local);
+    control.tree->UpdateNeighbors(config, registry.blocks());
     control.BindActiveHandles(handles);
     const std::array<FluidState amr::Block::*, 3> slots{
         &amr::Block::fluid_state, &amr::Block::state_next, &amr::Block::state_scratch};

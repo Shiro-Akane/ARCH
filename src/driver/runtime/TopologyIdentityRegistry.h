@@ -28,15 +28,7 @@
 
 namespace arch::topology {
 
-struct LogicalBlockIdentity {
-    int dimension = 0;
-    int level = 0;
-    std::uint32_t logical_x1 = 0;
-    std::uint32_t logical_x2 = 0;
-    std::uint32_t logical_x3 = 0;
-    friend constexpr auto operator<=>(const LogicalBlockIdentity&,
-                                      const LogicalBlockIdentity&) = default;
-};
+using LogicalBlockIdentity = amr::LogicalBlockKey;
 
 struct TopologyDomainBounds {
     int dimension = 0;
@@ -92,6 +84,11 @@ public:
                 throw std::logic_error(
                     "topology candidate is no longer inspectable");
             return result_;
+        }
+
+        std::vector<amr::BlockTopology> blocks() const {
+            (void)reconciliation(); // Reject moved/consumed candidates.
+            return describe_blocks(handles_, owners_, lowering_);
         }
 
     private:
@@ -276,6 +273,11 @@ public:
                     "committed local topology snapshot is not bijective");
             }
         }
+    }
+
+    std::vector<amr::BlockTopology> blocks() const {
+        require_adopted();
+        return describe_blocks(active_handles_, owners_, pool_lowering_);
     }
 
     int owner_for(LogicalBlockIdentity identity) const
@@ -536,6 +538,23 @@ private:
             if (current->first != incoming->first) return true;
         }
         return false;
+    }
+
+    static std::vector<amr::BlockTopology>
+    describe_blocks(const std::map<LogicalBlockIdentity, amr::BlockHandle>& handles,
+                    const std::map<LogicalBlockIdentity, int>& owners,
+                    const std::map<int, amr::BlockHandle>& lowering) {
+        std::map<amr::BlockHandle, int> local_slots;
+        for (const auto& [slot, handle] : lowering)
+            local_slots.emplace(handle, slot);
+        std::vector<amr::BlockTopology> result;
+        result.reserve(handles.size());
+        for (const auto& [logical, handle] : handles) {
+            const auto local = local_slots.find(handle);
+            result.push_back({logical, handle, owners.at(logical),
+                              local == local_slots.end() ? -1 : local->second});
+        }
+        return result;
     }
 
     static std::map<LogicalBlockIdentity, amr::BlockHandle> build_handles(

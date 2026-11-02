@@ -37,16 +37,6 @@ enum class ExchangeFace : std::uint8_t {
 
 enum class ExchangePhaseId : std::uint8_t { X = 0, Y = 1, Z = 2 };
 
-struct LogicalBlockKey {
-    int dimension = 0;
-    int level = 0;
-    std::uint32_t logical_x1 = 0;
-    std::uint32_t logical_x2 = 0;
-    std::uint32_t logical_x3 = 0;
-    friend constexpr auto operator<=>(const LogicalBlockKey&,
-                                      const LogicalBlockKey&) = default;
-};
-
 struct ExchangeEndpoint {
     LogicalBlockKey logical{};
     BlockHandle handle{};
