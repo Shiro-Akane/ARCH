@@ -142,6 +142,8 @@ struct ExecutionRequirements
     int required_ghost_depth;
     StateLayoutRequirement state_layout;
     BoundaryFeatureMask boundary_features;
+    // Launch topology is supplied by the caller, independent of physics input.
+    int mpi_ranks = 1;
 };
 
 } // namespace arch::dispatch

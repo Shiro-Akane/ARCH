@@ -17,7 +17,9 @@ struct ExecutionPreflight {
 };
 
 // SetupChecked and the scoped case boundary selection belong to the caller.
+// mpi_ranks is the intended launch size (query) or communicator size (Run).
 // Only NSE auto selection modifies effective; no runtime resources are owned.
 ExecutionPreflight ResolveExecutionPreflight(
-    SimConfig& effective, const SpeciesManager& specs, StartupOrder& startup_order);
+    SimConfig& effective, const SpeciesManager& specs, StartupOrder& startup_order,
+    int mpi_ranks = 1);
 } // namespace arch::dispatch

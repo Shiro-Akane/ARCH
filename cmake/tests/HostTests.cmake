@@ -560,6 +560,13 @@ if(WIN32)
     set_tests_properties(windows_config_and_read_operations PROPERTIES TIMEOUT 120)
 endif()
 
+add_test(NAME mpi_execution_preflight
+    COMMAND ${Python3_EXECUTABLE} -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/api/inspection/test_mpi_preflight.py"
+        $<TARGET_FILE:ARCH> "${CMAKE_CURRENT_SOURCE_DIR}"
+        $<IF:$<BOOL:${ARCH_ENABLE_MPI}>,ON,OFF> "${MPIEXEC_EXECUTABLE}")
+set_tests_properties(mpi_execution_preflight PROPERTIES TIMEOUT 300 LABELS mpi)
+
 # Exercise the existing Host owners under real 1/2/4-rank communication.
 if(ARCH_ENABLE_MPI)
     add_executable(arch_mpi_fixed_grid tests/host/amr/test_mpi_fixed_grid.cpp)
@@ -569,6 +576,6 @@ if(ARCH_ENABLE_MPI)
             COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${ranks}
                 ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_mpi_fixed_grid> ${MPIEXEC_POSTFLAGS})
         set_tests_properties(mpi_fixed_grid_${ranks} PROPERTIES
-            TIMEOUT 45 PROCESSORS ${ranks} ENVIRONMENT "OMP_NUM_THREADS=1")
+            TIMEOUT 45 PROCESSORS ${ranks} ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
     endforeach()
 endif()

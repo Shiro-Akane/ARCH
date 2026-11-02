@@ -814,6 +814,30 @@ void test_native_probe()
 #endif
 }
 
+void test_mpi_backend_selection()
+{
+    auto requirements = supported_requirements();
+    requirements.mpi_ranks = 4;
+    requirements.root_blocks_x1 = 7;
+    requirements.uniform_multiblock = true;
+    // Even an available CUDA device must not select an unsupported MPI backend.
+    const auto support = query_support(supported_plan(), requirements, available());
+    expect(support.cpu_supported && !support.cuda_supported
+        && support.cuda_code == BackendCapabilityCode::MpiRequiresCpu,
+        "MPI capability is independent of device availability");
+    const auto automatic = resolve_backend(ComputeBackend::Auto, support,
+        available(), StartupPhase::BeforeConstruction);
+    expect(automatic.resolved_backend == ComputeBackend::Cpu
+        && automatic.fallback_reason == "MPI multi-rank execution requires CPU",
+        "Auto explains the multi-rank CPU selection");
+    bool rejected = false;
+    try {
+        (void)resolve_backend(ComputeBackend::Cuda, support, available(),
+                             StartupPhase::BeforeConstruction);
+    } catch (const std::runtime_error&) { rejected = true; }
+    expect(rejected, "explicit CUDA must reject multi-rank execution");
+}
+
 void test_curvilinear_large_passive_capabilities()
 {
     auto plan = supported_plan();
@@ -851,6 +875,7 @@ int main()
     test_code_image_contract();
     test_all_requirement_codes();
     test_curvilinear_large_passive_capabilities();
+    test_mpi_backend_selection();
     test_resolver_and_startup_order();
     test_native_probe();
     std::cout << "runtime_probe_and_capabilities: ok\n";

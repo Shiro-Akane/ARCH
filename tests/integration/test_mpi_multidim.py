@@ -146,7 +146,7 @@ def main():
                     env=env, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, timeout=30)
             assert result.returncode != 0, "unsupported input was accepted"
             expected = ("MPI global max_blocks is smaller than the root mesh"
-                        if name == "pool-smaller-than-global-grid" else "MPI M1 requires")
+                        if name == "pool-smaller-than-global-grid" else "MPI requires built-in boundaries and paired periodic faces")
             assert expected in (lane / "run.log").read_text(), "failure was not the intended guard"
             assert not list(lane.rglob("*.h5")), "rejected input emitted scientific files"
             report["rejections"].append({"case": name, "exit_code": result.returncode})

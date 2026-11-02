@@ -24,7 +24,7 @@ Json response_envelope(const PreviewRequest& request)
         {"kind", "execution-preflight"}, {"version", "1"}, {"status", "error"},
         {"identity", Json::object({{"caseId", request.case_id},
             {"configRevision", core::string_sha256(request.config_text)},
-            {"requestId", request.request_id}})},
+            {"requestId", request.request_id}, {"mpiRanks", request.mpi_ranks}})},
         {"data", Json()},
         {"execution", Json::object({{"meshConstruction", "not_executed"},
             {"timeStepping", "not_executed"}})},
@@ -84,13 +84,14 @@ PreviewResponse CheckExecutionPreflight(const PreviewRequest& request)
             std::move(boundaries), effective, prepared.species());
         dispatch::StartupOrder order;
         const auto ready = dispatch::ResolveExecutionPreflight(
-            effective, prepared.species(), order);
+            effective, prepared.species(), order, request.mpi_ranks);
         out["data"] = Json::object({
             {"requestedBackend", backend_name(ready.backend.requested_backend)},
             {"resolvedBackend", backend_name(ready.backend.resolved_backend)},
             {"linearSolver", std::string(dispatch::canonical_policy_name<
                 dispatch::LinearSolverPolicies>(ready.plan.linear_solver))},
-            {"fallbackReason", ready.backend.fallback_reason}});
+            {"fallbackReason", ready.backend.fallback_reason},
+            {"mpiEnabled", static_cast<bool>(ARCH_MPI_ENABLED)}});
         out["status"] = "ok";
         code = 0;
     } catch (const std::exception& error) {

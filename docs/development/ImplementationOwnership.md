@@ -19,6 +19,7 @@ Current verification, source identities and costs are maintained in the
 
 | Responsibility | Single mathematical/control authority | Allowed adapters / consumers |
 |---|---|---|
+| MPI launch policy and backend selection | src/driver/dispatch/ExecutionPreflight.cpp and existing BackendCapabilities | --check-run supplies the planned rank count; Dispatch supplies MPI_COMM_WORLD size. One preflight rejects unsupported topology/sources/checkpoint/boundaries and resolves Auto before Dispatch acquires logs, output or mesh. Main retains MPI lifetime and cross-rank input identity. The existing log_dir fallback is unchanged. |
 | Policy names, factory routes, capabilities | `src/driver/dispatch/PolicyDescriptor.h`, `BackendCapabilities.h` | Resolve configuration names and backend support once; burn, diffusion and gravity factories consume resolved policy IDs. CPU dispatch TUs and generated CUDA wrappers bind implementations without a second string-selection path. |
 | Compiled CUDA image compatibility | `cmake/cuda/CudaCodeImages.cmake` resolves the configured image set; `RuntimeProbe.cpp::cuda_image_compatible` checks ordinary SASS/PTX eligibility | Image metadata is private to the probe translation unit. Descriptors retain genuine feature requirements, not a local GPU-model floor. Existing startup resolver owns strict CUDA rejection / pre-construction Auto fallback. |
 | AMR selected fields and indicator | `src/amr/refinement/RefinementIndicatorMath.h` | `AmrTree.h`, `cuda/amr/RefinementIndicators.cu` |

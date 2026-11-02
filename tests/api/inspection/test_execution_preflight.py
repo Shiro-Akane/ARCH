@@ -36,7 +36,8 @@ class ExecutionPreflight(unittest.TestCase):
         self.assertEqual(before, sorted(self.cwd.rglob('*')), 'query created an output file')
         out = json.loads(process.stdout)
         self.assertEqual(out['identity'], dict(caseId=case, requestId='run-preparation',
-                                              configRevision=hashlib.sha256(payload).hexdigest()))
+                                              configRevision=hashlib.sha256(payload).hexdigest(),
+                                              **({'mpiRanks': 1} if command == '--check-run' else {})))
         if command == '--check-run':
             self.assertEqual((out['schemaVersion'], out['version'], out['kind']),
                              ('1.0', '1', 'execution-preflight'))
@@ -51,7 +52,7 @@ class ExecutionPreflight(unittest.TestCase):
     def test_cpu_and_exact_crlf_identity(self):
         for text in [BASE, BASE.replace('\n', '\r\n')]:
             out = self.call(text)
-            self.assertEqual(out['data'], dict(requestedBackend='cpu', resolvedBackend='cpu',
+            self.assertEqual({k: v for k, v in out['data'].items() if k != 'mpiEnabled'}, dict(requestedBackend='cpu', resolvedBackend='cpu',
                                               linearSolver='none', fallbackReason=''))
 
     def test_setup_validation_and_unknown_case(self):
@@ -85,7 +86,7 @@ class ExecutionPreflight(unittest.TestCase):
         self.assertEqual(process.returncode, 3)
         out = json.loads(process.stdout)
         self.assertEqual(out['identity'], dict(caseId='Sod', requestId='invalid-config',
-            configRevision=hashlib.sha256(payload).hexdigest()))
+            configRevision=hashlib.sha256(payload).hexdigest(), mpiRanks=1))
         self.assertIsNone(out['data'])
 
     # Windows creates wide-character argv; only POSIX exposes raw invalid bytes.
@@ -97,7 +98,7 @@ class ExecutionPreflight(unittest.TestCase):
             self.assertEqual(process.returncode, 3)
             out = json.loads(process.stdout)
             self.assertEqual(out['identity'], dict(caseId='', requestId='valid-id',
-                configRevision=hashlib.sha256(b'').hexdigest()))
+                configRevision=hashlib.sha256(b'').hexdigest(), mpiRanks=1))
             self.assertIsNone(out['data'])
 
     def test_missing_cli_input_has_error_envelope(self):

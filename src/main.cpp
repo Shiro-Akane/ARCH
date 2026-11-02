@@ -34,8 +34,6 @@
 
 // Execution and logging services.
 #include "driver/SolverDispatch.h"
-#include "io/Logger.h"
-#include "io/OutputPath.h"
 #include "core/files/FileFingerprint.h"
 #include <algorithm>
 #include <array>
@@ -97,39 +95,6 @@ static int run_arch(int argc, char **argv)
         (void)arch::boundary::ResolveCaseBoundaries(problem_type, problem_ptr->SourceFile(),
                                                     config);
 
-#if ARCH_MPI_ENABLED
-        if (mpi_size > 1) {
-            const auto supported_face = [](const std::string &face) {
-                return face == "periodic" || face == "outflow" || face == "reflecting";
-            };
-            const auto supported_pair = [&](const std::string &lower, const std::string &upper) {
-                return supported_face(lower) && supported_face(upper)
-                    && ((lower == "periodic") == (upper == "periodic"));
-            };
-            if (config.grid.dim < 1 || config.grid.dim > 3 || config.grid.geometry != "cartesian" ||
-                config.amr.lrefinemin != 0 || config.amr.lrefinemax != 0 ||
-                config.grid.nblockx1 < mpi_size || config.execution.compute_backend != "cpu" ||
-                config.physics.burn.use_burn || config.physics.diffusion.use_diffusion ||
-                config.physics.gravity.type != "none" || config.io.restart ||
-                config.io.chk_dt > 0 || config.io.chk_dstep > 0 ||
-                !supported_pair(config.grid.x1l_boundary_type, config.grid.x1r_boundary_type) ||
-                (config.grid.dim >= 2 &&
-                 !supported_pair(config.grid.x2l_boundary_type, config.grid.x2r_boundary_type)) ||
-                (config.grid.dim == 3 &&
-                 !supported_pair(config.grid.x3l_boundary_type, config.grid.x3r_boundary_type)))
-                throw std::invalid_argument(
-                    "MPI M1 requires CPU fixed Cartesian 1-D/2-D/3-D hydro, one or more X slabs per rank, "
-                    "built-in boundaries, no sources or checkpoint/restart");
-        }
-#endif
-        std::filesystem::create_directories(io::output_directory(config.io.out_dir));
-        const std::string log_dir =
-            io::output_directory(config.Get<std::string>("log_dir", config.io.out_dir));
-        std::filesystem::create_directories(log_dir);
-        const std::string log_filename = log_dir + "/" + config.io.base_name + "_log.dat";
-        Logger::Init(log_filename, config.io.restart);
-        std::cout << "[Main] Console output is being recorded to log file: " << log_filename
-                  << std::endl;
         std::cout << "[Main] Parameters loaded from: " << par_file << std::endl;
         std::cout << "[Main] Problem created: " << problem_type << std::endl;
 

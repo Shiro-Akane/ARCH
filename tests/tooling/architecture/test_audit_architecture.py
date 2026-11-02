@@ -319,7 +319,7 @@ endif()
         "src/io/ConfigParser.h": 'throw ConfigValueError(key, "INVALID_BOOLEAN",',
         "src/core/config/RuntimeParams.h": "arch::config::AnalyzeConfigurationInput; input.RequireDeclaredInputs();",
         "src/driver/schedule/DriverControl.h": "1.0e-12",
-        "src/main.cpp": "config.Get<std::string>(\"log_dir\", config.io.out_dir)",
+        "src/driver/SolverDispatch.cpp": "config.Get<std::string>(\"log_dir\", config.io.out_dir)",
         "src/physics/eos/eos_Utils.h": "get_isentropic_state_at_pressure_factor",
         "src/physics/eos/tabular/Tabular3DEOS.h": "eos_utils",
         "src/physics/eos/tabular/Tabular4DEOS.h": "eos_utils",
@@ -1166,6 +1166,7 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
     def test_accepts_resolved_fallback_reason_sidecar_read(self):
         self.assert_accepted({
             "src/driver/SolverDispatch.cpp":
+                self.protected["src/driver/SolverDispatch.cpp"] + "\n"
                 "output << resolution.fallback_reason; "
                 "if (resolution.resolved_backend == ComputeBackend::Cpu) {}"
         })

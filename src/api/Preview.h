@@ -33,6 +33,8 @@ struct PreviewRequest {
     std::string case_id;
     std::string config_text;
     std::string request_id;
+    // Only --check-run accepts an intended MPI launch size; it stays one process.
+    int mpi_ranks = 1;
     bool initial_mesh = false;
     int mesh_max_blocks = contract::mesh_default_blocks;
     int mesh_memory_mib = contract::mesh_default_memory_mib;

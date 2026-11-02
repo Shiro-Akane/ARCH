@@ -6,6 +6,8 @@
 
 #include "physics/eos/eosdispatch.h"
 
+#include <algorithm>
+#include <cstdint>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -15,9 +17,54 @@
 #endif
 
 namespace arch::dispatch {
-ExecutionPreflight ResolveExecutionPreflight(
-    SimConfig& effective, const SpeciesManager& specs, StartupOrder& startup_order)
+namespace {
+// This is the single fixed-grid MPI policy boundary for both queries and Run.
+// It owns no communicator, mesh or allocator; storage stays with AmrTree/MemoryPool.
+void validate_mpi_launch(const SimConfig& config, int ranks)
 {
+    if (ranks < 1)
+        throw std::invalid_argument("MPI rank count must be positive");
+    if (ranks == 1) return;
+#if !ARCH_MPI_ENABLED
+    throw std::invalid_argument("MPI build disabled; configure ARCH_ENABLE_MPI=ON");
+#endif
+    if (config.grid.dim < 1 || config.grid.dim > 3 || config.grid.geometry != "cartesian")
+        throw std::invalid_argument("MPI requires Cartesian 1-D/2-D/3-D geometry");
+    if (config.amr.lrefinemin != 0 || config.amr.lrefinemax != 0)
+        throw std::invalid_argument("MPI requires a fixed grid (lrefinemin=lrefinemax=0)");
+    if (config.grid.nblockx1 < ranks)
+        throw std::invalid_argument("MPI requires one or more X slabs per rank");
+    if (config.physics.burn.use_burn || config.physics.diffusion.use_diffusion ||
+        config.physics.gravity.type != "none")
+        throw std::invalid_argument("MPI sources (burn, diffusion, gravity) are unsupported");
+    if (config.io.restart || config.io.chk_dt > 0 || config.io.chk_dstep > 0)
+        throw std::invalid_argument("MPI checkpoint/restart is unsupported");
+    const auto supported_face = [](const std::string& face) {
+        return face == "periodic" || face == "outflow" || face == "reflecting";
+    };
+    const auto supported_pair = [&](const std::string& lower, const std::string& upper) {
+        return supported_face(lower) && supported_face(upper)
+            && ((lower == "periodic") == (upper == "periodic"));
+    };
+    if (!supported_pair(config.grid.x1l_boundary_type, config.grid.x1r_boundary_type) ||
+        (config.grid.dim >= 2 &&
+         !supported_pair(config.grid.x2l_boundary_type, config.grid.x2r_boundary_type)) ||
+        (config.grid.dim == 3 &&
+         !supported_pair(config.grid.x3l_boundary_type, config.grid.x3r_boundary_type)))
+        throw std::invalid_argument("MPI requires built-in boundaries and paired periodic faces");
+    const int max_blocks = config.grid.amr_max_blocks > 0 ? config.grid.amr_max_blocks : 10000;
+    const auto transverse = static_cast<std::int64_t>(std::max(1, config.grid.nblockx2))
+        * std::max(1, config.grid.nblockx3);
+    // Bound multiplication before the existing allocator divides the global pool.
+    if (transverse > max_blocks || config.grid.nblockx1 > max_blocks / transverse)
+        throw std::invalid_argument("MPI global max_blocks is smaller than the root mesh");
+}
+} // namespace
+ExecutionPreflight ResolveExecutionPreflight(
+    SimConfig& effective, const SpeciesManager& specs, StartupOrder& startup_order,
+    int mpi_ranks)
+{
+    validate_mpi_launch(effective, mpi_ranks);
     const auto requested_backend = parse_compute_backend(
         effective.execution.compute_backend);
     if (!requested_backend.ok)
@@ -66,11 +113,12 @@ ExecutionPreflight ResolveExecutionPreflight(
         resolve_execution_requirements(effective, specs.count());
     if (!resolved_requirements.ok)
         throw std::runtime_error(std::string(resolved_requirements.error));
-    const ExecutionRequirements& requirements = resolved_requirements.value;
+    ExecutionRequirements requirements = resolved_requirements.value;
+    requirements.mpi_ranks = mpi_ranks;
     startup_order.record(StartupEvent::RequirementsBuilt);
 
     const RuntimeProbeResult probe = probe_runtime_native({
-        requested_backend.value,
+        mpi_ranks > 1 ? ComputeBackend::Cpu : requested_backend.value,
         static_cast<bool>(ARCH_CUDA_BUILD_ENABLED),
         effective.execution.cuda_device,
         cuda_candidate.value.linear_solver == LinearSolverId::CuDss

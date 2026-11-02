@@ -234,6 +234,16 @@ def main():
                     **compare(reference, snapshots(lane / "output")),
                 }
             )
+        if problem == "Sod" and integrator == "RK2" and boundary is None:
+            lane = args.evidence / name / "mpi-2-auto"
+            lane.mkdir()
+            par = lane / "run.par"
+            par.write_text(parameters(source, {"out_dir": lane / "output", "compute_backend": "auto"}))
+            run(args.candidate, problem, par, lane / "run.log", 2, mpi_command)
+            report["cases"].append({
+                "case": name, "ranks": 2, "requested_backend": "auto",
+                **compare(reference, snapshots(lane / "output")),
+            })
     # Seven roots with only eight total slots expose capacity over-allocation
     # when five ranks split roots and pool capacity independently.
     lane = args.evidence / "Sod-Euler-HLLC" / "mpi-5-tight-pool"

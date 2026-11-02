@@ -31,6 +31,7 @@
 #include "interface/ProblemGenerator.h"
 #include "physics/boundary/UserBoundary.h"
 #include "io/IO.h"
+#include "io/Logger.h"
 #include "io/OutputPath.h"
 #include "io/chk/CheckpointCompatibility.h"
 #include "driver/dispatch/ExecutionPreflight.h"
@@ -207,9 +208,26 @@ void DispatchSolver(ProblemGenerator &problem,
 
     using namespace arch::dispatch;
     StartupOrder startup_order;
-    const auto preflight = ResolveExecutionPreflight(effective, specs, startup_order);
+    int rank = 0, rank_count = 1;
+#if ARCH_MPI_ENABLED
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (initialized) {
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &rank_count);
+    }
+#endif
+    const auto preflight = ResolveExecutionPreflight(effective, specs, startup_order, rank_count);
     const arch::config::RuntimeConfiguration runtime(effective, prepared);
     const auto& config = runtime.config();
+    std::filesystem::create_directories(io::output_directory(config.io.out_dir));
+    const std::string log_dir =
+        io::output_directory(config.Get<std::string>("log_dir", config.io.out_dir));
+    std::filesystem::create_directories(log_dir);
+    const std::string log_filename = log_dir + "/" + config.io.base_name + "_log.dat";
+    Logger::Init(log_filename, config.io.restart);
+    std::cout << "[Dispatch] Console output is being recorded to log file: " << log_filename
+              << std::endl;
     const auto& plan = preflight.plan;
     const auto& requirements = preflight.requirements;
     const auto& backend = preflight.backend;
@@ -225,21 +243,10 @@ void DispatchSolver(ProblemGenerator &problem,
 
     // --- AMR Initialization ---
     int max_blocks = config.grid.amr_max_blocks > 0 ? config.grid.amr_max_blocks : 10000;
-    int rank = 0, rank_count = 1;
-#if ARCH_MPI_ENABLED
-    int initialized = 0;
-    MPI_Initialized(&initialized);
-    if (initialized) {
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        MPI_Comm_size(MPI_COMM_WORLD, &rank_count);
-    }
-#endif
     if (rank_count > 1) {
         const auto transverse_roots = static_cast<std::int64_t>(std::max(1, config.grid.nblockx2))
             * std::max(1, config.grid.nblockx3);
-        // Check before multiplying by X, including inputs near the integer limit.
-        if (transverse_roots > max_blocks || config.grid.nblockx1 > max_blocks / transverse_roots)
-            throw std::invalid_argument("MPI global max_blocks is smaller than the root mesh");
+        // The shared preflight already bounded the global root count.
         const int global_roots = static_cast<int>(config.grid.nblockx1 * transverse_roots);
         // Keep the original pool and free list. Only its per-rank capacity
         // changes; no shadow blocks or second field allocator is introduced.
