@@ -62,6 +62,16 @@ int RunPreviewCommand(int argc, char **argv) {
             const std::string option = argv[i];
             if (!seen.insert(option).second) throw std::invalid_argument("Duplicate preview option");
             if (option == "--config-stdin") config_stdin = true;
+            else if (option == "--mpi-ranks") {
+                if (command != Command::CheckRun)
+                    throw std::invalid_argument("--mpi-ranks requires --check-run");
+                if (++i == argc) throw std::invalid_argument("Missing MPI rank count");
+                const std::string_view value = argv[i];
+                const auto parsed = std::from_chars(value.data(), value.data() + value.size(), request.mpi_ranks);
+                if (parsed.ec != std::errc{} || parsed.ptr != value.data() + value.size()
+                    || request.mpi_ranks < 1)
+                    throw std::invalid_argument("--mpi-ranks expects a positive int");
+            }
             else if (option == "--samples" || option == "--samples-x1" || option == "--samples-x2" || option == "--samples-x3" || option == "--request-id" || option == "--mesh-max-blocks" || option == "--mesh-memory-mib") {
                 if (++i == argc) throw std::invalid_argument("Missing preview option value");
                 const std::string_view value = argv[i];

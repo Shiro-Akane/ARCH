@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "created_utc": "2026-10-31T16:05:34.235448+00:00",
+  "source_commit": "29972a167c9bc0bb77bdb07557f920f54bfad64f",
+  "baseline_commit": "5dc6d7bad3fcf37c1aa261d66ec1e8dcf6c5e21d",
+  "server": "gpu-273312",
+  "address": "150.65.181.188",
+  "purpose": "Migration acceptance and fixed-grid MPI regression extension",
+  "math_and_pool_unchanged": true,
+  "build_variants": [
+    "Debug",
+    "Release"
+  ],
+  "compiler_jobs": 8,
+  "short_regression": {
+    "runner": "tests/integration/test_mpi_fixed_grid.py",
+    "expected_comparisons_per_build": 26,
+    "expected_rejections_per_build": 7,
+    "oversubscribe": false
+  },
+  "extension": {
+    "planned_steps": 256,
+    "roots": 17,
+    "global_pool_slots": 18,
+    "ranks": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "output_every_steps": 16,
+    "conditions": [
+      "Sod-Euler-HLLC",
+      "Sod-RK2-HLLC",
+      "Sod-RK3-HLL",
+      "SmoothAdvection-RK2-HLLC",
+      "SmoothAdvection-RK3-Roe",
+      "Sod-RK2-HLLC-reflecting"
+    ],
+    "build": "Release",
+    "comparison": "native output bitwise vs independently rebuilt unchanged main",
+    "purpose": "correctness, not scaling performance",
+    "tmax": 1.0
+  },
+  "minimum_free_GiB": 24,
+  "maximum_added_evidence_GiB": 8,
+  "excluded": [
+    "multinode",
+    "MPI CUDA",
+    "AMR",
+    "new mathematical formulas",
+    "checkpoint/restart"
+  ],
+  "source_bindings": {
+    "cmake/project/Application.cmake": "716809c4ee8e649efce28565f5a596fdd014c5bc53e0a9ac6c5c6f9c56e9c0fc",
+    "cmake/project/BuildOptions.cmake": "05d2b28378d7b9e94fe44bf60d327b86cc0521ea4eca2e98bd8b456fa7fb5ecd",
+    "cmake/tests/HostTests.cmake": "157f1730bfbf04042a5c9dcf194f9ec45fbf509ecb76090c6283659c2d347d53",
+    "src/amr/exchange/GhostExchange.h": "23d90006e689bdc94d75b5658b6ed8976546f4b906146f1b91898b2692c7010e",
+    "src/amr/topology/AmrTree.h": "5f16a450f57cdaff3be521cff603b2a0f413e97582b8a0a49d73353c18147e5f",
+    "src/driver/DriverUtils.h": "79915853ccfad4a6a18480b9f00596129d8f0d310c9a6d452fe84638586d3d6a",
+    "src/driver/SolverDispatch.cpp": "2be7589c5650c6dbfb207a0663236dbec9b4cdcf7a7a87ece59d5026287732d3",
+    "src/driver/io/DriverIO.cpp": "37d8797544f19f18d212fbfb4aaac5c956e03c06cf6851d0601f6b04e1a5b2c0",
+    "src/driver/stages/DriverStages.h": "22f65200642c4fe3d4ced8b0a04e6bb33cf06a715e572dffc7f3ae961826b03b",
+    "src/io/OutputPath.h": "b2847e6caecc09c5e5c1df3483266b8f24f189df902140092b9d1323f6879710",
+    "src/io/plot/PlotIO.cpp": "6a9a1d7b7002300044ca1b6e3e2c20164aec0a29625218dea2f4bd18e4b1576a",
+    "src/main.cpp": "5a2a1b5d3edfe8789f30af4c509f6b1b6dff99f8f48f0dd22a2d0a5359b379c6",
+    "tests/host/amr/test_mpi_fixed_grid.cpp": "c64b18d5a05260548944698b18b8a72f337cf1161df5ccb58f6ed2b89ae96182",
+    "tests/integration/test_mpi_fixed_grid.py": "5af5f63fb53af9c70f6ca34c5c3d8b5d43b601d091efc86c9921ed6431c9df24"
+  },
+  "runner_sha256": {
+    "run_build_and_regression.py": "36dd3681841dc56a09465364cf59d21a07e32a17fa7a92b688e21aca4b865291",
+    "run_extended_regression.py": "adb3931295776df38522f5e15fb7afa681df4037709ec8e1930574511e8f5393"
+  }
+}

@@ -52,6 +52,7 @@ enum class BackendCapabilityCode : std::uint16_t
     UnsupportedStateLayout,
     UnsupportedBoundaryFeature,
     CuDssRuntimeUnavailable,
+    MpiRequiresCpu,
 };
 
 struct CapabilityResult
@@ -231,6 +232,7 @@ constexpr StateLayoutRequirement known_state_layout =
 constexpr std::string_view capability_name(BackendCapabilityCode code) noexcept
 {
     switch (code) {
+    case BackendCapabilityCode::MpiRequiresCpu: return "MPI multi-rank execution requires CPU";
     case BackendCapabilityCode::Supported: return "supported";
     case BackendCapabilityCode::InvalidPlan: return "invalid plan";
     case BackendCapabilityCode::BuildDisabled: return "CUDA build disabled";
@@ -316,6 +318,8 @@ inline CapabilityResult query_support(
         result.cuda_code = code;
         return result;
     };
+    if (requirements.mpi_ranks > 1)
+        return reject_cuda(BackendCapabilityCode::MpiRequiresCpu);
     if (cuda_plan.linear_solver == LinearSolverId::SparseKlu)
         return reject_cuda(BackendCapabilityCode::SparseKluRequiresCpu);
     if (probe.state == RuntimeProbeState::BuildDisabled)

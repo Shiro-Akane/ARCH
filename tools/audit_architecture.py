@@ -732,7 +732,7 @@ def audit_tree(root: pathlib.Path):
         "src/io/ConfigParser.h": 'throw ConfigValueError(key, "INVALID_BOOLEAN",',
         "src/core/config/RuntimeParams.h": ("arch::config::AnalyzeConfigurationInput", "input.RequireDeclaredInputs();"),
         "src/driver/schedule/DriverControl.h": "1.0e-12",
-        "src/main.cpp": "config.Get<std::string>(\"log_dir\", config.io.out_dir)",
+        "src/driver/SolverDispatch.cpp": "config.Get<std::string>(\"log_dir\", config.io.out_dir)",
         "src/physics/eos/eos_Utils.h": "get_isentropic_state_at_pressure_factor",
         "src/physics/eos/tabular/Tabular3DEOS.h": "eos_utils",
         "src/physics/eos/tabular/Tabular4DEOS.h": "eos_utils",

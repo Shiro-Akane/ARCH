@@ -1,0 +1,6305 @@
+{
+  "date": "2026-11-02",
+  "state": "passed",
+  "upstream": "2e05e66e3b09e3890488fb872cd842b1885f71e4",
+  "hardware": {
+    "GPU": {
+      "host": "gpu-273312",
+      "cpu": {
+        "Architecture:": "x86_64",
+        "CPU(s):": "32",
+        "Model name:": "Intel(R) Xeon(R) Gold 6338 CPU @ 2.00GHz",
+        "Thread(s) per core:": "1",
+        "Core(s) per socket:": "1",
+        "Socket(s):": "32",
+        "Hypervisor vendor:": "KVM"
+      },
+      "memory_kib": "MemTotal:       119924304 kB"
+    },
+    "CPU": {
+      "host": "gen-989544",
+      "cpu": {
+        "Architecture:": "x86_64",
+        "CPU(s):": "4",
+        "Model name:": "Intel(R) Xeon(R) Gold 6338 CPU @ 2.00GHz",
+        "Thread(s) per core:": "1",
+        "Core(s) per socket:": "1",
+        "Socket(s):": "4",
+        "Hypervisor vendor:": "KVM"
+      },
+      "memory_kib": "MemTotal:       60811788 kB"
+    }
+  },
+  "baseline_source": {
+    "commit": "be858c6d4a259eaa989b6d9fefcad9ebd5407944",
+    "upstream": "2e05e66e3b09e3890488fb872cd842b1885f71e4",
+    "baseline": "5dc6d7bad3fcf37c1aa261d66ec1e8dcf6c5e21d",
+    "binary_sha256": {
+      "ARCH": "219050d6a616106046769f0d8ef75954b9d5d8d73eab8155f9ceb9d8245766bc",
+      "ARCH-baseline": "075af004f4ce556960b8c2d198466c3d7faf9155279e0475979f3dd34c68a8d2",
+      "libmpi_trace.so": "c8c7e6608223df92284a99c1e298d84f579bf772dda85dc871523e73180022cb"
+    }
+  },
+  "cli_fix": {
+    "commit": "814b81187d79457f13d06b52d48a3515963310ad",
+    "binary_sha256": "55c65d65964ef908645c27ed11429b7631bb8a95e96d434c2fc14cdc8687bddc",
+    "measurement_commit": "be858c6d4a259eaa989b6d9fefcad9ebd5407944",
+    "difference": "Only error exit handling in src/main.cpp changes; successful solver code unchanged. CPU campaign retains its frozen pre-fix binary; cross campaign uses validated binary."
+  },
+  "halo_source": {
+    "base_commit": "814b81187d79457f13d06b52d48a3515963310ad",
+    "patch_sha256": "2822407f176f289345d6962cc8ff14c34584150f33ecc82b01587994f729aba0",
+    "production_file": "src/amr/exchange/GhostExchange.h",
+    "change": "Post both receives and sends in the existing function, then wait for all before existing count checks and scatter; existing scratch retained.",
+    "binary_sha256": {
+      "ARCH-before": "55c65d65964ef908645c27ed11429b7631bb8a95e96d434c2fc14cdc8687bddc",
+      "ARCH-baseline": "075af004f4ce556960b8c2d198466c3d7faf9155279e0475979f3dd34c68a8d2",
+      "libmpi_trace.so": "c05090bf6558669dd4b7e079db8da3ec408402db5b8b28120c655df544635c75",
+      "ARCH-concurrent": "be0434ccc19fbab766ea0789aa358944f02fa45d6e654515ab3a9d8c2e04da26"
+    }
+  },
+  "integration_regression": {
+    "comparisons": 108,
+    "rejections": 20,
+    "binary_records": {
+      "release-1d": {
+        "baseline_sha256": "075af004f4ce556960b8c2d198466c3d7faf9155279e0475979f3dd34c68a8d2",
+        "candidate_sha256": "55c65d65964ef908645c27ed11429b7631bb8a95e96d434c2fc14cdc8687bddc",
+        "serial_candidate_sha256": "b7a0a2385bb9710f0635096ba0870f0bdbf5b14b10eb307d48221abc2f0e5355"
+      },
+      "release-multidim": {
+        "binaries": {
+          "baseline": {
+            "path": "/home/ubuntu/projects/ARCH-mpi-baseline/build-gpu-release/bin/ARCH",
+            "sha256": "075af004f4ce556960b8c2d198466c3d7faf9155279e0475979f3dd34c68a8d2"
+          },
+          "mpi": {
+            "path": "/home/ubuntu/projects/ARCH-mpi/build-gpu-release/bin/ARCH",
+            "sha256": "55c65d65964ef908645c27ed11429b7631bb8a95e96d434c2fc14cdc8687bddc"
+          },
+          "serial": {
+            "path": "/home/ubuntu/projects/ARCH-mpi/build-gpu-release-serial/bin/ARCH",
+            "sha256": "b7a0a2385bb9710f0635096ba0870f0bdbf5b14b10eb307d48221abc2f0e5355"
+          }
+        }
+      },
+      "debug-1d": {
+        "baseline_sha256": "776fa08e4fb3ec3724358bcab4418ba3d7ced5a33c98f1487e3a5f2ee169d16d",
+        "candidate_sha256": "5dd890a3fa4f48a4bf0e30352b7cc740ac2aab725a922b877d268ea4b30e9f9b",
+        "serial_candidate_sha256": "2c52c31cb73a9e02fbb2eebbb83016d39658fadb82c54b97b9a424c9dcb54afa"
+      },
+      "debug-multidim": {
+        "binaries": {
+          "baseline": {
+            "path": "/home/ubuntu/projects/ARCH-mpi-baseline/build-gpu-debug/bin/ARCH",
+            "sha256": "776fa08e4fb3ec3724358bcab4418ba3d7ced5a33c98f1487e3a5f2ee169d16d"
+          },
+          "mpi": {
+            "path": "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug/bin/ARCH",
+            "sha256": "5dd890a3fa4f48a4bf0e30352b7cc740ac2aab725a922b877d268ea4b30e9f9b"
+          },
+          "serial": {
+            "path": "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug-serial/bin/ARCH",
+            "sha256": "2c52c31cb73a9e02fbb2eebbb83016d39658fadb82c54b97b9a424c9dcb54afa"
+          }
+        }
+      }
+    },
+    "archive": {
+      "archive": "regression-raw.tar.gz",
+      "sha256": "38264ab29402329c6fc4d52b93c961ff278e8204a423db7635d53b989e7f418b",
+      "bytes": 142015174,
+      "verified": true,
+      "member_count": 4609
+    },
+    "ctest_checks": 14,
+    "extra_host_checks": 4
+  },
+  "halo_regression": {
+    "comparisons": 108,
+    "rejections": 20,
+    "binary_records": {
+      "release-1d": {
+        "baseline_sha256": "075af004f4ce556960b8c2d198466c3d7faf9155279e0475979f3dd34c68a8d2",
+        "candidate_sha256": "be0434ccc19fbab766ea0789aa358944f02fa45d6e654515ab3a9d8c2e04da26",
+        "serial_candidate_sha256": "b7a0a2385bb9710f0635096ba0870f0bdbf5b14b10eb307d48221abc2f0e5355"
+      },
+      "release-multidim": {
+        "binaries": {
+          "baseline": {
+            "path": "/home/ubuntu/projects/ARCH-mpi-baseline/build-gpu-release/bin/ARCH",
+            "sha256": "075af004f4ce556960b8c2d198466c3d7faf9155279e0475979f3dd34c68a8d2"
+          },
+          "mpi": {
+            "path": "/home/ubuntu/projects/ARCH-mpi/build-gpu-release/bin/ARCH",
+            "sha256": "be0434ccc19fbab766ea0789aa358944f02fa45d6e654515ab3a9d8c2e04da26"
+          },
+          "serial": {
+            "path": "/home/ubuntu/projects/ARCH-mpi/build-gpu-release-serial/bin/ARCH",
+            "sha256": "b7a0a2385bb9710f0635096ba0870f0bdbf5b14b10eb307d48221abc2f0e5355"
+          }
+        }
+      },
+      "debug-1d": {
+        "baseline_sha256": "776fa08e4fb3ec3724358bcab4418ba3d7ced5a33c98f1487e3a5f2ee169d16d",
+        "candidate_sha256": "2549a1d1c7aae5af749694b78b1ae0f09f56cf8e63f6c0f7a775aff71a571a8f",
+        "serial_candidate_sha256": "2c52c31cb73a9e02fbb2eebbb83016d39658fadb82c54b97b9a424c9dcb54afa"
+      },
+      "debug-multidim": {
+        "binaries": {
+          "baseline": {
+            "path": "/home/ubuntu/projects/ARCH-mpi-baseline/build-gpu-debug/bin/ARCH",
+            "sha256": "776fa08e4fb3ec3724358bcab4418ba3d7ced5a33c98f1487e3a5f2ee169d16d"
+          },
+          "mpi": {
+            "path": "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug/bin/ARCH",
+            "sha256": "2549a1d1c7aae5af749694b78b1ae0f09f56cf8e63f6c0f7a775aff71a571a8f"
+          },
+          "serial": {
+            "path": "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug-serial/bin/ARCH",
+            "sha256": "2c52c31cb73a9e02fbb2eebbb83016d39658fadb82c54b97b9a424c9dcb54afa"
+          }
+        }
+      }
+    },
+    "archive": {
+      "archive": "regression-raw.tar.gz",
+      "sha256": "2d8de28fb8a105560e7a604d4893d3b10a3d75a6e3c1c868a90308f9b5b9ee1f",
+      "bytes": 142040714,
+      "verified": true,
+      "member_count": 4605
+    },
+    "ctest_checks": 14,
+    "extra_host_checks": 4
+  },
+  "controlled_baseline": {
+    "cpu": [
+      {
+        "kind": "strong",
+        "dimension": "2d",
+        "ranks": 1,
+        "steps": 768,
+        "shape": [
+          16,
+          8,
+          0
+        ],
+        "driver_nonoutput": {
+          "n": 5,
+          "median": 43.446864053000006,
+          "min": 43.433793653,
+          "max": 43.468355476,
+          "cv": 0.0003624595672177159
+        },
+        "launcher_wall": {
+          "n": 5,
+          "median": 45.24359062127769,
+          "min": 45.19049618579447,
+          "max": 45.24553772248328,
+          "cv": 0.0006157531065369222
+        },
+        "max_rank_output": {
+          "n": 5,
+          "median": 0.049942329,
+          "min": 0.04752543099999999,
+          "max": 0.053102211,
+          "cv": 0.04334190744748875
+        },
+        "sum_rank_peak_rss_kib": {
+          "n": 5,
+          "median": 54196.0,
+          "min": 53772.0,
+          "max": 54340.0,
+          "cv": 0.004681631760391453
+        },
+        "samples": [
+          {
+            "repeat": 1,
+            "seconds": 43.468355476
+          },
+          {
+            "repeat": 2,
+            "seconds": 43.446864053000006
+          },
+          {
+            "repeat": 3,
+            "seconds": 43.433793653
+          },
+          {
+            "repeat": 4,
+            "seconds": 43.468018731
+          },
+          {
+            "repeat": 5,
+            "seconds": 43.441479644999994
+          }
+        ],
+        "speedup": 1.0,
+        "efficiency": 1.0
+      },
+      {
+        "kind": "strong",
+        "dimension": "2d",
+        "ranks": 2,
+        "steps": 768,
+        "shape": [
+          16,
+          8,
+          0
+        ],
+        "driver_nonoutput": {
+          "n": 5,
+          "median": 21.859139133,
+          "min": 21.704479914,
+          "max": 22.193101705,
+          "cv": 0.00990275655739923
+        },
+        "launcher_wall": {
+          "n": 5,
+          "median": 23.554724517278373,
+          "min": 23.402224903926253,
+          "max": 23.953724577091634,
+          "cv": 0.010385855157230232
+        },
+        "max_rank_output": {
+          "n": 5,
+          "median": 0.023950747,
+          "min": 0.021376937999999998,
+          "max": 0.024194911,
+          "cv": 0.052464252800209825
+        },
+        "sum_rank_peak_rss_kib": {
+          "n": 5,
+          "median": 90300.0,
+          "min": 89860.0,
+          "max": 90480.0,
+          "cv": 0.0025874394975909506
+        },
+        "samples": [
+          {
+            "repeat": 1,
+            "seconds": 21.704479914
+          },
+          {
+            "repeat": 2,
+            "seconds": 22.193101705
+          },
+          {
+            "repeat": 3,
+            "seconds": 21.821839653999998
+          },
+          {
+            "repeat": 4,
+            "seconds": 22.161936464
+          },
+          {
+            "repeat": 5,
+            "seconds": 21.859139133
+          }
+        ],
+        "speedup": 1.9875834903035936,
+        "efficiency": 0.9937917451517968
+      },
+      {
+        "kind": "strong",
+        "dimension": "2d",
+        "ranks": 4,
+        "steps": 768,
+        "shape": [
+          16,
+          8,
+          0
+        ],
+        "driver_nonoutput": {
+          "n": 5,
+          "median": 10.921659786,
+          "min": 10.900958526,
+          "max": 11.538351505,
+          "cv": 0.02851983377102013
+        },
+        "launcher_wall": {
+          "n": 5,
+          "median": 12.636455794796348,
+          "min": 12.585179837420583,
+          "max": 13.337053555063903,
+          "cv": 0.028418757309859047
+        },
+        "max_rank_output": {
+          "n": 5,
+          "median": 0.016679697,
+          "min": 0.014894689,
+          "max": 0.021483339,
+          "cv": 0.17885281698088323
+        },
+        "sum_rank_peak_rss_kib": {
+          "n": 5,
+          "median": 158772.0,
+          "min": 158596.0,
+          "max": 159608.0,
+          "cv": 0.002548451848475901
+        },
+        "samples": [
+          {
+            "repeat": 1,
+            "seconds": 10.911434745000001
+          },
+          {
+            "repeat": 2,
+            "seconds": 11.436942258999999
+          },
+          {
+            "repeat": 3,
+            "seconds": 10.900958526
+          },
+          {
+            "repeat": 4,
+            "seconds": 11.538351505
+          },
+          {
+            "repeat": 5,
+            "seconds": 10.921659786
+          }
+        ],
+        "speedup": 3.978045910997214,
+        "efficiency": 0.9945114777493035
+      },
+      {
+        "kind": "strong",
+        "dimension": "3d",
+        "ranks": 1,
+        "steps": 192,
+        "shape": [
+          8,
+          2,
+          2
+        ],
+        "driver_nonoutput": {
+          "n": 5,
+          "median": 60.83713809,
+          "min": 60.712047604000006,
+          "max": 61.152012849,
+          "cv": 0.003324923015951146
+        },
+        "launcher_wall": {
+          "n": 5,
+          "median": 62.819305206649005,
+          "min": 62.631255539134145,
+          "max": 63.139486050233245,
+          "cv": 0.003602260993705201
+        },
+        "max_rank_output": {
+          "n": 5,
+          "median": 0.17145522400000002,
+          "min": 0.143428783,
+          "max": 0.194796099,
+          "cv": 0.1256664385507145
+        },
+        "sum_rank_peak_rss_kib": {
+          "n": 5,
+          "median": 143684.0,
+          "min": 143436.0,
+          "max": 143944.0,
+          "cv": 0.0014541881300299522
+        },
+        "samples": [
+          {
+            "repeat": 1,
+            "seconds": 61.10093062
+          },
+          {
+            "repeat": 2,
+            "seconds": 60.712047604000006
+          },
+          {
+            "repeat": 3,
+            "seconds": 61.152012849
+          },
+          {
+            "repeat": 4,
+            "seconds": 60.7533087
+          },
+          {
+            "repeat": 5,
+            "seconds": 60.83713809
+          }
+        ],
+        "speedup": 1.0,
+        "efficiency": 1.0
+      },
+      {
+        "kind": "strong",
+        "dimension": "3d",
+        "ranks": 2,
+        "steps": 192,
+        "shape": [
+          8,
+          2,
+          2
+        ],
+        "driver_nonoutput": {
+          "n": 5,
+          "median": 30.686488426,
+          "min": 30.564501935,
+          "max": 30.97028288,
+          "cv": 0.005270048969659587
+        },
+        "launcher_wall": {
+          "n": 5,
+          "median": 32.48034141026437,
+          "min": 32.32478950358927,
+          "max": 32.86558660119772,
+          "cv": 0.0068827310762202614
+        },
+        "max_rank_output": {
+          "n": 5,
+          "median": 0.073507483,
+          "min": 0.062754712,
+          "max": 0.081323672,
+          "cv": 0.10910038523766827
+        },
+        "sum_rank_peak_rss_kib": {
+          "n": 5,
+          "median": 180720.0,
+          "min": 180264.0,
+          "max": 181104.0,
+          "cv": 0.0019144667621725595
+        },
+        "samples": [
+          {
+            "repeat": 1,
+            "seconds": 30.686488426
+          },
+          {
+            "repeat": 2,
+            "seconds": 30.860430995999998
+          },
+          {
+            "repeat": 3,
+            "seconds": 30.673222492
+          },
+          {
+            "repeat": 4,
+            "seconds": 30.97028288
+          },
+          {
+            "repeat": 5,
+            "seconds": 30.564501935
+          }
+        ],
+        "speedup": 1.9825382834763852,
+        "efficiency": 0.9912691417381926
+      },
+      {
+        "kind": "strong",
+        "dimension": "3d",
+        "ranks": 4,
+        "steps": 192,
+        "shape": [
+          8,
+          2,
+          2
+        ],
+        "driver_nonoutput": {
+          "n": 5,
+          "median": 15.745935300000001,
+          "min": 15.464002617,
+          "max": 15.872167772000001,
+          "cv": 0.011324045585778108
+        },
+        "launcher_wall": {
+          "n": 5,
+          "median": 17.457408856600523,
+          "min": 17.199476743116975,
+          "max": 17.653731039725244,
+          "cv": 0.011720682068635632
+        },
+        "max_rank_output": {
+          "n": 5,
+          "median": 0.042562641,
+          "min": 0.034894047,
+          "max": 0.044286872000000005,
+          "cv": 0.11846998756009415
+        },
+        "sum_rank_peak_rss_kib": {
+          "n": 5,
+          "median": 256548.0,
+          "min": 255844.0,
+          "max": 257096.0,
+          "cv": 0.0019113883864719427
+        },
+        "samples": [
+          {
+            "repeat": 1,
+            "seconds": 15.574089325000001
+          },
+          {
+            "repeat": 2,
+            "seconds": 15.872167772000001
+          },
+          {
+            "repeat": 3,
+            "seconds": 15.745935300000001
+          },
+          {
+            "repeat": 4,
+            "seconds": 15.852233056
+          },
+          {
+            "repeat": 5,
+            "seconds": 15.464002617
+          }
+        ],
+        "speedup": 3.8636725561802607,
+        "efficiency": 0.9659181390450652
+      },
+      {
+        "kind": "weak",
+        "dimension": "2d",
+        "ranks": 1,
+        "steps": 768,
+        "shape": [
+          4,
+          8,
+          0
+        ],
+        "driver_nonoutput": {
+          "n": 5,
+          "median": 10.62551266,
+          "min": 10.606462064,
+          "max": 10.664757963,
+          "cv": 0.0022222501344937233
+        },
+        "launcher_wall": {
+          "n": 5,
+          "median": 12.362732340581715,
+          "min": 12.312397964298725,
+          "max": 12.363408800214529,
+          "cv": 0.002170360625415528
+        },
+        "max_rank_output": {
+          "n": 5,
+          "median": 0.016595809,
+          "min": 0.016221024,
+          "max": 0.017242307,
+          "cv": 0.024056449302159322
+        },
+        "sum_rank_peak_rss_kib": {
+          "n": 5,
+          "median": 39432.0,
+          "min": 39292.0,
+          "max": 39824.0,
+          "cv": 0.006026469794104778
+        },
+        "samples": [
+          {
+            "repeat": 1,
+            "seconds": 10.632036163
+          },
+          {
+            "repeat": 2,
+            "seconds": 10.608114665
+          },
+          {
+            "repeat": 3,
+            "seconds": 10.62551266
+          },
+          {
+            "repeat": 4,
+            "seconds": 10.664757963
+          },
+          {
+            "repeat": 5,
+            "seconds": 10.606462064
+          }
+        ],
+        "speedup": 1.0,
+        "efficiency": 1.0
+      },
+      {
+        "kind": "weak",
+        "dimension": "2d",
+        "ranks": 2,
+        "steps": 768,
+        "shape": [
+          8,
+          8,
+          0
+        ],
+        "driver_nonoutput": {
+          "n": 5,
+          "median": 10.849914674,
+          "min": 10.826161887,
+          "max": 11.507139022,
+          "cv": 0.028455113148434314
+        },
+        "launcher_wall": {
+          "n": 5,
+          "median": 12.563418881967664,
+          "min": 12.51249391771853,
+          "max": 13.26088693458587,
+          "cv": 0.026292021443290427
+        },
+        "max_rank_output": {
+          "n": 5,
+          "median": 0.013670257000000002,
+          "min": 0.012591283,
+          "max": 0.017690148,
+          "cv": 0.14393604071204708
+        },
+        "sum_rank_peak_rss_kib": {
+          "n": 5,
+          "median": 79512.0,
+          "min": 79076.0,
+          "max": 79668.0,
+          "cv": 0.0028827020420152047
+        },
+        "samples": [
+          {
+            "repeat": 1,
+            "seconds": 10.837290215000001
+          },
+          {
+            "repeat": 2,
+            "seconds": 11.507139022
+          },
+          {
+            "repeat": 3,
+            "seconds": 10.849914674
+          },
+          {
+            "repeat": 4,
+            "seconds": 11.278672775
+          },
+          {
+            "repeat": 5,
+            "seconds": 10.826161887
+          }
+        ],
+        "speedup": 0.9793176240788564,
+        "efficiency": 0.9793176240788564
+      },
+      {
+        "kind": "weak",
+        "dimension": "2d",
+        "ranks": 4,
+        "steps": 768,
+        "shape": [
+          16,
+          8,
+          0
+        ],
+        "driver_nonoutput": {
+          "n": 5,
+          "median": 10.909853838,
+          "min": 10.837083626,
+          "max": 11.756055814,
+          "cv": 0.03909528451263833
+        },
+        "launcher_wall": {
+          "n": 5,
+          "median": 12.635612279176712,
+          "min": 12.535214396193624,
+          "max": 13.491436301730573,
+          "cv": 0.03482994435349562
+        },
+        "max_rank_output": {
+          "n": 5,
+          "median": 0.01396979,
+          "min": 0.013080130999999998,
+          "max": 0.017385344,
+          "cv": 0.12679799438482786
+        },
+        "sum_rank_peak_rss_kib": {
+          "n": 5,
+          "median": 159456.0,
+          "min": 159060.0,
+          "max": 159880.0,
+          "cv": 0.002198562300218836
+        },
+        "samples": [
+          {
+            "repeat": 1,
+            "seconds": 10.905265378
+          },
+          {
+            "repeat": 2,
+            "seconds": 11.593707589000001
+          },
+          {
+            "repeat": 3,
+            "seconds": 10.909853838
+          },
+          {
+            "repeat": 4,
+            "seconds": 11.756055814
+          },
+          {
+            "repeat": 5,
+            "seconds": 10.837083626
+          }
+        ],
+        "speedup": 0.9739372147214646,
+        "efficiency": 0.9739372147214646
+      },
+      {
+        "kind": "weak",
+        "dimension": "3d",
+        "ranks": 1,
+        "steps": 192,
+        "shape": [
+          2,
+          2,
+          2
+        ],
+        "driver_nonoutput": {
+          "n": 5,
+          "median": 14.553249175000001,
+          "min": 14.473355409,
+          "max": 14.560009508999999,
+          "cv": 0.002890240740972268
+        },
+        "launcher_wall": {
+          "n": 5,
+          "median": 16.290636656805873,
+          "min": 16.229575496166945,
+          "max": 16.330873765982687,
+          "cv": 0.0031073289638460567
+        },
+        "max_rank_output": {
+          "n": 5,
+          "median": 0.042103446999999995,
+          "min": 0.041217198999999996,
+          "max": 0.042984568,
+          "cv": 0.016131501449457707
+        },
+        "sum_rank_peak_rss_kib": {
+          "n": 5,
+          "median": 63868.0,
+          "min": 63668.0,
+          "max": 64112.0,
+          "cv": 0.003094465125458575
+        },
+        "samples": [
+          {
+            "repeat": 1,
+            "seconds": 14.560009508999999
+          },
+          {
+            "repeat": 2,
+            "seconds": 14.489682278
+          },
+          {
+            "repeat": 3,
+            "seconds": 14.473355409
+          },
+          {
+            "repeat": 4,
+            "seconds": 14.553249175000001
+          },
+          {
+            "repeat": 5,
+            "seconds": 14.558661723
+          }
+        ],
+        "speedup": 1.0,
+        "efficiency": 1.0
+      },
+      {
+        "kind": "weak",
+        "dimension": "3d",
+        "ranks": 2,
+        "steps": 192,
+        "shape": [
+          4,
+          2,
+          2
+        ],
+        "driver_nonoutput": {
+          "n": 5,
+          "median": 14.970669853999999,
+          "min": 14.850501882000001,
+          "max": 15.49866152,
+          "cv": 0.017833854341009016
+        },
+        "launcher_wall": {
+          "n": 5,
+          "median": 16.694787512533367,
+          "min": 16.595276347361505,
+          "max": 17.298160136677325,
+          "cv": 0.01813316135439027
+        },
+        "max_rank_output": {
+          "n": 5,
+          "median": 0.034818537999999996,
+          "min": 0.033292929,
+          "max": 0.04664208,
+          "cv": 0.15675570256356003
+        },
+        "sum_rank_peak_rss_kib": {
+          "n": 5,
+          "median": 127980.0,
+          "min": 127584.0,
+          "max": 128356.0,
+          "cv": 0.002245391155061873
+        },
+        "samples": [
+          {
+            "repeat": 1,
+            "seconds": 14.850501882000001
+          },
+          {
+            "repeat": 2,
+            "seconds": 15.270159092
+          },
+          {
+            "repeat": 3,
+            "seconds": 14.945909128
+          },
+          {
+            "repeat": 4,
+            "seconds": 15.49866152
+          },
+          {
+            "repeat": 5,
+            "seconds": 14.970669853999999
+          }
+        ],
+        "speedup": 0.9721174347526963,
+        "efficiency": 0.9721174347526963
+      },
+      {
+        "kind": "weak",
+        "dimension": "3d",
+        "ranks": 4,
+        "steps": 192,
+        "shape": [
+          8,
+          2,
+          2
+        ],
+        "driver_nonoutput": {
+          "n": 5,
+          "median": 15.819371216,
+          "min": 15.50789623,
+          "max": 15.973720385,
+          "cv": 0.012748304688667274
+        },
+        "launcher_wall": {
+          "n": 5,
+          "median": 17.553854591213167,
+          "min": 17.25015220604837,
+          "max": 17.802174898795784,
+          "cv": 0.013831951660625945
+        },
+        "max_rank_output": {
+          "n": 5,
+          "median": 0.042812763000000004,
+          "min": 0.035197642,
+          "max": 0.058213721999999996,
+          "cv": 0.1918495726027522
+        },
+        "sum_rank_peak_rss_kib": {
+          "n": 5,
+          "median": 256200.0,
+          "min": 255792.0,
+          "max": 256688.0,
+          "cv": 0.0013781302956477565
+        },
+        "samples": [
+          {
+            "repeat": 1,
+            "seconds": 15.568851468999998
+          },
+          {
+            "repeat": 2,
+            "seconds": 15.973720385
+          },
+          {
+            "repeat": 3,
+            "seconds": 15.819371216
+          },
+          {
+            "repeat": 4,
+            "seconds": 15.872260686
+          },
+          {
+            "repeat": 5,
+            "seconds": 15.50789623
+          }
+        ],
+        "speedup": 0.919963820071469,
+        "efficiency": 0.919963820071469
+      }
+    ],
+    "cross": [
+      {
+        "dimension": "2d",
+        "ranks": 2,
+        "local": {
+          "n": 5,
+          "median": 21.868737604,
+          "min": 21.59133976,
+          "max": 22.739773168,
+          "cv": 0.019876076143290893
+        },
+        "cross": {
+          "n": 5,
+          "median": 24.662418701999997,
+          "min": 24.535916601,
+          "max": 25.221125089999997,
+          "cv": 0.012820976344905068
+        },
+        "paired_cross_over_local": {
+          "n": 5,
+          "median": 1.124341877120684,
+          "min": 1.1091194667452453,
+          "max": 1.1646423401008996,
+          "cv": 0.01839929083672598
+        }
+      },
+      {
+        "dimension": "2d",
+        "ranks": 4,
+        "local": {
+          "n": 5,
+          "median": 11.791378392,
+          "min": 11.383492879,
+          "max": 12.870130612999999,
+          "cv": 0.04796894846838529
+        },
+        "cross": {
+          "n": 5,
+          "median": 14.320639973,
+          "min": 14.250163685,
+          "max": 16.092086111999997,
+          "cv": 0.05409780529012722
+        },
+        "paired_cross_over_local": {
+          "n": 5,
+          "median": 1.2265737435175472,
+          "min": 1.1072275887088545,
+          "max": 1.3647332463622626,
+          "cv": 0.07885677323993202
+        }
+      },
+      {
+        "dimension": "3d",
+        "ranks": 2,
+        "local": {
+          "n": 5,
+          "median": 30.750223484,
+          "min": 30.413094178,
+          "max": 30.835358807,
+          "cv": 0.006229882649703634
+        },
+        "cross": {
+          "n": 5,
+          "median": 32.975062412999996,
+          "min": 32.36577555,
+          "max": 33.350196652,
+          "cv": 0.013418761448696854
+        },
+        "paired_cross_over_local": {
+          "n": 5,
+          "median": 1.081285182600492,
+          "min": 1.0496318772412851,
+          "max": 1.0960573031110152,
+          "cv": 0.017538152254281104
+        }
+      },
+      {
+        "dimension": "3d",
+        "ranks": 4,
+        "local": {
+          "n": 5,
+          "median": 15.881773421,
+          "min": 15.615880763,
+          "max": 16.630682887,
+          "cv": 0.031708539144845324
+        },
+        "cross": {
+          "n": 5,
+          "median": 17.913253517,
+          "min": 17.700375825,
+          "max": 18.044196858,
+          "cv": 0.008285710457074078
+        },
+        "paired_cross_over_local": {
+          "n": 5,
+          "median": 1.1334855903189889,
+          "min": 1.0771207435506194,
+          "max": 1.1362978351396045,
+          "cv": 0.027197285864738224
+        }
+      }
+    ],
+    "profile": [
+      {
+        "name": "2d-r0-p4-profile",
+        "placement": "local",
+        "ranks": 4,
+        "critical_driver_nonoutput_seconds": 11.419422883,
+        "rank_metrics": [
+          {
+            "rank": 0,
+            "host": "gen-989544",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 0.4651660853996873,
+                "seconds_per_call": 0.00010081623003894393,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.269615531899035,
+                "seconds_per_call": 0.00035106189049353514,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.00022848974913358688,
+                "seconds_per_call": 0.00022848974913358688,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 2.165231853723526e-05,
+                "seconds_per_call": 2.165231853723526e-05,
+                "sent_payload_bytes": 64
+              }
+            },
+            "mpi_seconds": 0.7350317593663931,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 6.937899999999996e-05,
+              "timestep": 0.5111287330000002,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.869137973999992,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.06436680442587242,
+            "user_seconds": 11.46,
+            "system_seconds": 0.51,
+            "core_ticks_delta": {
+              "cpu0": [
+                1156,
+                0,
+                81,
+                115,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gen-989544",
+            "affinity": [
+              1
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 0.2896074568852782,
+                "seconds_per_call": 6.276711245888128e-05,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.1781850904226303,
+                "seconds_per_call": 0.00023201183648779988,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.00022473838180303574,
+                "seconds_per_call": 0.00022473838180303574,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 3.948807716369629e-05,
+                "seconds_per_call": 3.948807716369629e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.46805677376687527,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 9.696900000000005e-05,
+              "timestep": 0.4314821729999995,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.944834633,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.041076377138132024,
+            "user_seconds": 11.56,
+            "system_seconds": 0.45,
+            "core_ticks_delta": {
+              "cpu1": [
+                1173,
+                0,
+                70,
+                109,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "affinity": [
+              2
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 0.23081441409885883,
+                "seconds_per_call": 5.0024797160567585e-05,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.10583226289600134,
+                "seconds_per_call": 0.00013780242564583509,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.00021809060126543045,
+                "seconds_per_call": 0.00021809060126543045,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 5.476921796798706e-05,
+                "seconds_per_call": 5.476921796798706e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.3369195368140936,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 7.511099999999994e-05,
+              "timestep": 0.3605818630000004,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 11.009753751999995,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.02957047685974508,
+            "user_seconds": 11.54,
+            "system_seconds": 0.42,
+            "core_ticks_delta": {
+              "cpu2": [
+                1171,
+                0,
+                71,
+                108,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "affinity": [
+              3
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 0.10775809828191996,
+                "seconds_per_call": 2.3354594339384474e-05,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.041351581923663616,
+                "seconds_per_call": 5.384320562977033e-05,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 3.9429403841495514e-05,
+                "seconds_per_call": 3.9429403841495514e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 4.283525049686432e-05,
+                "seconds_per_call": 4.283525049686432e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.14919194485992193,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 0.00034639100000000047,
+              "timestep": 0.3092545610000003,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 11.059638747999996,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.013096498810130294,
+            "user_seconds": 11.46,
+            "system_seconds": 0.5,
+            "core_ticks_delta": {
+              "cpu3": [
+                1164,
+                0,
+                79,
+                108,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        ],
+        "allgather_all": {
+          "arrival_spread_sum": 0.26688813511282206,
+          "completion_tail_sum": 0.002944457344710827,
+          "arrival_share_of_summed_call_spans": 0.9890878365808451
+        },
+        "allgather_after_first": {
+          "arrival_spread_sum": 0.26260819751769304,
+          "completion_tail_sum": 0.002931412309408188,
+          "arrival_share_of_summed_call_spans": 0.9889605459941856
+        }
+      },
+      {
+        "name": "2d-r1-p4-profile",
+        "placement": "local",
+        "ranks": 4,
+        "critical_driver_nonoutput_seconds": 10.965375074999999,
+        "rank_metrics": [
+          {
+            "rank": 0,
+            "host": "gen-989544",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 0.15754855051636696,
+                "seconds_per_call": 3.414576300744841e-05,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.11278411839157343,
+                "seconds_per_call": 0.00014685432082236124,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.00010122358798980713,
+                "seconds_per_call": 0.00010122358798980713,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 1.6344711184501648e-05,
+                "seconds_per_call": 1.6344711184501648e-05,
+                "sent_payload_bytes": 64
+              }
+            },
+            "mpi_seconds": 0.2704502372071147,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 7.584399999999995e-05,
+              "timestep": 0.35423294500000013,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.596904340999997,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.024664269967325625,
+            "user_seconds": 11.06,
+            "system_seconds": 0.43,
+            "core_ticks_delta": {
+              "cpu0": [
+                1121,
+                0,
+                71,
+                104,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gen-989544",
+            "affinity": [
+              1
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 0.14112466108053923,
+                "seconds_per_call": 3.058618575651045e-05,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.08872551843523979,
+                "seconds_per_call": 0.00011552801879588515,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 1.878943294286728e-05,
+                "seconds_per_call": 1.878943294286728e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 2.3067928850650787e-05,
+                "seconds_per_call": 2.3067928850650787e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.22989203687757254,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 7.588800000000008e-05,
+              "timestep": 0.34513342900000005,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.605227669000016,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.020965686246109595,
+            "user_seconds": 10.99,
+            "system_seconds": 0.48,
+            "core_ticks_delta": {
+              "cpu1": [
+                1115,
+                0,
+                77,
+                104,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "affinity": [
+              2
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 0.06773977540433407,
+                "seconds_per_call": 1.4681355744329013e-05,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.02750302478671074,
+                "seconds_per_call": 3.581123019102961e-05,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 4.977080971002579e-05,
+                "seconds_per_call": 4.977080971002579e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 1.2628734111785889e-05,
+                "seconds_per_call": 1.2628734111785889e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.09530519973486662,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 0.00016066500000000002,
+              "timestep": 0.2790881889999999,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.666079856999998,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.008691467376446913,
+            "user_seconds": 10.98,
+            "system_seconds": 0.47,
+            "core_ticks_delta": {
+              "cpu2": [
+                1116,
+                0,
+                76,
+                104,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "affinity": [
+              3
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 0.16604018677026033,
+                "seconds_per_call": 3.598616965111841e-05,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.06861035618931055,
+                "seconds_per_call": 8.933640128816478e-05,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 6.981194019317627e-06,
+                "seconds_per_call": 6.981194019317627e-06,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.0001005176454782486,
+                "seconds_per_call": 0.0001005176454782486,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.23475804179906845,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 0.00015784399999999992,
+              "timestep": 0.342143711,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.60278949300001,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.02140920544972869,
+            "user_seconds": 11.01,
+            "system_seconds": 0.45,
+            "core_ticks_delta": {
+              "cpu3": [
+                1119,
+                0,
+                74,
+                104,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        ],
+        "allgather_all": {
+          "arrival_spread_sum": 0.11359058599919081,
+          "completion_tail_sum": 0.0034424392506480217,
+          "arrival_share_of_summed_call_spans": 0.9705857449784008
+        },
+        "allgather_after_first": {
+          "arrival_spread_sum": 0.11345214396715164,
+          "completion_tail_sum": 0.0034340498968958855,
+          "arrival_share_of_summed_call_spans": 0.9706205687483495
+        }
+      },
+      {
+        "name": "2d-r2-p4-profile",
+        "placement": "local",
+        "ranks": 4,
+        "critical_driver_nonoutput_seconds": 11.10145647,
+        "rank_metrics": [
+          {
+            "rank": 0,
+            "host": "gen-989544",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 0.19894956331700087,
+                "seconds_per_call": 4.3118674320979815e-05,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.1476529473438859,
+                "seconds_per_call": 0.0001922564418540181,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 4.573725163936615e-05,
+                "seconds_per_call": 4.573725163936615e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 1.463480293750763e-05,
+                "seconds_per_call": 1.463480293750763e-05,
+                "sent_payload_bytes": 64
+              }
+            },
+            "mpi_seconds": 0.34666288271546364,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 7.593599999999992e-05,
+              "timestep": 0.38969747900000007,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.696155416000007,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.03122679295750674,
+            "user_seconds": 11.21,
+            "system_seconds": 0.42,
+            "core_ticks_delta": {
+              "cpu0": [
+                1134,
+                0,
+                72,
+                104,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gen-989544",
+            "affinity": [
+              1
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 0.21254101488739252,
+                "seconds_per_call": 4.606437253736292e-05,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.1413327781483531,
+                "seconds_per_call": 0.0001840270548806681,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 3.1334348022937775e-05,
+                "seconds_per_call": 3.1334348022937775e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 3.1987205147743225e-05,
+                "seconds_per_call": 3.1987205147743225e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.3539371145889163,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 6.738499999999997e-05,
+              "timestep": 0.3892567489999996,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.695955333000004,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.031882497381693534,
+            "user_seconds": 11.18,
+            "system_seconds": 0.44,
+            "core_ticks_delta": {
+              "cpu1": [
+                1133,
+                0,
+                72,
+                104,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "affinity": [
+              2
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 0.07418157625943422,
+                "seconds_per_call": 1.607749810564244e-05,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.021820465102791786,
+                "seconds_per_call": 2.8412063935926806e-05,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 2.5780871510505676e-05,
+                "seconds_per_call": 2.5780871510505676e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 6.284750998020172e-05,
+                "seconds_per_call": 6.284750998020172e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.09609066974371672,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 0.00013396399999999987,
+              "timestep": 0.27508225899999994,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.80361448699999,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.008656123365787747,
+            "user_seconds": 11.08,
+            "system_seconds": 0.46,
+            "core_ticks_delta": {
+              "cpu2": [
+                1127,
+                0,
+                79,
+                104,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "affinity": [
+              3
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 0.21503037493675947,
+                "seconds_per_call": 4.660389573835273e-05,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.12451376393437386,
+                "seconds_per_call": 0.0001621272967895493,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 1.628883183002472e-05,
+                "seconds_per_call": 1.628883183002472e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 6.91339373588562e-05,
+                "seconds_per_call": 6.91339373588562e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.3396295616403222,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 0.00012017400000000003,
+              "timestep": 0.3749554990000004,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.706937307000002,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.03059590906609671,
+            "user_seconds": 11.21,
+            "system_seconds": 0.39,
+            "core_ticks_delta": {
+              "cpu3": [
+                1140,
+                0,
+                65,
+                104,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        ],
+        "allgather_all": {
+          "arrival_spread_sum": 0.152782310731709,
+          "completion_tail_sum": 0.003270602785050869,
+          "arrival_share_of_summed_call_spans": 0.9790417063587883
+        },
+        "allgather_after_first": {
+          "arrival_spread_sum": 0.1522140046581626,
+          "completion_tail_sum": 0.003259710967540741,
+          "arrival_share_of_summed_call_spans": 0.9790336845400391
+        }
+      },
+      {
+        "name": "3d-r0-p4-profile",
+        "placement": "local",
+        "ranks": 4,
+        "critical_driver_nonoutput_seconds": 16.072095291,
+        "rank_metrics": [
+          {
+            "rank": 0,
+            "host": "gen-989544",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 0.410550725646317,
+                "seconds_per_call": 0.0003545343053940561,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.13330355007201433,
+                "seconds_per_call": 0.0006942893232917413,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0001603430137038231,
+                "seconds_per_call": 0.0001603430137038231,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 1.411139965057373e-05,
+                "seconds_per_call": 1.411139965057373e-05,
+                "sent_payload_bytes": 64
+              }
+            },
+            "mpi_seconds": 0.5440287301316857,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 4.7132e-05,
+              "timestep": 0.3899984160000001,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 15.618632942999994,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.033849272312137746,
+            "user_seconds": 16.06,
+            "system_seconds": 0.45,
+            "core_ticks_delta": {
+              "cpu0": [
+                1639,
+                0,
+                71,
+                111,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gen-989544",
+            "affinity": [
+              1
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 0.6095083216205239,
+                "seconds_per_call": 0.0005263457008812815,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.19309932179749012,
+                "seconds_per_call": 0.0010057256343619276,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0001531718298792839,
+                "seconds_per_call": 0.0001531718298792839,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 2.860836684703827e-05,
+                "seconds_per_call": 2.860836684703827e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.8027894236147404,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 7.590300000000001e-05,
+              "timestep": 0.46191387799999994,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 15.537297364999993,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.04994979044845084,
+            "user_seconds": 16.19,
+            "system_seconds": 0.41,
+            "core_ticks_delta": {
+              "cpu1": [
+                1640,
+                0,
+                70,
+                109,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "affinity": [
+              2
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 0.19895215332508087,
+                "seconds_per_call": 0.00017180669544480213,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.06652142573148012,
+                "seconds_per_call": 0.00034646575901812565,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.00014705676585435867,
+                "seconds_per_call": 0.00014705676585435867,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 1.5049241483211517e-05,
+                "seconds_per_call": 1.5049241483211517e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.26563568506389856,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 5.697299999999998e-05,
+              "timestep": 0.33779170100000006,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 15.661723147000002,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.01657318462545485,
+            "user_seconds": 16.11,
+            "system_seconds": 0.45,
+            "core_ticks_delta": {
+              "cpu2": [
+                1638,
+                0,
+                75,
+                104,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "affinity": [
+              3
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 0.353424278087914,
+                "seconds_per_call": 0.0003052023126838635,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.12405721843242645,
+                "seconds_per_call": 0.0006461313460022211,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 7.82310962677002e-06,
+                "seconds_per_call": 7.82310962677002e-06,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 2.1745450794696808e-05,
+                "seconds_per_call": 2.1745450794696808e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.4775110650807619,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 4.7544e-05,
+              "timestep": 0.3848854089999999,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 15.614478983999996,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.029785969081628606,
+            "user_seconds": 16.24,
+            "system_seconds": 0.43,
+            "core_ticks_delta": {
+              "cpu3": [
+                1643,
+                0,
+                70,
+                105,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        ],
+        "allgather_all": {
+          "arrival_spread_sum": 0.2124041747301817,
+          "completion_tail_sum": 0.0056821564212441444,
+          "arrival_share_of_summed_call_spans": 0.9739453802939222
+        },
+        "allgather_after_first": {
+          "arrival_spread_sum": 0.20274705346673727,
+          "completion_tail_sum": 0.005665176548063755,
+          "arrival_share_of_summed_call_spans": 0.9728174467128852
+        }
+      },
+      {
+        "name": "3d-r1-p4-profile",
+        "placement": "local",
+        "ranks": 4,
+        "critical_driver_nonoutput_seconds": 15.473078975,
+        "rank_metrics": [
+          {
+            "rank": 0,
+            "host": "gen-989544",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 0.18241573590785265,
+                "seconds_per_call": 0.0001575265422347605,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.06048191338777542,
+                "seconds_per_call": 0.0003150099655613303,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 8.736178278923035e-05,
+                "seconds_per_call": 8.736178278923035e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 2.9418617486953735e-05,
+                "seconds_per_call": 2.9418617486953735e-05,
+                "sent_payload_bytes": 64
+              }
+            },
+            "mpi_seconds": 0.24301442969590425,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 5.081500000000001e-05,
+              "timestep": 0.3205723659999998,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 15.129464703,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.015705920019999636,
+            "user_seconds": 15.66,
+            "system_seconds": 0.39,
+            "core_ticks_delta": {
+              "cpu0": [
+                1583,
+                0,
+                65,
+                104,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gen-989544",
+            "affinity": [
+              1
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 0.14017212204635143,
+                "seconds_per_call": 0.0001210467375184382,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.03357661608606577,
+                "seconds_per_call": 0.00017487820878159255,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 6.57280907034874e-05,
+                "seconds_per_call": 6.57280907034874e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 7.84900039434433e-05,
+                "seconds_per_call": 7.84900039434433e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.17389295622706413,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 4.4875000000000007e-05,
+              "timestep": 0.29603496100000004,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 15.155410313000003,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.011238484362000799,
+            "user_seconds": 15.66,
+            "system_seconds": 0.37,
+            "core_ticks_delta": {
+              "cpu1": [
+                1585,
+                0,
+                63,
+                104,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "affinity": [
+              2
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 0.1197438258677721,
+                "seconds_per_call": 0.00010340572182018316,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.03911639004945755,
+                "seconds_per_call": 0.00020373119817425808,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 6.651785224676132e-05,
+                "seconds_per_call": 6.651785224676132e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 7.535237818956375e-05,
+                "seconds_per_call": 7.535237818956375e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.15900208614766598,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 6.486199999999998e-05,
+              "timestep": 0.3049330960000001,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 15.145991400999993,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.010276146553382109,
+            "user_seconds": 15.62,
+            "system_seconds": 0.39,
+            "core_ticks_delta": {
+              "cpu2": [
+                1579,
+                0,
+                67,
+                105,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "affinity": [
+              3
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 0.14877476263791323,
+                "seconds_per_call": 0.00012847561540407014,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.026146759279072285,
+                "seconds_per_call": 0.0001361810379118348,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 2.373289316892624e-05,
+                "seconds_per_call": 2.373289316892624e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.0001698266714811325,
+                "seconds_per_call": 0.0001698266714811325,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.17511508148163557,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 6.607500000000001e-05,
+              "timestep": 0.28705015800000006,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 15.156741950000006,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.011317403715483561,
+            "user_seconds": 15.57,
+            "system_seconds": 0.42,
+            "core_ticks_delta": {
+              "cpu3": [
+                1578,
+                0,
+                71,
+                103,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        ],
+        "allgather_all": {
+          "arrival_spread_sum": 0.06641230545938015,
+          "completion_tail_sum": 0.012807841412723064,
+          "arrival_share_of_summed_call_spans": 0.8383259572416515
+        },
+        "allgather_after_first": {
+          "arrival_spread_sum": 0.0662755910307169,
+          "completion_tail_sum": 0.012793567031621933,
+          "arrival_share_of_summed_call_spans": 0.838197758201303
+        }
+      },
+      {
+        "name": "3d-r2-p4-profile",
+        "placement": "local",
+        "ranks": 4,
+        "critical_driver_nonoutput_seconds": 15.504676803,
+        "rank_metrics": [
+          {
+            "rank": 0,
+            "host": "gen-989544",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 0.21836639009416103,
+                "seconds_per_call": 0.0001885720121711235,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.06967641226947308,
+                "seconds_per_call": 0.00036289798057017225,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 6.418023258447647e-05,
+                "seconds_per_call": 6.418023258447647e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 2.9684975743293762e-05,
+                "seconds_per_call": 2.9684975743293762e-05,
+                "sent_payload_bytes": 64
+              }
+            },
+            "mpi_seconds": 0.2881366675719619,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 7.556299999999998e-05,
+              "timestep": 0.3309347229999999,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 15.149892792999996,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.018584233839730447,
+            "user_seconds": 15.67,
+            "system_seconds": 0.37,
+            "core_ticks_delta": {
+              "cpu0": [
+                1580,
+                0,
+                71,
+                104,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gen-989544",
+            "affinity": [
+              1
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 0.19007685594260693,
+                "seconds_per_call": 0.00016414236264473828,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.06722650304436684,
+                "seconds_per_call": 0.0003501380366894106,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 3.7993304431438446e-05,
+                "seconds_per_call": 3.7993304431438446e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 4.32673841714859e-05,
+                "seconds_per_call": 4.32673841714859e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.2573846196755767,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 7.822400000000002e-05,
+              "timestep": 0.3298474189999999,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 15.152932424999996,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.016601176310748273,
+            "user_seconds": 15.71,
+            "system_seconds": 0.37,
+            "core_ticks_delta": {
+              "cpu1": [
+                1587,
+                0,
+                64,
+                105,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "affinity": [
+              2
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 0.10469168704003096,
+                "seconds_per_call": 9.040732905011309e-05,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.02237569820135832,
+                "seconds_per_call": 0.00011654009479874124,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 4.0786340832710266e-05,
+                "seconds_per_call": 4.0786340832710266e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 4.545878618955612e-05,
+                "seconds_per_call": 4.545878618955612e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.12715363036841154,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 4.4658000000000005e-05,
+              "timestep": 0.2860740559999999,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 15.198891712000004,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.008200985546748616,
+            "user_seconds": 15.64,
+            "system_seconds": 0.41,
+            "core_ticks_delta": {
+              "cpu2": [
+                1583,
+                0,
+                67,
+                104,
+                0,
+                0,
+                1,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "affinity": [
+              3
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 0.10797561425715685,
+                "seconds_per_call": 9.324319020479866e-05,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.01696564443409443,
+                "seconds_per_call": 8.836273142757516e-05,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 2.5702640414237976e-05,
+                "seconds_per_call": 2.5702640414237976e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 9.821448475122452e-05,
+                "seconds_per_call": 9.821448475122452e-05,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.12506517581641674,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 4.785700000000002e-05,
+              "timestep": 0.27764359299999997,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 15.203383261,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.008066517159454542,
+            "user_seconds": 15.65,
+            "system_seconds": 0.37,
+            "core_ticks_delta": {
+              "cpu3": [
+                1582,
+                0,
+                69,
+                105,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        ],
+        "allgather_all": {
+          "arrival_spread_sum": 0.08044152893126011,
+          "completion_tail_sum": 0.0020471476018428802,
+          "arrival_share_of_summed_call_spans": 0.9751826833950796
+        },
+        "allgather_after_first": {
+          "arrival_spread_sum": 0.08022522088140249,
+          "completion_tail_sum": 0.002033209428191185,
+          "arrival_share_of_summed_call_spans": 0.9752826619649944
+        }
+      },
+      {
+        "name": "preflight-p2",
+        "placement": "cross",
+        "ranks": 2,
+        "critical_driver_nonoutput_seconds": 0.029829772,
+        "rank_metrics": [
+          {
+            "rank": 0,
+            "host": "gpu-273312",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 30,
+                "seconds": 0.015841485059354454,
+                "seconds_per_call": 0.0005280495019784818,
+                "sent_payload_bytes": 184320
+              },
+              "Allgather": {
+                "calls": 4,
+                "seconds": 0.0030684999946970493,
+                "seconds_per_call": 0.0007671249986742623,
+                "sent_payload_bytes": 384
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0009996570006478578,
+                "seconds_per_call": 0.0009996570006478578,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.008213484019506723,
+                "seconds_per_call": 0.008213484019506723,
+                "sent_payload_bytes": 64
+              }
+            },
+            "mpi_seconds": 0.028123126074206084,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 1.029e-06,
+              "timestep": 0.003355437,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 0.023987562,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.9427871615715361,
+            "user_seconds": 0.29,
+            "system_seconds": 0.39,
+            "core_ticks_delta": {
+              "cpu0": [
+                42,
+                0,
+                69,
+                7,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gen-989544",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 30,
+                "seconds": 0.015895647928118706,
+                "seconds_per_call": 0.0005298549309372902,
+                "sent_payload_bytes": 184320
+              },
+              "Allgather": {
+                "calls": 4,
+                "seconds": 0.0015090284869074821,
+                "seconds_per_call": 0.00037725712172687054,
+                "sent_payload_bytes": 384
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0002694223076105118,
+                "seconds_per_call": 0.0002694223076105118,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.008078431710600853,
+                "seconds_per_call": 0.008078431710600853,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.025752530433237553,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 2.091e-06,
+              "timestep": 0.0018258889999999998,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 0.024726915999999998,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.909619174160988,
+            "user_seconds": 0.29,
+            "system_seconds": 0.34,
+            "core_ticks_delta": {
+              "cpu0": [
+                45,
+                0,
+                62,
+                6,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "preflight-p4",
+        "placement": "cross",
+        "ranks": 4,
+        "critical_driver_nonoutput_seconds": 0.033251075000000005,
+        "rank_metrics": [
+          {
+            "rank": 0,
+            "host": "gpu-273312",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 30,
+                "seconds": 0.016719986946554855,
+                "seconds_per_call": 0.0005573328982184951,
+                "sent_payload_bytes": 184320
+              },
+              "Allgather": {
+                "calls": 4,
+                "seconds": 0.01172732500708662,
+                "seconds_per_call": 0.002931831251771655,
+                "sent_payload_bytes": 384
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0009943150216713548,
+                "seconds_per_call": 0.0009943150216713548,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.02454940098687075,
+                "seconds_per_call": 0.02454940098687075,
+                "sent_payload_bytes": 64
+              }
+            },
+            "mpi_seconds": 0.05399102796218358,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 1.006e-06,
+              "timestep": 0.011883484,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 0.015174388,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 1.6237378178655448,
+            "user_seconds": 0.26,
+            "system_seconds": 0.44,
+            "core_ticks_delta": {
+              "cpu0": [
+                40,
+                0,
+                73,
+                9,
+                0,
+                0,
+                0,
+                1
+              ]
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gpu-273312",
+            "affinity": [
+              1
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 30,
+                "seconds": 0.01798033609520644,
+                "seconds_per_call": 0.0005993445365068813,
+                "sent_payload_bytes": 184320
+              },
+              "Allgather": {
+                "calls": 4,
+                "seconds": 0.009841753984801471,
+                "seconds_per_call": 0.002460438496200368,
+                "sent_payload_bytes": 384
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0009885769977699965,
+                "seconds_per_call": 0.0009885769977699965,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.024513679993106052,
+                "seconds_per_call": 0.024513679993106052,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.05332434707088396,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 1.33e-06,
+              "timestep": 0.010011397,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 0.017186298,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 1.6409275220867536,
+            "user_seconds": 0.27,
+            "system_seconds": 0.43,
+            "core_ticks_delta": {
+              "cpu1": [
+                39,
+                0,
+                73,
+                9,
+                0,
+                0,
+                1,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 30,
+                "seconds": 0.012722179293632507,
+                "seconds_per_call": 0.00042407264312108357,
+                "sent_payload_bytes": 184320
+              },
+              "Allgather": {
+                "calls": 4,
+                "seconds": 0.011129670776426792,
+                "seconds_per_call": 0.002782417694106698,
+                "sent_payload_bytes": 384
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0009613307192921638,
+                "seconds_per_call": 0.0009613307192921638,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.02444261498749256,
+                "seconds_per_call": 0.02444261498749256,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.049255795776844025,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 1.4370000000000002e-06,
+              "timestep": 0.011303337,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 0.014636814,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 1.7053555913412901,
+            "user_seconds": 0.27,
+            "system_seconds": 0.39,
+            "core_ticks_delta": {
+              "cpu0": [
+                44,
+                0,
+                64,
+                8,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "affinity": [
+              1
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 30,
+                "seconds": 0.015020887367427349,
+                "seconds_per_call": 0.0005006962455809116,
+                "sent_payload_bytes": 184320
+              },
+              "Allgather": {
+                "calls": 4,
+                "seconds": 0.0094682602211833,
+                "seconds_per_call": 0.002367065055295825,
+                "sent_payload_bytes": 384
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0009509827941656113,
+                "seconds_per_call": 0.0009509827941656113,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.0244774566963315,
+                "seconds_per_call": 0.0244774566963315,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 0.04991758707910776,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 2.2959999999999997e-06,
+              "timestep": 0.009659571,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 0.015945216999999998,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 1.683704557059659,
+            "user_seconds": 0.29,
+            "system_seconds": 0.37,
+            "core_ticks_delta": {
+              "cpu1": [
+                44,
+                0,
+                64,
+                8,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "2d-p2-cross-profile",
+        "placement": "cross",
+        "ranks": 2,
+        "critical_driver_nonoutput_seconds": 25.139236882,
+        "rank_metrics": [
+          {
+            "rank": 0,
+            "host": "gpu-273312",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 2.9078255900240038,
+                "seconds_per_call": 0.0006302179432215006,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.6341219100286253,
+                "seconds_per_call": 0.0008256795703497725,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0010614759812597185,
+                "seconds_per_call": 0.0010614759812597185,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.008169490000000224,
+                "seconds_per_call": 0.008169490000000224,
+                "sent_payload_bytes": 64
+              }
+            },
+            "mpi_seconds": 3.551178466033889,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 0.00014569399999999998,
+              "timestep": 1.1233552269999993,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 23.962009136000027,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.1412603923779634,
+            "user_seconds": 23.93,
+            "system_seconds": 1.81,
+            "core_ticks_delta": {
+              "cpu0": [
+                2407,
+                0,
+                209,
+                14,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gen-989544",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 2.5485097840428352,
+                "seconds_per_call": 0.0005523428227227644,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.33315940387547016,
+                "seconds_per_call": 0.0004338013071295184,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.00033040158450603485,
+                "seconds_per_call": 0.00033040158450603485,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.007549243979156017,
+                "seconds_per_call": 0.007549243979156017,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 2.8895488334819674,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 0.00013805599999999998,
+              "timestep": 0.846336074,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 24.227886953000016,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.11511434595019938,
+            "user_seconds": 24.39,
+            "system_seconds": 1.35,
+            "core_ticks_delta": {
+              "cpu0": [
+                2456,
+                0,
+                161,
+                6,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "2d-p4-cross-profile",
+        "placement": "cross",
+        "ranks": 4,
+        "critical_driver_nonoutput_seconds": 14.497660646,
+        "rank_metrics": [
+          {
+            "rank": 0,
+            "host": "gpu-273312",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 2.571943081828067,
+                "seconds_per_call": 0.0005574215608643405,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 1.1137894715357106,
+                "seconds_per_call": 0.00145024670772879,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0006385549786500633,
+                "seconds_per_call": 0.0006385549786500633,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.022311278007691726,
+                "seconds_per_call": 0.022311278007691726,
+                "sent_payload_bytes": 64
+              }
+            },
+            "mpi_seconds": 3.7086823863501195,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 0.00010224300000000008,
+              "timestep": 1.3552351780000018,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 13.095999455000017,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.2558124705018095,
+            "user_seconds": 13.5,
+            "system_seconds": 1.61,
+            "core_ticks_delta": {
+              "cpu0": [
+                1364,
+                0,
+                188,
+                12,
+                0,
+                0,
+                2,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gpu-273312",
+            "affinity": [
+              1
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 2.662344691401813,
+                "seconds_per_call": 0.0005770144541399682,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 1.094941556773847,
+                "seconds_per_call": 0.0014257051520492798,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0006355689838528633,
+                "seconds_per_call": 0.0006355689838528633,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.022323044016957283,
+                "seconds_per_call": 0.022323044016957283,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 3.7802448611764703,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 0.00011560300000000005,
+              "timestep": 1.3425009369999996,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 13.112639608999988,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.2611436843228601,
+            "user_seconds": 13.56,
+            "system_seconds": 1.55,
+            "core_ticks_delta": {
+              "cpu1": [
+                1368,
+                0,
+                181,
+                9,
+                0,
+                0,
+                5,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 2.634755253791809,
+                "seconds_per_call": 0.0005710349488062005,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 1.0522072976455092,
+                "seconds_per_call": 0.0013700615854759235,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.000787791796028614,
+                "seconds_per_call": 0.000787791796028614,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.02172014769166708,
+                "seconds_per_call": 0.02172014769166708,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 3.709470490925014,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 7.3271e-05,
+              "timestep": 1.3033337250000003,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 13.146797573,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.2559259659631812,
+            "user_seconds": 13.55,
+            "system_seconds": 1.51,
+            "core_ticks_delta": {
+              "cpu0": [
+                1369,
+                0,
+                177,
+                11,
+                0,
+                0,
+                1,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "affinity": [
+              1
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 4614,
+                "seconds": 2.5395425632596016,
+                "seconds_per_call": 0.000550399341842133,
+                "sent_payload_bytes": 113393664
+              },
+              "Allgather": {
+                "calls": 768,
+                "seconds": 0.3402229379862547,
+                "seconds_per_call": 0.0004429986171696025,
+                "sent_payload_bytes": 73728
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0007741702720522881,
+                "seconds_per_call": 0.0007741702720522881,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.021720319986343384,
+                "seconds_per_call": 0.021720319986343384,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 2.902259991504252,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 0.00010782500000000007,
+              "timestep": 0.6149085490000004,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 13.830049489000002,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.20058134392569485,
+            "user_seconds": 13.51,
+            "system_seconds": 1.55,
+            "core_ticks_delta": {
+              "cpu1": [
+                1368,
+                0,
+                180,
+                6,
+                0,
+                0,
+                4,
+                0
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "3d-p2-cross-profile",
+        "placement": "cross",
+        "ranks": 2,
+        "critical_driver_nonoutput_seconds": 33.191828386000005,
+        "rank_metrics": [
+          {
+            "rank": 0,
+            "host": "gpu-273312",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 2.8129995980707463,
+                "seconds_per_call": 0.0024291879085239607,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.1657859769766219,
+                "seconds_per_call": 0.0008634686300865724,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0010715269891079515,
+                "seconds_per_call": 0.0010715269891079515,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.0071777430130168796,
+                "seconds_per_call": 0.0071777430130168796,
+                "sent_payload_bytes": 64
+              }
+            },
+            "mpi_seconds": 2.987034845049493,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 6.0243e-05,
+              "timestep": 0.7360684889999994,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 32.348398263000014,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.08999307933001352,
+            "user_seconds": 32.62,
+            "system_seconds": 1.28,
+            "core_ticks_delta": {
+              "cpu0": [
+                3273,
+                0,
+                160,
+                14,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gen-989544",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 2.806311239488423,
+                "seconds_per_call": 0.002423412123910555,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.42228221148252487,
+                "seconds_per_call": 0.0021993865181381502,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0002572285011410713,
+                "seconds_per_call": 0.0002572285011410713,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.006503843702375889,
+                "seconds_per_call": 0.006503843702375889,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 3.2353545231744647,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 4.102100000000002e-05,
+              "timestep": 0.945270082,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 32.10863110000002,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.0976651004407609,
+            "user_seconds": 32.49,
+            "system_seconds": 1.41,
+            "core_ticks_delta": {
+              "cpu0": [
+                3261,
+                0,
+                171,
+                6,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "3d-p4-cross-profile",
+        "placement": "cross",
+        "ranks": 4,
+        "critical_driver_nonoutput_seconds": 17.943969776,
+        "rank_metrics": [
+          {
+            "rank": 0,
+            "host": "gpu-273312",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 2.3999361595197115,
+                "seconds_per_call": 0.0020724837301551915,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.5249145680281799,
+                "seconds_per_call": 0.002733930041813437,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0008848840079735965,
+                "seconds_per_call": 0.0008848840079735965,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.026216864003799856,
+                "seconds_per_call": 0.026216864003799856,
+                "sent_payload_bytes": 64
+              }
+            },
+            "mpi_seconds": 2.951952475559665,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 4.132300000000002e-05,
+              "timestep": 0.777550442,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 17.096385894999994,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.1645094431393822,
+            "user_seconds": 17.23,
+            "system_seconds": 1.37,
+            "core_ticks_delta": {
+              "cpu0": [
+                1737,
+                0,
+                164,
+                14,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gpu-273312",
+            "affinity": [
+              1
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 2.596651446336182,
+                "seconds_per_call": 0.0022423587619483437,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.5368617150525097,
+                "seconds_per_call": 0.0027961547658984878,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0008830369915813208,
+                "seconds_per_call": 0.0008830369915813208,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.026092535990756005,
+                "seconds_per_call": 0.026092535990756005,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 3.160488734371029,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 6.343700000000002e-05,
+              "timestep": 0.7959120279999999,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 17.078179723999988,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.17621697612330078,
+            "user_seconds": 17.12,
+            "system_seconds": 1.53,
+            "core_ticks_delta": {
+              "cpu1": [
+                1726,
+                0,
+                179,
+                8,
+                0,
+                0,
+                2,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "affinity": [
+              0
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 2.543362418189645,
+                "seconds_per_call": 0.0021963406029271546,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.603017115034163,
+                "seconds_per_call": 0.0031407141408029324,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0008486825972795486,
+                "seconds_per_call": 0.0008486825972795486,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.026121960021555424,
+                "seconds_per_call": 0.026121960021555424,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 3.173350175842643,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 5.144700000000003e-05,
+              "timestep": 0.8646110250000001,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 17.00824223900001,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.17694035467036345,
+            "user_seconds": 17.19,
+            "system_seconds": 1.37,
+            "core_ticks_delta": {
+              "cpu0": [
+                1733,
+                0,
+                165,
+                13,
+                0,
+                0,
+                1,
+                0
+              ]
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "affinity": [
+              1
+            ],
+            "operations": {
+              "Sendrecv": {
+                "calls": 1158,
+                "seconds": 2.094769704155624,
+                "seconds_per_call": 0.0018089548395126287,
+                "sent_payload_bytes": 227672064
+              },
+              "Allgather": {
+                "calls": 192,
+                "seconds": 0.053943224251270294,
+                "seconds_per_call": 0.0002809542929753661,
+                "sent_payload_bytes": 18432
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0008388357236981392,
+                "seconds_per_call": 0.0008388357236981392,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.026097635738551617,
+                "seconds_per_call": 0.026097635738551617,
+                "sent_payload_bytes": 0
+              }
+            },
+            "mpi_seconds": 2.175649399869144,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 3.7463000000000004e-05,
+              "timestep": 0.32713897099999995,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 17.536556155000003,
+              "burn_second": 0.0
+            },
+            "mpi_over_driver_nonoutput": 0.12152267954608571,
+            "user_seconds": 17.42,
+            "system_seconds": 1.18,
+            "core_ticks_delta": {
+              "cpu1": [
+                1755,
+                0,
+                144,
+                8,
+                0,
+                0,
+                3,
+                0
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "comparisons": {
+      "cpu": 72,
+      "profile": 6,
+      "cross": 54
+    },
+    "interpretation": [
+      "Strong scaling fixes total cells and steps. Weak scaling fixes per-rank cells and steps, not physical duration.",
+      "Primary metric is max_rank(driver-output); it includes setup, MPI calls and waiting.",
+      "PMPI durations include waiting; rank sums and per-stage maxima are not a disjoint wall-time partition.",
+      "Cross-host comparisons include differing VM configurations and do not isolate network bandwidth.",
+      "No timestamp alignment is performed between different hosts.",
+      "Warmups and profile runs are excluded from measured medians but all outputs are validated and retained."
+    ]
+  },
+  "paired_application": {
+    "rows": [
+      {
+        "placement": "CPU local",
+        "dimension": "2d",
+        "ranks": 2,
+        "ARCH-before": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 14.521842213,
+            "min": 14.43814649,
+            "max": 14.531688079,
+            "cv": 0.0030658548429864613
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 16.227081044577062,
+            "min": 16.178196945227683,
+            "max": 16.243334245868027,
+            "cv": 0.0018899099513918197
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 90020.0,
+            "min": 89948.0,
+            "max": 90176.0,
+            "cv": 0.0010970097757870174
+          }
+        },
+        "ARCH-concurrent": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 14.557117688,
+            "min": 14.507493390999999,
+            "max": 14.617384215,
+            "cv": 0.00345023373330092
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 16.279241017065942,
+            "min": 16.17797134909779,
+            "max": 16.339861562475562,
+            "cv": 0.004084718083292327
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 90424.0,
+            "min": 88968.0,
+            "max": 90620.0,
+            "cv": 0.007683840289461846
+          }
+        },
+        "pairs": [
+          {
+            "repeat": 1,
+            "before": 14.531688079,
+            "concurrent": 14.508121683,
+            "ratio": 0.9983782754025627
+          },
+          {
+            "repeat": 2,
+            "before": 14.455091691,
+            "concurrent": 14.557117688,
+            "ratio": 1.007058135581632
+          },
+          {
+            "repeat": 3,
+            "before": 14.526750616,
+            "concurrent": 14.507493390999999,
+            "ratio": 0.9986743611486804
+          },
+          {
+            "repeat": 4,
+            "before": 14.521842213,
+            "concurrent": 14.617384215,
+            "ratio": 1.0065791929562815
+          },
+          {
+            "repeat": 5,
+            "before": 14.43814649,
+            "concurrent": 14.597068989,
+            "ratio": 1.0110071260954494
+          }
+        ],
+        "paired_ratio": {
+          "n": 5,
+          "median": 1.0065791929562815,
+          "min": 0.9983782754025627,
+          "max": 1.0110071260954494,
+          "cv": 0.00555474941233529
+        },
+        "faster_pairs": 2,
+        "median_change_percent": 0.2429132232852682
+      },
+      {
+        "placement": "CPU local",
+        "dimension": "2d",
+        "ranks": 4,
+        "ARCH-before": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 7.413441467,
+            "min": 7.210793927,
+            "max": 7.785277697,
+            "cv": 0.036899037692598245
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 9.129968910478055,
+            "min": 8.879359503276646,
+            "max": 9.53273752052337,
+            "cv": 0.03432085903265694
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 159372.0,
+            "min": 158912.0,
+            "max": 159512.0,
+            "cv": 0.0017023311525383048
+          }
+        },
+        "ARCH-concurrent": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 7.213547265,
+            "min": 7.204248397,
+            "max": 7.217257938,
+            "cv": 0.0007642977057290524
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 8.929452881217003,
+            "min": 8.87936995178461,
+            "max": 8.933373160660267,
+            "cv": 0.003164899862707353
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 159060.0,
+            "min": 158344.0,
+            "max": 159340.0,
+            "cv": 0.002522785817402871
+          }
+        },
+        "pairs": [
+          {
+            "repeat": 1,
+            "before": 7.413441467,
+            "concurrent": 7.208349982,
+            "ratio": 0.9723351852290276
+          },
+          {
+            "repeat": 2,
+            "before": 7.756865490999999,
+            "concurrent": 7.204248397,
+            "ratio": 0.928757679936415
+          },
+          {
+            "repeat": 3,
+            "before": 7.239047725,
+            "concurrent": 7.213547265,
+            "ratio": 0.996477373686606
+          },
+          {
+            "repeat": 4,
+            "before": 7.785277697,
+            "concurrent": 7.216254967,
+            "ratio": 0.9269104131996129
+          },
+          {
+            "repeat": 5,
+            "before": 7.210793927,
+            "concurrent": 7.217257938,
+            "ratio": 1.0008964354085612
+          }
+        ],
+        "paired_ratio": {
+          "n": 5,
+          "median": 0.9723351852290276,
+          "min": 0.9269104131996129,
+          "max": 1.0008964354085612,
+          "cv": 0.03699017890611423
+        },
+        "faster_pairs": 4,
+        "median_change_percent": -2.696375264980566
+      },
+      {
+        "placement": "CPU local",
+        "dimension": "3d",
+        "ranks": 2,
+        "ARCH-before": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 20.313011708,
+            "min": 20.285532859,
+            "max": 20.448031073,
+            "cv": 0.0032007235230930367
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 22.107273515313864,
+            "min": 22.106447170488536,
+            "max": 22.257684970274568,
+            "cv": 0.003024585494535176
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 180788.0,
+            "min": 180356.0,
+            "max": 181024.0,
+            "cv": 0.0014907425824290358
+          }
+        },
+        "ARCH-concurrent": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 20.315678824000003,
+            "min": 20.213506965,
+            "max": 20.39317365,
+            "cv": 0.0034824451178262304
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 22.11421607248485,
+            "min": 22.009973310865462,
+            "max": 22.20794020127505,
+            "cv": 0.0033452884365370956
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 180380.0,
+            "min": 180036.0,
+            "max": 180616.0,
+            "cv": 0.001343928076530584
+          }
+        },
+        "pairs": [
+          {
+            "repeat": 1,
+            "before": 20.300284432,
+            "concurrent": 20.213506965,
+            "ratio": 0.9957253078255786
+          },
+          {
+            "repeat": 2,
+            "before": 20.285532859,
+            "concurrent": 20.315678824000003,
+            "ratio": 1.0014860819880622
+          },
+          {
+            "repeat": 3,
+            "before": 20.448031073,
+            "concurrent": 20.39317365,
+            "ratio": 0.9973172271303699
+          },
+          {
+            "repeat": 4,
+            "before": 20.313011708,
+            "concurrent": 20.243311547999998,
+            "ratio": 0.996568693948394
+          },
+          {
+            "repeat": 5,
+            "before": 20.329169173,
+            "concurrent": 20.320088105,
+            "ratio": 0.9995532986162533
+          }
+        ],
+        "paired_ratio": {
+          "n": 5,
+          "median": 0.9973172271303699,
+          "min": 0.9957253078255786,
+          "max": 1.0014860819880622,
+          "cv": 0.0023586558175310037
+        },
+        "faster_pairs": 4,
+        "median_change_percent": 0.013130086460555468
+      },
+      {
+        "placement": "CPU local",
+        "dimension": "3d",
+        "ranks": 4,
+        "ARCH-before": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 10.577551521,
+            "min": 10.186096844000001,
+            "max": 10.724553503,
+            "cv": 0.023888428964007887
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 12.390576303005219,
+            "min": 11.94245295226574,
+            "max": 12.4408467579633,
+            "cv": 0.02151592424851545
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 256512.0,
+            "min": 256120.0,
+            "max": 257208.0,
+            "cv": 0.0017382357043330486
+          }
+        },
+        "ARCH-concurrent": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 10.234351199,
+            "min": 10.187584026,
+            "max": 10.285974101999999,
+            "cv": 0.0035438681984263226
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 11.989667898975313,
+            "min": 11.939360447227955,
+            "max": 12.043440043926239,
+            "cv": 0.0036162356781454627
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 256720.0,
+            "min": 255868.0,
+            "max": 257276.0,
+            "cv": 0.0021518067641703082
+          }
+        },
+        "pairs": [
+          {
+            "repeat": 1,
+            "before": 10.186096844000001,
+            "concurrent": 10.234351199,
+            "ratio": 1.0047372762834492
+          },
+          {
+            "repeat": 2,
+            "before": 10.577551521,
+            "concurrent": 10.244614499999999,
+            "ratio": 0.9685241881980902
+          },
+          {
+            "repeat": 3,
+            "before": 10.724553503,
+            "concurrent": 10.216886749,
+            "ratio": 0.9526631338210968
+          },
+          {
+            "repeat": 4,
+            "before": 10.612631042999999,
+            "concurrent": 10.285974101999999,
+            "ratio": 0.9692199851595275
+          },
+          {
+            "repeat": 5,
+            "before": 10.199947158999999,
+            "concurrent": 10.187584026,
+            "ratio": 0.9987879218580961
+          }
+        ],
+        "paired_ratio": {
+          "n": 5,
+          "median": 0.9692199851595275,
+          "min": 0.9526631338210968,
+          "max": 1.0047372762834492,
+          "cv": 0.022573911684784384
+        },
+        "faster_pairs": 4,
+        "median_change_percent": -3.2446102608777783
+      },
+      {
+        "placement": "two hosts",
+        "dimension": "2d",
+        "ranks": 2,
+        "ARCH-before": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 16.331145467,
+            "min": 16.246772075,
+            "max": 16.679066402,
+            "cv": 0.010701087932223555
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 17.431114570994396,
+            "min": 17.381663648004178,
+            "max": 17.832708543981425,
+            "cv": 0.010822880702645884
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 115704.0,
+            "min": 115420.0,
+            "max": 116044.0,
+            "cv": 0.00252392900389317
+          }
+        },
+        "ARCH-concurrent": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 16.020193704,
+            "min": 15.914925034,
+            "max": 16.873891581000002,
+            "cv": 0.02447196023313147
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 17.130223259009654,
+            "min": 17.030805524991592,
+            "max": 18.082599877001485,
+            "cv": 0.025115712032249146
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 115936.0,
+            "min": 115376.0,
+            "max": 116068.0,
+            "cv": 0.0023239043676523572
+          }
+        },
+        "pairs": [
+          {
+            "repeat": 1,
+            "before": 16.679066402,
+            "concurrent": 16.873891581000002,
+            "ratio": 1.0116808203951175
+          },
+          {
+            "repeat": 2,
+            "before": 16.270034619,
+            "concurrent": 16.042536122999998,
+            "ratio": 0.9860173317803312
+          },
+          {
+            "repeat": 3,
+            "before": 16.423468066,
+            "concurrent": 16.020193704,
+            "ratio": 0.9754452372434745
+          },
+          {
+            "repeat": 4,
+            "before": 16.331145467,
+            "concurrent": 15.914925034,
+            "ratio": 0.9745137024318933
+          },
+          {
+            "repeat": 5,
+            "before": 16.246772075,
+            "concurrent": 16.004942220999997,
+            "ratio": 0.9851152060924075
+          }
+        ],
+        "paired_ratio": {
+          "n": 5,
+          "median": 0.9851152060924075,
+          "min": 0.9745137024318933,
+          "max": 1.0116808203951175,
+          "cv": 0.015222063942169605
+        },
+        "faster_pairs": 4,
+        "median_change_percent": -1.9040413523248034
+      },
+      {
+        "placement": "two hosts",
+        "dimension": "2d",
+        "ranks": 4,
+        "ARCH-before": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 9.189313388,
+            "min": 9.014495425000002,
+            "max": 11.044406451,
+            "cv": 0.08689690262386825
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 10.40753889401094,
+            "min": 10.204534126998624,
+            "max": 12.262653431011131,
+            "cv": 0.07894829301002497
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 211228.0,
+            "min": 210044.0,
+            "max": 211880.0,
+            "cv": 0.003149326365494306
+          }
+        },
+        "ARCH-concurrent": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 8.874798809,
+            "min": 8.414809466,
+            "max": 8.888174214,
+            "cv": 0.02373170274926728
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 10.053599560982548,
+            "min": 9.60387426399393,
+            "max": 10.103092748002382,
+            "cv": 0.02093570569912978
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 211112.0,
+            "min": 211012.0,
+            "max": 211720.0,
+            "cv": 0.001434407381928538
+          }
+        },
+        "pairs": [
+          {
+            "repeat": 1,
+            "before": 9.832931808000001,
+            "concurrent": 8.878981115,
+            "ratio": 0.902984103660327
+          },
+          {
+            "repeat": 2,
+            "before": 9.189313388,
+            "concurrent": 8.414809466,
+            "ratio": 0.9157168888144137
+          },
+          {
+            "repeat": 3,
+            "before": 9.180762214,
+            "concurrent": 8.65616459,
+            "ratio": 0.9428590337303338
+          },
+          {
+            "repeat": 4,
+            "before": 11.044406451,
+            "concurrent": 8.888174214,
+            "ratio": 0.8047670332881702
+          },
+          {
+            "repeat": 5,
+            "before": 9.014495425000002,
+            "concurrent": 8.874798809,
+            "ratio": 0.9845031131068546
+          }
+        ],
+        "paired_ratio": {
+          "n": 5,
+          "median": 0.9157168888144137,
+          "min": 0.8047670332881702,
+          "max": 0.9845031131068546,
+          "cv": 0.07326400581605182
+        },
+        "faster_pairs": 5,
+        "median_change_percent": -3.422612394640001
+      },
+      {
+        "placement": "two hosts",
+        "dimension": "3d",
+        "ranks": 2,
+        "ARCH-before": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 21.966260441,
+            "min": 21.776756566,
+            "max": 22.122827448,
+            "cv": 0.006337279841488747
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 23.309051995980553,
+            "min": 23.00733883000794,
+            "max": 23.409324857988395,
+            "cv": 0.007062279639924374
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 206244.0,
+            "min": 205540.0,
+            "max": 206556.0,
+            "cv": 0.0020001821401324873
+          }
+        },
+        "ARCH-concurrent": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 21.023700827,
+            "min": 20.954926854,
+            "max": 21.272784867,
+            "cv": 0.005789984319712547
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 22.25505885700113,
+            "min": 22.15501699197921,
+            "max": 22.508176550996723,
+            "cv": 0.006123679743966594
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 205580.0,
+            "min": 205212.0,
+            "max": 206868.0,
+            "cv": 0.003654284445159195
+          }
+        },
+        "pairs": [
+          {
+            "repeat": 1,
+            "before": 21.966260441,
+            "concurrent": 21.023700827,
+            "ratio": 0.9570905745868007
+          },
+          {
+            "repeat": 2,
+            "before": 22.122827448,
+            "concurrent": 21.272784867,
+            "ratio": 0.961576223337725
+          },
+          {
+            "repeat": 3,
+            "before": 22.105137086,
+            "concurrent": 20.954926854,
+            "ratio": 0.9479663832201036
+          },
+          {
+            "repeat": 4,
+            "before": 21.776756566,
+            "concurrent": 21.100937758,
+            "ratio": 0.9689660484585132
+          },
+          {
+            "repeat": 5,
+            "before": 21.962096495999997,
+            "concurrent": 21.022857836,
+            "ratio": 0.9572336520709185
+          }
+        ],
+        "paired_ratio": {
+          "n": 5,
+          "median": 0.9572336520709185,
+          "min": 0.9479663832201036,
+          "max": 0.9689660484585132,
+          "cv": 0.007971052610364127
+        },
+        "faster_pairs": 5,
+        "median_change_percent": -4.2909425413199305
+      },
+      {
+        "placement": "two hosts",
+        "dimension": "3d",
+        "ranks": 4,
+        "ARCH-before": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 11.691702599000001,
+            "min": 11.404516936,
+            "max": 13.01972555,
+            "cv": 0.057268101476924814
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 12.918789899995318,
+            "min": 12.616913483012468,
+            "max": 14.325251848000335,
+            "cv": 0.055301530109709306
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 303220.0,
+            "min": 302752.0,
+            "max": 304188.0,
+            "cv": 0.00206059153020581
+          }
+        },
+        "ARCH-concurrent": {
+          "driver_nonoutput": {
+            "n": 5,
+            "median": 10.938284980999999,
+            "min": 10.876547256,
+            "max": 11.487844225000002,
+            "cv": 0.023769266826065467
+          },
+          "launcher_wall": {
+            "n": 5,
+            "median": 12.164928569982294,
+            "min": 12.114106335007818,
+            "max": 12.718256307998672,
+            "cv": 0.02169253540599848
+          },
+          "sum_rank_peak_rss_kib": {
+            "n": 5,
+            "median": 302944.0,
+            "min": 302420.0,
+            "max": 304404.0,
+            "cv": 0.0029281624926605003
+          }
+        },
+        "pairs": [
+          {
+            "repeat": 1,
+            "before": 11.691702599000001,
+            "concurrent": 11.487844225000002,
+            "ratio": 0.9825638419833365
+          },
+          {
+            "repeat": 2,
+            "before": 13.01972555,
+            "concurrent": 11.257842606999999,
+            "ratio": 0.8646758769043329
+          },
+          {
+            "repeat": 3,
+            "before": 11.404516936,
+            "concurrent": 10.938284980999999,
+            "ratio": 0.9591186581933802
+          },
+          {
+            "repeat": 4,
+            "before": 12.342657578,
+            "concurrent": 10.935718081,
+            "ratio": 0.8860100032664131
+          },
+          {
+            "repeat": 5,
+            "before": 11.472018255,
+            "concurrent": 10.876547256,
+            "ratio": 0.948093614762122
+          }
+        ],
+        "paired_ratio": {
+          "n": 5,
+          "median": 0.948093614762122,
+          "min": 0.8646758769043329,
+          "max": 0.9825638419833365,
+          "cv": 0.05420264877961953
+        },
+        "faster_pairs": 5,
+        "median_change_percent": -6.444036799776642
+      }
+    ],
+    "comparisons": {
+      "paired-cpu": 52,
+      "paired-cross": 52
+    },
+    "profiles": [
+      {
+        "name": "2d-p4-before-profile",
+        "placement": "CPU local",
+        "variant": "ARCH-before",
+        "driver_nonoutput": 7.629332125,
+        "ranks": [
+          {
+            "rank": 0,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 3078,
+                "seconds": 0.351355847902596,
+                "sent_payload_bytes": 75644928
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.19368966668844223,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0005398262292146683,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 1.0371208190917969e-05,
+                "sent_payload_bytes": 64
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 7.629275299,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 6.197700000000002e-05,
+              "timestep": 0.35426050600000014,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 7.2397242980000005,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 3078,
+                "seconds": 0.3244617721065879,
+                "sent_payload_bytes": 75644928
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.15119538269937038,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0004621753469109535,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 1.5019439160823822e-05,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 7.629332125,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 8.692099999999998e-05,
+              "timestep": 0.3227255830000003,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 7.261978812999999,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 3078,
+                "seconds": 0.09625487681478262,
+                "sent_payload_bytes": 75644928
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.05033343471586704,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0003820648416876793,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 1.345854252576828e-05,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 7.602413445,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 7.617499999999998e-05,
+              "timestep": 0.2275605379999998,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 7.360189773000005,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 3078,
+                "seconds": 0.06430053245276213,
+                "sent_payload_bytes": 75644928
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.030208123847842216,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 1.4006160199642181e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 4.820059984922409e-05,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 7.599724579,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 0.00011953499999999986,
+              "timestep": 0.21129901900000014,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 7.371735358000004,
+              "burn_second": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "name": "2d-p4-concurrent-profile",
+        "placement": "CPU local",
+        "variant": "ARCH-concurrent",
+        "driver_nonoutput": 7.537870917,
+        "ranks": [
+          {
+            "rank": 0,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.07276542391628027,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 6.80088996887207e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 2.2269785404205322e-05,
+                "sent_payload_bytes": 64
+              },
+              "Irecv": {
+                "calls": 3078,
+                "seconds": 0.0009052464738488197,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 3078,
+                "seconds": 0.0014317994937300682,
+                "sent_payload_bytes": 75644928
+              },
+              "Waitall": {
+                "calls": 1539,
+                "seconds": 0.20877404883503914,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 7.537263282,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 2.5069000000000047e-05,
+              "timestep": 0.24995999500000018,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 7.276219282999998,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.16058447863906622,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 4.795752465724945e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 2.8034672141075134e-05,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 3078,
+                "seconds": 0.0009707994759082794,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 3078,
+                "seconds": 0.0014005880802869797,
+                "sent_payload_bytes": 75644928
+              },
+              "Waitall": {
+                "calls": 1539,
+                "seconds": 0.17802892066538334,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 7.537544388,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 9.001899999999995e-05,
+              "timestep": 0.327435765,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 7.198762022999997,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.10768467281013727,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 5.237385630607605e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 1.6868114471435547e-05,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 3078,
+                "seconds": 0.0008734744042158127,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 3078,
+                "seconds": 0.0014225533232092857,
+                "sent_payload_bytes": 75644928
+              },
+              "Waitall": {
+                "calls": 1539,
+                "seconds": 0.19415937457233667,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 7.537870917,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 6.428299999999989e-05,
+              "timestep": 0.27635931599999963,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 7.248999917000003,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.0790760600939393,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 2.4966895580291748e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 7.851142436265945e-05,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 3078,
+                "seconds": 0.000851907767355442,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 3078,
+                "seconds": 0.0014138184487819672,
+                "sent_payload_bytes": 75644928
+              },
+              "Waitall": {
+                "calls": 1539,
+                "seconds": 0.18506529461592436,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 7.537844996,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 0.00010345300000000003,
+              "timestep": 0.2480937460000001,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 7.268443707999998,
+              "burn_second": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "name": "3d-p4-before-profile",
+        "placement": "CPU local",
+        "variant": "ARCH-before",
+        "driver_nonoutput": 10.585196845999999,
+        "ranks": [
+          {
+            "rank": 0,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 774,
+                "seconds": 0.4063126603141427,
+                "sent_payload_bytes": 152174592
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.15452742669731379,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0002658991143107414,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 9.659677743911743e-06,
+                "sent_payload_bytes": 64
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 10.585196845999999,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 5.2747e-05,
+              "timestep": 0.332821537,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.198197047,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 774,
+                "seconds": 0.2918303944170475,
+                "sent_payload_bytes": 152174592
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.114589374512434,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0002632215619087219,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 8.601229637861252e-05,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 10.585109353,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 2.1920999999999996e-05,
+              "timestep": 0.28904630400000014,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.244472883,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 774,
+                "seconds": 0.16375036165118217,
+                "sent_payload_bytes": 152174592
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.05674376431852579,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0002631647512316704,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 3.9103440940380096e-05,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 10.550417765,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 2.0210000000000008e-05,
+              "timestep": 0.23431416599999996,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.291502901000003,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 774,
+                "seconds": 0.13835229258984327,
+                "sent_payload_bytes": 152174592
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.032517203129827976,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 1.1436641216278076e-05,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 2.9746443033218384e-05,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 10.550201202,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 4.3218999999999994e-05,
+              "timestep": 0.21434292800000004,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.307672821,
+              "burn_second": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "name": "3d-p4-concurrent-profile",
+        "placement": "CPU local",
+        "variant": "ARCH-concurrent",
+        "driver_nonoutput": 10.205585591,
+        "ranks": [
+          {
+            "rank": 0,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.03344905748963356,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.00027146562933921814,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 1.0844320058822632e-05,
+                "sent_payload_bytes": 64
+              },
+              "Irecv": {
+                "calls": 774,
+                "seconds": 0.001013176515698433,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 774,
+                "seconds": 0.0010785693302750587,
+                "sent_payload_bytes": 152174592
+              },
+              "Waitall": {
+                "calls": 387,
+                "seconds": 0.06813689321279526,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 10.205499117999999,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 5.576000000000001e-05,
+              "timestep": 0.21053293700000006,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 9.975624429000005,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.019574263133108616,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.00021885614842176437,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 1.507531851530075e-05,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 774,
+                "seconds": 0.0010817525908350945,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 774,
+                "seconds": 0.0009724060073494911,
+                "sent_payload_bytes": 152174592
+              },
+              "Waitall": {
+                "calls": 387,
+                "seconds": 0.05603926256299019,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 10.204480799,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 3.0099999999999993e-05,
+              "timestep": 0.196320859,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 9.990806963999999,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.004289975389838219,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.00026544462889432907,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 1.4799647033214569e-05,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 774,
+                "seconds": 0.0009250584989786148,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 774,
+                "seconds": 0.0008715782314538956,
+                "sent_payload_bytes": 152174592
+              },
+              "Waitall": {
+                "calls": 387,
+                "seconds": 0.04127650614827871,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 10.205585591,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 2.7481000000000003e-05,
+              "timestep": 0.181487462,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.005832100000001,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.03571739327162504,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 7.945112884044647e-06,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 2.6584602892398834e-05,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 774,
+                "seconds": 0.0009924285113811493,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 774,
+                "seconds": 0.0011528301984071732,
+                "sent_payload_bytes": 152174592
+              },
+              "Waitall": {
+                "calls": 387,
+                "seconds": 0.1162929804995656,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 10.204831008,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 0.000118981,
+              "timestep": 0.2137283659999999,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 9.967770624,
+              "burn_second": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "name": "2d-p4-before-profile",
+        "placement": "two hosts",
+        "variant": "ARCH-before",
+        "driver_nonoutput": 9.856535479000001,
+        "ranks": [
+          {
+            "rank": 0,
+            "host": "gpu-273312",
+            "operations": {
+              "Sendrecv": {
+                "calls": 3078,
+                "seconds": 1.8504530513309874,
+                "sent_payload_bytes": 75644928
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.7475703289674129,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0007872470014262944,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.023871477984357625,
+                "sent_payload_bytes": 64
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 9.856535479000001,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 4.635000000000001e-05,
+              "timestep": 0.9089532899999997,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 8.90657891300001,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gpu-273312",
+            "operations": {
+              "Sendrecv": {
+                "calls": 3078,
+                "seconds": 1.7952509242168162,
+                "sent_payload_bytes": 75644928
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.8894089529057965,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.00048113701632246375,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.024203092005336657,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 9.831558679,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 6.847300000000009e-05,
+              "timestep": 1.057229922000002,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 8.75695813499999,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 3078,
+                "seconds": 1.8171172449365258,
+                "sent_payload_bytes": 75644928
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.7687404518947005,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0009757988154888153,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.0231107696890831,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 9.853164795,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 7.923399999999983e-05,
+              "timestep": 0.9361835639999999,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 8.877188385999997,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 3078,
+                "seconds": 1.7117194700986147,
+                "sent_payload_bytes": 75644928
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.19491538684815168,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0009786523878574371,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.02307312749326229,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 9.828520651,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 9.723199999999998e-05,
+              "timestep": 0.37761217100000005,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 9.430269001999994,
+              "burn_second": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "name": "2d-p4-concurrent-profile",
+        "placement": "two hosts",
+        "variant": "ARCH-concurrent",
+        "driver_nonoutput": 8.475465175,
+        "ranks": [
+          {
+            "rank": 0,
+            "host": "gpu-273312",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.45100725200609304,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0009521260217297822,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.026423648989293724,
+                "sent_payload_bytes": 64
+              },
+              "Irecv": {
+                "calls": 3078,
+                "seconds": 0.0008510342740919441,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 3078,
+                "seconds": 0.030076652386924252,
+                "sent_payload_bytes": 75644928
+              },
+              "Waitall": {
+                "calls": 1539,
+                "seconds": 0.8017613350239117,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 8.475465175,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 5.4171e-05,
+              "timestep": 0.6115189479999995,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 7.847571300000001,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gpu-273312",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.42802098096581176,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.00095106300432235,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.026428175973705947,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 3078,
+                "seconds": 0.0010638849926181138,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 3078,
+                "seconds": 0.03406661615008488,
+                "sent_payload_bytes": 75644928
+              },
+              "Waitall": {
+                "calls": 1539,
+                "seconds": 0.7643371106532868,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 8.475238931,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 5.309899999999997e-05,
+              "timestep": 0.593781622000001,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 7.866533866999998,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.1712719239294529,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0008136127144098282,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.026095283217728138,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 3078,
+                "seconds": 0.0010204995051026344,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 3078,
+                "seconds": 0.028391246683895588,
+                "sent_payload_bytes": 75644928
+              },
+              "Waitall": {
+                "calls": 1539,
+                "seconds": 1.0087227206677198,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 8.469126979,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 6.377099999999993e-05,
+              "timestep": 0.34187583600000004,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 8.114737864,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 512,
+                "seconds": 0.19348466768860817,
+                "sent_payload_bytes": 49152
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.000816933810710907,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.026091993786394596,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 3078,
+                "seconds": 0.001122298650443554,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 3078,
+                "seconds": 0.03420918062329292,
+                "sent_payload_bytes": 75644928
+              },
+              "Waitall": {
+                "calls": 1539,
+                "seconds": 1.0019301492720842,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 8.471816443,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 6.690400000000008e-05,
+              "timestep": 0.3578423030000003,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 8.098847062000006,
+              "burn_second": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "name": "3d-p4-before-profile",
+        "placement": "two hosts",
+        "variant": "ARCH-before",
+        "driver_nonoutput": 12.241023602,
+        "ranks": [
+          {
+            "rank": 0,
+            "host": "gpu-273312",
+            "operations": {
+              "Sendrecv": {
+                "calls": 774,
+                "seconds": 1.7929483104962856,
+                "sent_payload_bytes": 152174592
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.4378080547612626,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0009209389972966164,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.026920714997686446,
+                "sent_payload_bytes": 64
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 12.241023602,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 2.258499999999999e-05,
+              "timestep": 0.6079520930000003,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 11.562508778000002,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gpu-273312",
+            "operations": {
+              "Sendrecv": {
+                "calls": 774,
+                "seconds": 1.8881626281363424,
+                "sent_payload_bytes": 152174592
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.3392616840719711,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.000918175996048376,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.026983572024619207,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 12.240350431,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 2.6292999999999994e-05,
+              "timestep": 0.5134959760000002,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 11.658985736000007,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 774,
+                "seconds": 1.8772598281502724,
+                "sent_payload_bytes": 152174592
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.4693179316818714,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0010066376999020576,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.02658944111317396,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 12.2310748,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 3.097699999999998e-05,
+              "timestep": 0.6426527279999997,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 11.529125077999995,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 774,
+                "seconds": 1.4804384745657444,
+                "sent_payload_bytes": 152174592
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.11366921849548817,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0010057492181658745,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.02650357037782669,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Waitall": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 12.199026971,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 2.4749000000000003e-05,
+              "timestep": 0.29940580799999994,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 11.861347919000004,
+              "burn_second": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "name": "3d-p4-concurrent-profile",
+        "placement": "two hosts",
+        "variant": "ARCH-concurrent",
+        "driver_nonoutput": 10.865930854,
+        "ranks": [
+          {
+            "rank": 0,
+            "host": "gpu-273312",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.2034305867855437,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0007434739964082837,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.024986646021716297,
+                "sent_payload_bytes": 64
+              },
+              "Irecv": {
+                "calls": 774,
+                "seconds": 0.0008276838343590498,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 774,
+                "seconds": 0.011309215595247224,
+                "sent_payload_bytes": 152174592
+              },
+              "Waitall": {
+                "calls": 387,
+                "seconds": 0.70297300760285,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 10.86582507,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 1.9714000000000005e-05,
+              "timestep": 0.374376216,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.462202733000005,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 1,
+            "host": "gpu-273312",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.13612803007708862,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0007413990097120404,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.025069272989640012,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 774,
+                "seconds": 0.0008098258113022894,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 774,
+                "seconds": 0.01072873326484114,
+                "sent_payload_bytes": 152174592
+              },
+              "Waitall": {
+                "calls": 387,
+                "seconds": 0.7067341541114729,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 10.865930854,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 2.1046999999999997e-05,
+              "timestep": 0.31742622299999995,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.519929234,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 2,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.04646025039255619,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0007648756727576256,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.024421430192887783,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 774,
+                "seconds": 0.0006592283025383949,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 774,
+                "seconds": 0.009984380565583706,
+                "sent_payload_bytes": 152174592
+              },
+              "Waitall": {
+                "calls": 387,
+                "seconds": 0.8503159852698445,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 10.861260065,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 4.037899999999999e-05,
+              "timestep": 0.22078935099999994,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.615491546999998,
+              "burn_second": 0.0
+            }
+          },
+          {
+            "rank": 3,
+            "host": "gen-989544",
+            "operations": {
+              "Sendrecv": {
+                "calls": 0,
+                "seconds": 0,
+                "sent_payload_bytes": 0
+              },
+              "Allgather": {
+                "calls": 128,
+                "seconds": 0.09203923679888248,
+                "sent_payload_bytes": 12288
+              },
+              "Allreduce": {
+                "calls": 1,
+                "seconds": 0.0007612379267811775,
+                "sent_payload_bytes": 4
+              },
+              "Bcast": {
+                "calls": 1,
+                "seconds": 0.024445923045277596,
+                "sent_payload_bytes": 0
+              },
+              "Irecv": {
+                "calls": 774,
+                "seconds": 0.0006552832201123238,
+                "sent_payload_bytes": 0
+              },
+              "Isend": {
+                "calls": 774,
+                "seconds": 0.010115744546055794,
+                "sent_payload_bytes": 152174592
+              },
+              "Waitall": {
+                "calls": 387,
+                "seconds": 0.7998670283704996,
+                "sent_payload_bytes": 0
+              }
+            },
+            "driver_nonoutput": 10.860097154,
+            "stages": {
+              "regrid": 0.0,
+              "gravity": 3.6819e-05,
+              "timestep": 0.27070675699999996,
+              "burn_first": 0.0,
+              "diffusion": 0.0,
+              "hydro": 10.563922395999995,
+              "burn_second": 0.0
+            }
+          }
+        ]
+      }
+    ],
+    "sources": {
+      "paired-cpu": {
+        "base_commit": "814b81187d79457f13d06b52d48a3515963310ad",
+        "patch_sha256": "2822407f176f289345d6962cc8ff14c34584150f33ecc82b01587994f729aba0",
+        "production_file": "src/amr/exchange/GhostExchange.h",
+        "change": "Post both receives and sends in the existing function, then wait for all before existing count checks and scatter; existing scratch retained.",
+        "binary_sha256": {
+          "ARCH-before": "55c65d65964ef908645c27ed11429b7631bb8a95e96d434c2fc14cdc8687bddc",
+          "ARCH-baseline": "075af004f4ce556960b8c2d198466c3d7faf9155279e0475979f3dd34c68a8d2",
+          "libmpi_trace.so": "c05090bf6558669dd4b7e079db8da3ec408402db5b8b28120c655df544635c75",
+          "ARCH-concurrent": "be0434ccc19fbab766ea0789aa358944f02fa45d6e654515ab3a9d8c2e04da26"
+        }
+      },
+      "paired-cross": {
+        "base_commit": "814b81187d79457f13d06b52d48a3515963310ad",
+        "patch_sha256": "2822407f176f289345d6962cc8ff14c34584150f33ecc82b01587994f729aba0",
+        "production_file": "src/amr/exchange/GhostExchange.h",
+        "change": "Post both receives and sends in the existing function, then wait for all before existing count checks and scatter; existing scratch retained.",
+        "binary_sha256": {
+          "ARCH-before": "55c65d65964ef908645c27ed11429b7631bb8a95e96d434c2fc14cdc8687bddc",
+          "ARCH-baseline": "075af004f4ce556960b8c2d198466c3d7faf9155279e0475979f3dd34c68a8d2",
+          "libmpi_trace.so": "c05090bf6558669dd4b7e079db8da3ec408402db5b8b28120c655df544635c75",
+          "ARCH-concurrent": "be0434ccc19fbab766ea0789aa358944f02fa45d6e654515ab3a9d8c2e04da26"
+        }
+      }
+    },
+    "halo_payload_checks": [
+      {
+        "placement": "CPU local",
+        "dimension": "2d",
+        "ranks": 4,
+        "passed": true
+      },
+      {
+        "placement": "CPU local",
+        "dimension": "3d",
+        "ranks": 4,
+        "passed": true
+      },
+      {
+        "placement": "two hosts",
+        "dimension": "2d",
+        "ranks": 4,
+        "passed": true
+      },
+      {
+        "placement": "two hosts",
+        "dimension": "3d",
+        "ranks": 4,
+        "passed": true
+      }
+    ],
+    "notes": [
+      "Before is the integrated 814b8118 executable; concurrent changes only the MPI halo exchange region.",
+      "Primary medians exclude warmups and PMPI profiles. All saved outputs, including warmups, are compared bitwise.",
+      "Ratios below one favor the candidate; show all five paired ratios and unfiltered timing ranges.",
+      "CPU-local and two-host experiments are different placements; compare before/after only within each placement.",
+      "MPI posted calls and Waitall are recorded; no computation is overlapped with outstanding requests.",
+      "The existing send/receive scratch, tags, count validation, numerical kernels and MPI-OFF controls are preserved."
+    ]
+  },
+  "protocol_probes": [
+    {
+      "placement": "local",
+      "ranks": 2,
+      "bytes_per_direction": 24576,
+      "sequential": {
+        "n": 5,
+        "median": 8.310389999999224e-06,
+        "min": 8.295879999999922e-06,
+        "max": 8.446280000000694e-06
+      },
+      "concurrent": {
+        "n": 5,
+        "median": 8.22794000000071e-06,
+        "min": 8.208990000000415e-06,
+        "max": 8.51528999999962e-06
+      },
+      "concurrent_over_sequential": 0.9900786846347137
+    },
+    {
+      "placement": "local",
+      "ranks": 2,
+      "bytes_per_direction": 196608,
+      "sequential": {
+        "n": 5,
+        "median": 3.6853009999999744e-05,
+        "min": 3.683730000000107e-05,
+        "max": 3.7109220000000056e-05
+      },
+      "concurrent": {
+        "n": 5,
+        "median": 3.6792849999998104e-05,
+        "min": 3.675987000000047e-05,
+        "max": 3.681455999999805e-05
+      },
+      "concurrent_over_sequential": 0.9983675688905291
+    },
+    {
+      "placement": "cross",
+      "ranks": 2,
+      "bytes_per_direction": 24576,
+      "sequential": {
+        "n": 5,
+        "median": 0.0007990064200000002,
+        "min": 0.0006720530599999997,
+        "max": 0.0009076628099999995
+      },
+      "concurrent": {
+        "n": 5,
+        "median": 0.00037850163999999967,
+        "min": 0.00021434076000000025,
+        "max": 0.0005699545799999994
+      },
+      "concurrent_over_sequential": 0.47371539267481677
+    },
+    {
+      "placement": "cross",
+      "ranks": 2,
+      "bytes_per_direction": 196608,
+      "sequential": {
+        "n": 5,
+        "median": 0.0037003342400000003,
+        "min": 0.00364124602,
+        "max": 0.0038279082399999996
+      },
+      "concurrent": {
+        "n": 5,
+        "median": 0.0017357580500000002,
+        "min": 0.0016184442900000007,
+        "max": 0.0019323440100000022
+      },
+      "concurrent_over_sequential": 0.4690814227635826
+    },
+    {
+      "placement": "cross",
+      "ranks": 4,
+      "bytes_per_direction": 24576,
+      "sequential": {
+        "n": 5,
+        "median": 0.0009429691600000001,
+        "min": 0.0008797898400000004,
+        "max": 0.0009946256400000008
+      },
+      "concurrent": {
+        "n": 5,
+        "median": 0.0003964425500000002,
+        "min": 0.000261558369999999,
+        "max": 0.00046335181000000113
+      },
+      "concurrent_over_sequential": 0.42041942283669187
+    },
+    {
+      "placement": "cross",
+      "ranks": 4,
+      "bytes_per_direction": 196608,
+      "sequential": {
+        "n": 5,
+        "median": 0.0031459865500000016,
+        "min": 0.003000657000000002,
+        "max": 0.003270564600000001
+      },
+      "concurrent": {
+        "n": 5,
+        "median": 0.0011181145300000006,
+        "min": 0.0010286249200000008,
+        "max": 0.0016639030700000034
+      },
+      "concurrent_over_sequential": 0.3554098252581531
+    },
+    {
+      "placement": "local",
+      "ranks": 4,
+      "bytes_per_direction": 24576,
+      "sequential": {
+        "n": 5,
+        "median": 1.4138340000000582e-05,
+        "min": 1.4120749999999572e-05,
+        "max": 1.4896979999998728e-05
+      },
+      "concurrent": {
+        "n": 5,
+        "median": 8.394510000000466e-06,
+        "min": 8.375529999999909e-06,
+        "max": 8.458749999999959e-06
+      },
+      "concurrent_over_sequential": 0.5937408493500737
+    },
+    {
+      "placement": "local",
+      "ranks": 4,
+      "bytes_per_direction": 196608,
+      "sequential": {
+        "n": 5,
+        "median": 6.358671999999955e-05,
+        "min": 6.295897999999855e-05,
+        "max": 6.395211999999928e-05
+      },
+      "concurrent": {
+        "n": 5,
+        "median": 3.509674999999879e-05,
+        "min": 3.5040260000001045e-05,
+        "max": 3.528594999999912e-05
+      },
+      "concurrent_over_sequential": 0.5519509419576767
+    }
+  ],
+  "protected_paths_unchanged_against_upstream": [
+    "src/core",
+    "src/numerics",
+    "src/physics",
+    "src/amr/storage",
+    "src/amr/transfer"
+  ],
+  "evidence_locations": {
+    "GPU": "/home/ubuntu/projects/ARCH-mpi-evidence-controlled-20261102",
+    "CPU": "/home/ubuntu/projects/ARCH-mpi-evidence-controlled-20261102",
+    "candidate": "/home/ubuntu/projects/ARCH-mpi-evidence-controlled-20261102/halo-candidate"
+  },
+  "raw_data_policy": "Raw HDF5, inputs and logs remain on servers in verified lossless archives; Git holds code, protocol, summaries and hashes."
+}

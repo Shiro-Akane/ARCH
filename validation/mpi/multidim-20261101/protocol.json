@@ -1,0 +1,289 @@
+{
+  "created_utc": "2026-11-01T07:28:17.786395+00:00",
+  "host": "gpu-273312",
+  "base": "cb97c71fb83a8c5f080ff2ada1ebc20234900551",
+  "baseline": "5dc6d7bad3fcf37c1aa261d66ec1e8dcf6c5e21d",
+  "stage": "M1b multidimensional X slabs",
+  "phases": [
+    "analytic ghost test",
+    "1D regression",
+    "2D/3D application parity"
+  ],
+  "math_changes_allowed": false,
+  "disk_floor_gib": 24,
+  "mpi_ranks": [
+    1,
+    2,
+    4
+  ],
+  "steps": 16,
+  "snapshots": 5,
+  "root_shapes": {
+    "2d": [
+      5,
+      3,
+      1
+    ],
+    "3d": [
+      5,
+      3,
+      2
+    ]
+  },
+  "global_pool_capacities": {
+    "2d": 16,
+    "3d": 31
+  },
+  "candidate_lanes_concurrent": 4,
+  "maximum_candidate_cpu_processes": 8,
+  "omp_threads": 1,
+  "mpiexec_args": [
+    "--bind-to",
+    "none"
+  ],
+  "purpose": "correctness; wall times are not scaling measurements",
+  "build_commands": [
+    {
+      "name": "host-debug",
+      "command": [
+        "cmake",
+        "--build",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug",
+        "--target",
+        "arch_mpi_fixed_grid",
+        "arch_same_level_exchange_plan",
+        "arch_reduction_contract",
+        "-j8"
+      ],
+      "start": 1793518129.6852405,
+      "exit_code": 0,
+      "seconds": 5.990281820297241
+    },
+    {
+      "name": "ctest-mpi-debug",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug",
+        "--output-on-failure",
+        "-R",
+        "^(mpi_fixed_grid_[124]|same_level_exchange_plan|reduction_contract)$"
+      ],
+      "start": 1793518135.6770933,
+      "exit_code": 0,
+      "seconds": 13.423322439193726
+    },
+    {
+      "name": "application-debug",
+      "command": [
+        "cmake",
+        "--build",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug",
+        "--target",
+        "ARCH",
+        "-j8"
+      ],
+      "start": 1793518149.1032143,
+      "exit_code": 0,
+      "seconds": 50.49625754356384
+    },
+    {
+      "name": "serial-debug",
+      "command": [
+        "cmake",
+        "--build",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug-serial",
+        "--target",
+        "ARCH",
+        "arch_boundary_plan",
+        "arch_same_level_exchange_plan",
+        "arch_amr_operation_plans",
+        "arch_amr_flux_surface_plan",
+        "arch_topology_transaction",
+        "arch_reduction_contract",
+        "-j8"
+      ],
+      "start": 1793518199.6031024,
+      "exit_code": 0,
+      "seconds": 60.45843195915222
+    },
+    {
+      "name": "ctest-serial-debug",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug-serial",
+        "--output-on-failure",
+        "-R",
+        "^(boundary_plan|same_level_exchange_plan|amr_operation_plans|amr_flux_surface_plan|topology_transaction|reduction_contract)$"
+      ],
+      "start": 1793518260.0636632,
+      "exit_code": 0,
+      "seconds": 2.0742204189300537
+    },
+    {
+      "name": "host-release",
+      "command": [
+        "cmake",
+        "--build",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-release",
+        "--target",
+        "arch_mpi_fixed_grid",
+        "arch_same_level_exchange_plan",
+        "arch_reduction_contract",
+        "-j8"
+      ],
+      "start": 1793518262.1393943,
+      "exit_code": 0,
+      "seconds": 10.917333364486694
+    },
+    {
+      "name": "ctest-mpi-release",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-release",
+        "--output-on-failure",
+        "-R",
+        "^(mpi_fixed_grid_[124]|same_level_exchange_plan|reduction_contract)$"
+      ],
+      "start": 1793518273.0660155,
+      "exit_code": 0,
+      "seconds": 7.093254566192627
+    },
+    {
+      "name": "application-release",
+      "command": [
+        "cmake",
+        "--build",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-release",
+        "--target",
+        "ARCH",
+        "-j8"
+      ],
+      "start": 1793518280.1607435,
+      "exit_code": 0,
+      "seconds": 53.55492162704468
+    },
+    {
+      "name": "serial-release",
+      "command": [
+        "cmake",
+        "--build",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-release-serial",
+        "--target",
+        "ARCH",
+        "arch_boundary_plan",
+        "arch_same_level_exchange_plan",
+        "arch_amr_operation_plans",
+        "arch_amr_flux_surface_plan",
+        "arch_topology_transaction",
+        "arch_reduction_contract",
+        "-j8"
+      ],
+      "start": 1793518333.731304,
+      "exit_code": 0,
+      "seconds": 54.68108367919922
+    },
+    {
+      "name": "ctest-serial-release",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-release-serial",
+        "--output-on-failure",
+        "-R",
+        "^(boundary_plan|same_level_exchange_plan|amr_operation_plans|amr_flux_surface_plan|topology_transaction|reduction_contract)$"
+      ],
+      "start": 1793518388.4370625,
+      "exit_code": 0,
+      "seconds": 0.418060302734375
+    }
+  ],
+  "application_commands": [
+    {
+      "name": "debug-1d",
+      "command": [
+        "/home/ubuntu/projects/ARCH-mpi-toolchain/env/bin/python",
+        "-B",
+        "/home/ubuntu/projects/ARCH-mpi/tests/integration/test_mpi_fixed_grid.py",
+        "--baseline",
+        "/home/ubuntu/projects/ARCH-mpi-baseline/build-gpu-debug/bin/ARCH",
+        "--candidate",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug/bin/ARCH",
+        "--serial-candidate",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug-serial/bin/ARCH",
+        "--evidence",
+        "/home/ubuntu/projects/ARCH-mpi-evidence-multidim-20261101/debug-1d",
+        "--mpiexec",
+        "/home/ubuntu/projects/ARCH-mpi-toolchain/env/bin/mpiexec"
+      ],
+      "start": 1793518267.211812,
+      "exit_code": 0,
+      "seconds": 367.7669515609741
+    },
+    {
+      "name": "debug-multidim",
+      "command": [
+        "/home/ubuntu/projects/ARCH-mpi-toolchain/env/bin/python",
+        "-B",
+        "/home/ubuntu/projects/ARCH-mpi/tests/integration/test_mpi_multidim.py",
+        "--baseline",
+        "/home/ubuntu/projects/ARCH-mpi-baseline/build-gpu-debug/bin/ARCH",
+        "--candidate",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug/bin/ARCH",
+        "--serial-candidate",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug-serial/bin/ARCH",
+        "--evidence",
+        "/home/ubuntu/projects/ARCH-mpi-evidence-multidim-20261101/debug-multidim",
+        "--mpiexec",
+        "/home/ubuntu/projects/ARCH-mpi-toolchain/env/bin/mpiexec"
+      ],
+      "start": 1793518634.9799097,
+      "exit_code": 0,
+      "seconds": 549.5273544788361
+    },
+    {
+      "name": "release-1d",
+      "command": [
+        "/home/ubuntu/projects/ARCH-mpi-toolchain/env/bin/python",
+        "-B",
+        "/home/ubuntu/projects/ARCH-mpi/tests/integration/test_mpi_fixed_grid.py",
+        "--baseline",
+        "/home/ubuntu/projects/ARCH-mpi-baseline/build-gpu-release/bin/ARCH",
+        "--candidate",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-release/bin/ARCH",
+        "--serial-candidate",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-release-serial/bin/ARCH",
+        "--evidence",
+        "/home/ubuntu/projects/ARCH-mpi-evidence-multidim-20261101/release-1d",
+        "--mpiexec",
+        "/home/ubuntu/projects/ARCH-mpi-toolchain/env/bin/mpiexec"
+      ],
+      "start": 1793519184.5092247,
+      "exit_code": 0,
+      "seconds": 57.22611856460571
+    },
+    {
+      "name": "release-multidim",
+      "command": [
+        "/home/ubuntu/projects/ARCH-mpi-toolchain/env/bin/python",
+        "-B",
+        "/home/ubuntu/projects/ARCH-mpi/tests/integration/test_mpi_multidim.py",
+        "--baseline",
+        "/home/ubuntu/projects/ARCH-mpi-baseline/build-gpu-release/bin/ARCH",
+        "--candidate",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-release/bin/ARCH",
+        "--serial-candidate",
+        "/home/ubuntu/projects/ARCH-mpi/build-gpu-release-serial/bin/ARCH",
+        "--evidence",
+        "/home/ubuntu/projects/ARCH-mpi-evidence-multidim-20261101/release-multidim",
+        "--mpiexec",
+        "/home/ubuntu/projects/ARCH-mpi-toolchain/env/bin/mpiexec"
+      ],
+      "start": 1793519241.7370906,
+      "exit_code": 0,
+      "seconds": 79.83645153045654
+    }
+  ]
+}

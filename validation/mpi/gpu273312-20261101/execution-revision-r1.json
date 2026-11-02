@@ -1,0 +1,16 @@
+{
+  "revision": "r1",
+  "utc": "2026-10-31T16:10:37.249301+00:00",
+  "reason": "Initial configure omitted ARCH_RUNTIME_OUTPUT_DIRECTORY; default repository bin directory is shared by MPI ON/OFF builds. Post-build binary existence check stopped before any application comparison.",
+  "changes": [
+    "Explicit distinct output directory for each build variant",
+    "Reuse checked object directories; original failed runner and execution-status.json retained",
+    "Reused successful build/CTest log filenames now contain recovery output; command timings from the initial execution remain in execution-status.json"
+  ],
+  "science_changes": false,
+  "runner_sha256": {
+    "run_build_and_regression_r1.py": "33da918524666a93d068a19843b0db4106654f51e358b167268d75af0aa38417",
+    "run_extended_regression_r1.py": "0ed546e04f23e766374997d3d901a3a9a2d76ea5704c270076164a610960cbde"
+  },
+  "original_status": "execution-status.json"
+}

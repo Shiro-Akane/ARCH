@@ -31,6 +31,8 @@
 #include "interface/ProblemGenerator.h"
 #include "physics/boundary/UserBoundary.h"
 #include "io/IO.h"
+#include "io/Logger.h"
+#include "io/OutputPath.h"
 #include "io/chk/CheckpointCompatibility.h"
 #include "driver/dispatch/ExecutionPreflight.h"
 #include "driver/dispatch/PolicyDescriptor.h"
@@ -84,8 +86,8 @@ void write_backend_sidecar(
     const arch::dispatch::BackendResolution& resolution)
 {
     using namespace arch::dispatch;
-    const std::filesystem::path directory = config.Get<std::string>(
-        "log_dir", config.io.out_dir);
+    const std::filesystem::path directory = io::output_directory(config.Get<std::string>(
+        "log_dir", config.io.out_dir));
     std::filesystem::create_directories(directory);
     const std::filesystem::path path =
         directory / (config.io.base_name + "_backend_plan.txt");
@@ -206,9 +208,26 @@ void DispatchSolver(ProblemGenerator &problem,
 
     using namespace arch::dispatch;
     StartupOrder startup_order;
-    const auto preflight = ResolveExecutionPreflight(effective, specs, startup_order);
+    int rank = 0, rank_count = 1;
+#if ARCH_MPI_ENABLED
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (initialized) {
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &rank_count);
+    }
+#endif
+    const auto preflight = ResolveExecutionPreflight(effective, specs, startup_order, rank_count);
     const arch::config::RuntimeConfiguration runtime(effective, prepared);
     const auto& config = runtime.config();
+    std::filesystem::create_directories(io::output_directory(config.io.out_dir));
+    const std::string log_dir =
+        io::output_directory(config.Get<std::string>("log_dir", config.io.out_dir));
+    std::filesystem::create_directories(log_dir);
+    const std::string log_filename = log_dir + "/" + config.io.base_name + "_log.dat";
+    Logger::Init(log_filename, config.io.restart);
+    std::cout << "[Dispatch] Console output is being recorded to log file: " << log_filename
+              << std::endl;
     const auto& plan = preflight.plan;
     const auto& requirements = preflight.requirements;
     const auto& backend = preflight.backend;
@@ -224,7 +243,27 @@ void DispatchSolver(ProblemGenerator &problem,
 
     // --- AMR Initialization ---
     int max_blocks = config.grid.amr_max_blocks > 0 ? config.grid.amr_max_blocks : 10000;
+    if (rank_count > 1) {
+        const auto transverse_roots = static_cast<std::int64_t>(std::max(1, config.grid.nblockx2))
+            * std::max(1, config.grid.nblockx3);
+        // The shared preflight already bounded the global root count.
+        const int global_roots = static_cast<int>(config.grid.nblockx1 * transverse_roots);
+        // Keep the original pool and free list. Only its per-rank capacity
+        // changes; no shadow blocks or second field allocator is introduced.
+        const int roots =
+            static_cast<int>(static_cast<std::int64_t>(config.grid.nblockx1) * (rank + 1) / rank_count -
+                             static_cast<std::int64_t>(config.grid.nblockx1) * rank / rank_count)
+            * static_cast<int>(transverse_roots);
+        // Reserve owned roots first, then share spare slots. Clamping an
+        // independently divided capacity could exceed the global max_blocks.
+        const int spare_blocks = max_blocks - global_roots;
+        const int local_spare =
+            static_cast<int>(static_cast<std::int64_t>(spare_blocks) * (rank + 1) / rank_count -
+                             static_cast<std::int64_t>(spare_blocks) * rank / rank_count);
+        max_blocks = roots + local_spare;
+    }
     amr::AMRControl amr_ctrl(max_blocks, config.grid.dim);
+    amr_ctrl.tree->SetRootPartition(rank, rank_count);
 
     amr_ctrl.tree->ConfigureRefinementSpecies(config.amr, specs);
     RunState run_state;
@@ -264,6 +303,26 @@ void DispatchSolver(ProblemGenerator &problem,
         }
     }
 
+    if (rank_count > 1) {
+        std::ofstream partition(io::output_directory(config.io.out_dir) + "/partition.txt");
+        if (!partition)
+            throw std::runtime_error("cannot write MPI partition metadata");
+        partition << "schema=1\nrank=" << rank << "\nsize=" << rank_count
+                  << "\nroot_begin=" << amr_ctrl.tree->RootBegin()
+                  << "\nroot_end=" << amr_ctrl.tree->RootEnd()
+                  << "\npartition_axis=0\ntransverse_root_blocks="
+                  << std::max(1, config.grid.nblockx2) * std::max(1, config.grid.nblockx3)
+                  << "\nglobal_root_blocks=" << static_cast<std::int64_t>(config.grid.nblockx1)
+                      * std::max(1, config.grid.nblockx2) * std::max(1, config.grid.nblockx3)
+                  << "\nlocal_pool_capacity=" << max_blocks
+                  << "\noutput_scope=rank-local\nrestart_supported=false\n";
+        partition.close();
+        if (!partition)
+            throw std::runtime_error("cannot finish MPI partition metadata");
+        std::cout << "[MPI] rank=" << rank << '/' << rank_count << " owned roots=["
+                  << amr_ctrl.tree->RootBegin() << ',' << amr_ctrl.tree->RootEnd()
+                  << ") pool=" << max_blocks << "; rank-local plots, no checkpoints" << std::endl;
+    }
     std::cout << "[Dispatch] Resolving Gravity Policy..." << std::endl;
     std::string grav_type = config.physics.gravity.type;
     std::cout << "           -> Type: " << grav_type;

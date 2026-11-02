@@ -1,0 +1,176 @@
+{
+  "date": "2026-11-02",
+  "scope": "CPU fixed Cartesian grid MPI; no AMR, GPU or checkpoint feature work",
+  "upstream_main": "2e05e66e3b09e3890488fb872cd842b1885f71e4",
+  "integrated_source": "be858c6d4a259eaa989b6d9fefcad9ebd5407944",
+  "numerical_baseline": "5dc6d7bad3fcf37c1aa261d66ec1e8dcf6c5e21d",
+  "toolchain": {
+    "gcc": "14.4.0",
+    "openmpi": "5.0.11",
+    "python": "3.12",
+    "root": "/home/ubuntu/projects/ARCH-mpi-toolchain/env"
+  },
+  "cpu_suite": {
+    "host": "gen-989544",
+    "ranks": [
+      1,
+      2,
+      4
+    ],
+    "warmups": 1,
+    "measured_repeats": 5,
+    "cases": [
+      {
+        "name": "2d",
+        "strong_roots": [
+          16,
+          8,
+          0
+        ],
+        "weak_roots": "[4*P,8,0]",
+        "steps": 768
+      },
+      {
+        "name": "3d",
+        "strong_roots": [
+          8,
+          2,
+          2
+        ],
+        "weak_roots": "[2*P,2,2]",
+        "steps": 192
+      }
+    ]
+  },
+  "cross_suite": {
+    "hosts": [
+      "gpu-273312",
+      "gen-989544"
+    ],
+    "ranks": [
+      2,
+      4
+    ],
+    "mapping": "equal ranks per host; one core per rank",
+    "transport": "OpenMPI TCP on existing 150.65.181.0/24 interface",
+    "controls": "same total ranks on gpu-273312; alternate local/cross order",
+    "warmups": 1,
+    "measured_repeats": 5
+  },
+  "metrics": {
+    "primary": "max_rank(driver_seconds-output_seconds)",
+    "secondary": [
+      "launcher wall seconds",
+      "output wall seconds",
+      "stage timings",
+      "per-rank peak RSS",
+      "CPU user/system time",
+      "bound-core busy and steal ticks"
+    ],
+    "profile": "Separate PMPI-observed runs only; no instrumented run enters main timing medians"
+  },
+  "weak_scaling_interpretation": "Fixed cells and steps per rank; increasing X resolution in a fixed physical domain changes CFL dt. This measures work scaling, not equal physical duration.",
+  "clock_rules": "Align CLOCK_MONOTONIC entries only within one host. Never subtract timestamps from different hosts.",
+  "validation": "Every warmup/measured/profile output compared bitwise to its own independent serial shape/step baseline; verify hydro steps, unique host/core bindings and exit codes.",
+  "storage": "All output uses server tmpfs; per-run archives validated by all member hashes before removing exactly that staging directory. No local downloads and no new LFS experiment data.",
+  "step3_gate": "Only retain a further production change if measured bottleneck evidence supports it, existing mathematical/reduction semantics remain intact, and matched end-to-end controls improve beyond run variability. A no-change decision is valid if no new bottleneck is demonstrated.",
+  "push_targets": [
+    "Arsenic-er/ARCH:codex/mpi-fixed-grid-validated-20261102",
+    "Shiro-Akane/ARCH:codex/mpi-fixed-grid-validated-20261102"
+  ],
+  "validated_source": "814b81187d79457f13d06b52d48a3515963310ad",
+  "source_split": "CPU timing retains the frozen be858c6d build. Only the single-rank error-exit path in main.cpp changes in 814b8118. Full Debug/Release regressions and all cross-host trials use the corrected build; successful solver code is unchanged.",
+  "transport_probe": {
+    "scope": "isolated two-rank Sendrecv; local and two-host controls",
+    "bytes_per_call_per_rank": [
+      96,
+      32768,
+      262144
+    ],
+    "warmups": 20,
+    "samples": 5,
+    "iterations": {
+      "96": 1000,
+      "32768": 100,
+      "262144": 100
+    },
+    "payload_check": "received bytes checked on both ranks after each sample",
+    "interpretation": "MPI call duration under these endpoints, not physical NIC bandwidth; barrier and reduction outside timed loop"
+  },
+  "halo_protocol_probe": {
+    "purpose": "Test the measured two-direction halo cost before any production transport edit",
+    "bytes_per_direction": [
+      24576,
+      196608
+    ],
+    "ranks": [
+      2,
+      4
+    ],
+    "placements": [
+      "local",
+      "cross"
+    ],
+    "variants": [
+      "two Sendrecv calls",
+      "two Irecv plus two Isend followed immediately by Waitall"
+    ],
+    "preserved_semantics": [
+      "periodic rank neighbors",
+      "direction tags 310/311",
+      "four disjoint buffers",
+      "receive completion before caller resumes"
+    ],
+    "iterations_per_sample": 100,
+    "warmup_samples": 1,
+    "measured_samples": 5,
+    "ordering": "alternate protocol order by sample",
+    "validation": "verify both received faces byte by byte after every sample",
+    "decision": "Microbenchmark improvement alone is insufficient; require matched complete-application trials before accepting a production edit."
+  },
+  "application_candidate": {
+    "base_commit": "814b81187d79457f13d06b52d48a3515963310ad",
+    "patch_sha256": "2822407f176f289345d6962cc8ff14c34584150f33ecc82b01587994f729aba0",
+    "file": "src/amr/exchange/GhostExchange.h",
+    "cases": [
+      {
+        "dimension": "2d",
+        "roots": [
+          16,
+          8,
+          0
+        ],
+        "steps": 512
+      },
+      {
+        "dimension": "3d",
+        "roots": [
+          8,
+          2,
+          2
+        ],
+        "steps": 128
+      }
+    ],
+    "ranks": [
+      2,
+      4
+    ],
+    "placements": [
+      "idle CPU host",
+      "two hosts with equal rank counts"
+    ],
+    "warmups_per_variant": 1,
+    "paired_measured_repeats": 5,
+    "order": "alternate version and rank order each repeat",
+    "primary": "max_rank(driver-output)",
+    "secondary": [
+      "launcher wall",
+      "per-rank stage timings",
+      "peak RSS"
+    ],
+    "profile": "separate four-rank runs for both versions; intercept Irecv, Isend and Waitall as well as the original operations",
+    "controls": "same source/toolchain as the baseline except the one MPI-only exchange region; original buffers and all numerical kernels unchanged",
+    "acceptance": "Bitwise output agreement and all MPI regressions required. Retain only if matched application comparisons substantiate the transport benefit without a material persistent single-host regression."
+  }
+}

@@ -1,0 +1,2604 @@
+{
+  "schema": 1,
+  "status": "passed_for_scoped_slice",
+  "verified_utc": "2026-10-31T16:23:50.867939+00:00",
+  "user_facing_date_JST": "2026-11-01",
+  "source_commit": "29972a167c9bc0bb77bdb07557f920f54bfad64f",
+  "baseline_commit": "5dc6d7bad3fcf37c1aa261d66ec1e8dcf6c5e21d",
+  "server": "gpu-273312",
+  "address": "150.65.181.188",
+  "migration": {
+    "source_host": "gen-989544",
+    "destination_host": "gpu-273312",
+    "commit": "29972a167c9bc0bb77bdb07557f920f54bfad64f",
+    "manifest_sha256": "d76648a50d5c9ba52db5a540319e96e8413202bf8f80d1f5b714848841a5f702",
+    "groups": {
+      "repository": {
+        "files_and_links": 11217,
+        "bytes": 503676530,
+        "verified": true,
+        "destination": "/home/ubuntu/projects/ARCH-mpi"
+      },
+      "evidence": {
+        "files_and_links": 4798,
+        "bytes": 339991958,
+        "verified": true,
+        "destination": "/home/ubuntu/projects/ARCH-mpi-evidence"
+      },
+      "toolchain": {
+        "files_and_links": 21015,
+        "bytes": 1587732117,
+        "verified": true,
+        "destination": "/home/ubuntu/projects/ARCH-mpi-toolchain/env"
+      },
+      "highfive": {
+        "files_and_links": 760,
+        "bytes": 76606107,
+        "verified": true,
+        "destination": "/home/ubuntu/projects/ARCH-mpi-dependencies/highfive-src"
+      }
+    },
+    "environment_verified": true,
+    "verified_at_utc": "2026-10-31T16:04:01.578102+00:00",
+    "free_GiB": 81.95733642578125
+  },
+  "legacy_unchanged_entries": 164,
+  "source_sha256": {
+    "cmake/project/Application.cmake": "716809c4ee8e649efce28565f5a596fdd014c5bc53e0a9ac6c5c6f9c56e9c0fc",
+    "cmake/project/BuildOptions.cmake": "05d2b28378d7b9e94fe44bf60d327b86cc0521ea4eca2e98bd8b456fa7fb5ecd",
+    "cmake/tests/HostTests.cmake": "157f1730bfbf04042a5c9dcf194f9ec45fbf509ecb76090c6283659c2d347d53",
+    "src/amr/exchange/GhostExchange.h": "23d90006e689bdc94d75b5658b6ed8976546f4b906146f1b91898b2692c7010e",
+    "src/amr/topology/AmrTree.h": "5f16a450f57cdaff3be521cff603b2a0f413e97582b8a0a49d73353c18147e5f",
+    "src/driver/DriverUtils.h": "79915853ccfad4a6a18480b9f00596129d8f0d310c9a6d452fe84638586d3d6a",
+    "src/driver/SolverDispatch.cpp": "2be7589c5650c6dbfb207a0663236dbec9b4cdcf7a7a87ece59d5026287732d3",
+    "src/driver/io/DriverIO.cpp": "37d8797544f19f18d212fbfb4aaac5c956e03c06cf6851d0601f6b04e1a5b2c0",
+    "src/driver/stages/DriverStages.h": "22f65200642c4fe3d4ced8b0a04e6bb33cf06a715e572dffc7f3ae961826b03b",
+    "src/io/OutputPath.h": "b2847e6caecc09c5e5c1df3483266b8f24f189df902140092b9d1323f6879710",
+    "src/io/plot/PlotIO.cpp": "6a9a1d7b7002300044ca1b6e3e2c20164aec0a29625218dea2f4bd18e4b1576a",
+    "src/main.cpp": "5a2a1b5d3edfe8789f30af4c509f6b1b6dff99f8f48f0dd22a2d0a5359b379c6",
+    "tests/host/amr/test_mpi_fixed_grid.cpp": "c64b18d5a05260548944698b18b8a72f337cf1161df5ccb58f6ed2b89ae96182",
+    "tests/integration/test_mpi_fixed_grid.py": "5af5f63fb53af9c70f6ca34c5c3d8b5d43b601d091efc86c9921ed6431c9df24"
+  },
+  "bindings": {
+    "protocol.json": "7acb77aed58c6ff2246c489fe09dcd99c9db7dae7d0aa468328031f148623949",
+    "execution-revision-r1.json": "24c7cd56270016349599fd6c2675e12ca6a480b509bff01dfa6112f5e92b49fe",
+    "run_build_and_regression_r1.py": "33da918524666a93d068a19843b0db4106654f51e358b167268d75af0aa38417",
+    "run_extended_regression_r1.py": "0ed546e04f23e766374997d3d901a3a9a2d76ea5704c270076164a610960cbde",
+    "host-environment.json": "41fb07f4bfc3ddde70198ac27732a73bf36f58ecd5d479a0e06165f40934a762",
+    "source-manifest.json": "d76648a50d5c9ba52db5a540319e96e8413202bf8f80d1f5b714848841a5f702",
+    "migration-verified.json": "59aad6b9c94557d21ac13160cb7ada7b7947199e6449e9bf5b042912f318ea73",
+    "git-restore-verified.json": "54451085cef4c1f082e1a96a3aef00446f54a94b54b3499bbcb0022cb07114ff"
+  },
+  "ctest": {
+    "debug-mpi": {
+      "passed": 5,
+      "failed": 0,
+      "log_sha256": "af24e001d3672d505dc9e63399f46f65d24a2d1515ca612dee6f9b9a33280b58"
+    },
+    "debug-serial": {
+      "passed": 6,
+      "failed": 0,
+      "log_sha256": "cc528921856563382dd441f592ff73617d4170bafe83a285e7c0bdd8c0b3f46a"
+    },
+    "release-mpi": {
+      "passed": 5,
+      "failed": 0,
+      "log_sha256": "f7c96da392ae50f7f309a5ed4182a3863dad8296b81a5ae01abf061ab7c13c45"
+    },
+    "release-serial": {
+      "passed": 6,
+      "failed": 0,
+      "log_sha256": "b93f18b58d769c1f73bbe56a637e1fcb7625db932d4f08054d9a387c5e792fd6"
+    }
+  },
+  "short_regressions": {
+    "debug": {
+      "baseline_sha256": "776fa08e4fb3ec3724358bcab4418ba3d7ced5a33c98f1487e3a5f2ee169d16d",
+      "candidate_sha256": "bf4049cd426be58ce58de69f7b7f0fbfc97f3fa592004db1d5aba16d2bb9e1fe",
+      "cases": [
+        {
+          "case": "Sod-Euler-HLLC",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015621798437273437,
+          "cells": 112
+        },
+        {
+          "case": "Sod-Euler-HLLC",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015621798437273437,
+          "cells": 112
+        },
+        {
+          "case": "Sod-Euler-HLLC",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015621798437273437,
+          "cells": 112
+        },
+        {
+          "case": "Sod-Euler-HLLC",
+          "ranks": 1,
+          "mpi_enabled": false,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015621798437273437,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 1,
+          "mpi_enabled": false,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 2,
+          "omp_threads": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK3-HLL",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015756004964136087,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK3-HLL",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015756004964136087,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK3-HLL",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015756004964136087,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK3-HLL",
+          "ranks": 1,
+          "mpi_enabled": false,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015756004964136087,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK2-HLLC",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364125473947,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK2-HLLC",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364125473947,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK2-HLLC",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364125473947,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK2-HLLC",
+          "ranks": 1,
+          "mpi_enabled": false,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364125473947,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK3-Roe",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364103603608,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK3-Roe",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364103603608,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK3-Roe",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364103603608,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK3-Roe",
+          "ranks": 1,
+          "mpi_enabled": false,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364103603608,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC-reflecting",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.011847974860846868,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC-reflecting",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.011847974860846868,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC-reflecting",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.011847974860846868,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC-reflecting",
+          "ranks": 1,
+          "mpi_enabled": false,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.011847974860846868,
+          "cells": 112
+        },
+        {
+          "case": "Sod-Euler-HLLC",
+          "ranks": 5,
+          "global_pool_capacity": 8,
+          "rank_pool_capacities": [
+            1,
+            1,
+            2,
+            1,
+            3
+          ],
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015621798437273437,
+          "cells": 112
+        }
+      ],
+      "mpiexec": [
+        "mpiexec"
+      ],
+      "serial_candidate_sha256": "df4b91e9d9366ae5ca39b8a2c436d380fb8d24cd30d4f390410c84f0ec4389bd",
+      "rejections": [
+        {
+          "case": "amr",
+          "returncode": 1
+        },
+        {
+          "case": "empty-rank",
+          "returncode": 1
+        },
+        {
+          "case": "checkpoint",
+          "returncode": 1
+        },
+        {
+          "case": "cuda",
+          "returncode": 1
+        },
+        {
+          "case": "one-sided-periodic",
+          "returncode": 1
+        },
+        {
+          "case": "rank-input-mismatch",
+          "returncode": 1
+        },
+        {
+          "case": "one-rank-missing-input",
+          "returncode": 1
+        }
+      ]
+    },
+    "release": {
+      "baseline_sha256": "075af004f4ce556960b8c2d198466c3d7faf9155279e0475979f3dd34c68a8d2",
+      "candidate_sha256": "339e2b997749b5bc1db8362147a48775d67afcafffae4af96e4c2341f928f03e",
+      "cases": [
+        {
+          "case": "Sod-Euler-HLLC",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015621798437273437,
+          "cells": 112
+        },
+        {
+          "case": "Sod-Euler-HLLC",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015621798437273437,
+          "cells": 112
+        },
+        {
+          "case": "Sod-Euler-HLLC",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015621798437273437,
+          "cells": 112
+        },
+        {
+          "case": "Sod-Euler-HLLC",
+          "ranks": 1,
+          "mpi_enabled": false,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015621798437273437,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 1,
+          "mpi_enabled": false,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 2,
+          "omp_threads": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK3-HLL",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015756004964136087,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK3-HLL",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015756004964136087,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK3-HLL",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015756004964136087,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK3-HLL",
+          "ranks": 1,
+          "mpi_enabled": false,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015756004964136087,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK2-HLLC",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364125473947,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK2-HLLC",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364125473947,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK2-HLLC",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364125473947,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK2-HLLC",
+          "ranks": 1,
+          "mpi_enabled": false,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364125473947,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK3-Roe",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364103603608,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK3-Roe",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364103603608,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK3-Roe",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364103603608,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK3-Roe",
+          "ranks": 1,
+          "mpi_enabled": false,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364103603608,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC-reflecting",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.011847974860846868,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC-reflecting",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.011847974860846868,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC-reflecting",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.011847974860846868,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC-reflecting",
+          "ranks": 1,
+          "mpi_enabled": false,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.011847974860846868,
+          "cells": 112
+        },
+        {
+          "case": "Sod-Euler-HLLC",
+          "ranks": 5,
+          "global_pool_capacity": 8,
+          "rank_pool_capacities": [
+            1,
+            1,
+            2,
+            1,
+            3
+          ],
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015621798437273437,
+          "cells": 112
+        }
+      ],
+      "mpiexec": [
+        "mpiexec"
+      ],
+      "serial_candidate_sha256": "fa1c97e49fda733f016047b412946d39909304c54698a5cb17c78bf364d93d86",
+      "rejections": [
+        {
+          "case": "amr",
+          "returncode": 1
+        },
+        {
+          "case": "empty-rank",
+          "returncode": 1
+        },
+        {
+          "case": "checkpoint",
+          "returncode": 1
+        },
+        {
+          "case": "cuda",
+          "returncode": 1
+        },
+        {
+          "case": "one-sided-periodic",
+          "returncode": 1
+        },
+        {
+          "case": "rank-input-mismatch",
+          "returncode": 1
+        },
+        {
+          "case": "one-rank-missing-input",
+          "returncode": 1
+        }
+      ]
+    }
+  },
+  "extended_regressions": {
+    "source_commit": "29972a167c9bc0bb77bdb07557f920f54bfad64f",
+    "steps": 256,
+    "roots": 17,
+    "global_pool_capacity": 18,
+    "cases": [
+      {
+        "case": "Sod-Euler-HLLC",
+        "ranks": 1,
+        "completed_steps": 256,
+        "pool_capacities": [],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.0860523868048985,
+        "cells": 272
+      },
+      {
+        "case": "Sod-Euler-HLLC",
+        "ranks": 2,
+        "completed_steps": 256,
+        "pool_capacities": [
+          8,
+          10
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.0860523868048985,
+        "cells": 272
+      },
+      {
+        "case": "Sod-Euler-HLLC",
+        "ranks": 4,
+        "completed_steps": 256,
+        "pool_capacities": [
+          4,
+          4,
+          4,
+          6
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.0860523868048985,
+        "cells": 272
+      },
+      {
+        "case": "Sod-Euler-HLLC",
+        "ranks": 8,
+        "completed_steps": 256,
+        "pool_capacities": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          4
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.0860523868048985,
+        "cells": 272
+      },
+      {
+        "case": "Sod-Euler-HLLC",
+        "ranks": 16,
+        "completed_steps": 256,
+        "pool_capacities": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          3
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.0860523868048985,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK2-HLLC",
+        "ranks": 1,
+        "completed_steps": 256,
+        "pool_capacities": [],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.08660503644769714,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK2-HLLC",
+        "ranks": 2,
+        "completed_steps": 256,
+        "pool_capacities": [
+          8,
+          10
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.08660503644769714,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK2-HLLC",
+        "ranks": 4,
+        "completed_steps": 256,
+        "pool_capacities": [
+          4,
+          4,
+          4,
+          6
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.08660503644769714,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK2-HLLC",
+        "ranks": 8,
+        "completed_steps": 256,
+        "pool_capacities": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          4
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.08660503644769714,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK2-HLLC",
+        "ranks": 16,
+        "completed_steps": 256,
+        "pool_capacities": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          3
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.08660503644769714,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK3-HLL",
+        "ranks": 1,
+        "completed_steps": 256,
+        "pool_capacities": [],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.08676967312844511,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK3-HLL",
+        "ranks": 2,
+        "completed_steps": 256,
+        "pool_capacities": [
+          8,
+          10
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.08676967312844511,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK3-HLL",
+        "ranks": 4,
+        "completed_steps": 256,
+        "pool_capacities": [
+          4,
+          4,
+          4,
+          6
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.08676967312844511,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK3-HLL",
+        "ranks": 8,
+        "completed_steps": 256,
+        "pool_capacities": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          4
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.08676967312844511,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK3-HLL",
+        "ranks": 16,
+        "completed_steps": 256,
+        "pool_capacities": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          3
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.08676967312844511,
+        "cells": 272
+      },
+      {
+        "case": "SmoothAdvection-RK2-HLLC",
+        "ranks": 1,
+        "completed_steps": 256,
+        "pool_capacities": [],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.06077778628716342,
+        "cells": 272
+      },
+      {
+        "case": "SmoothAdvection-RK2-HLLC",
+        "ranks": 2,
+        "completed_steps": 256,
+        "pool_capacities": [
+          8,
+          10
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.06077778628716342,
+        "cells": 272
+      },
+      {
+        "case": "SmoothAdvection-RK2-HLLC",
+        "ranks": 4,
+        "completed_steps": 256,
+        "pool_capacities": [
+          4,
+          4,
+          4,
+          6
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.06077778628716342,
+        "cells": 272
+      },
+      {
+        "case": "SmoothAdvection-RK2-HLLC",
+        "ranks": 8,
+        "completed_steps": 256,
+        "pool_capacities": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          4
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.06077778628716342,
+        "cells": 272
+      },
+      {
+        "case": "SmoothAdvection-RK2-HLLC",
+        "ranks": 16,
+        "completed_steps": 256,
+        "pool_capacities": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          3
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.06077778628716342,
+        "cells": 272
+      },
+      {
+        "case": "SmoothAdvection-RK3-Roe",
+        "ranks": 1,
+        "completed_steps": 256,
+        "pool_capacities": [],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.060777787445342527,
+        "cells": 272
+      },
+      {
+        "case": "SmoothAdvection-RK3-Roe",
+        "ranks": 2,
+        "completed_steps": 256,
+        "pool_capacities": [
+          8,
+          10
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.060777787445342527,
+        "cells": 272
+      },
+      {
+        "case": "SmoothAdvection-RK3-Roe",
+        "ranks": 4,
+        "completed_steps": 256,
+        "pool_capacities": [
+          4,
+          4,
+          4,
+          6
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.060777787445342527,
+        "cells": 272
+      },
+      {
+        "case": "SmoothAdvection-RK3-Roe",
+        "ranks": 8,
+        "completed_steps": 256,
+        "pool_capacities": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          4
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.060777787445342527,
+        "cells": 272
+      },
+      {
+        "case": "SmoothAdvection-RK3-Roe",
+        "ranks": 16,
+        "completed_steps": 256,
+        "pool_capacities": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          3
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.060777787445342527,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK2-HLLC-reflecting",
+        "ranks": 1,
+        "completed_steps": 256,
+        "pool_capacities": [],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.06674946437077403,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK2-HLLC-reflecting",
+        "ranks": 2,
+        "completed_steps": 256,
+        "pool_capacities": [
+          8,
+          10
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.06674946437077403,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK2-HLLC-reflecting",
+        "ranks": 4,
+        "completed_steps": 256,
+        "pool_capacities": [
+          4,
+          4,
+          4,
+          6
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.06674946437077403,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK2-HLLC-reflecting",
+        "ranks": 8,
+        "completed_steps": 256,
+        "pool_capacities": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          4
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.06674946437077403,
+        "cells": 272
+      },
+      {
+        "case": "Sod-RK2-HLLC-reflecting",
+        "ranks": 16,
+        "completed_steps": 256,
+        "pool_capacities": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          3
+        ],
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.06674946437077403,
+        "cells": 272
+      }
+    ],
+    "started_utc": "2026-10-31T16:21:10.754536+00:00",
+    "status": "passed",
+    "no_oversubscription": true,
+    "binary_sha256": {
+      "baseline": "075af004f4ce556960b8c2d198466c3d7faf9155279e0475979f3dd34c68a8d2",
+      "mpi": "339e2b997749b5bc1db8362147a48775d67afcafffae4af96e4c2341f928f03e",
+      "serial": "fa1c97e49fda733f016047b412946d39909304c54698a5cb17c78bf364d93d86"
+    },
+    "finished_utc": "2026-10-31T16:22:29.291006+00:00"
+  },
+  "cross_host_debug": {
+    "source": "gen-989544",
+    "destination": "gpu-273312",
+    "comparisons": [
+      {
+        "lane": "SmoothAdvection-RK2-HLLC/baseline/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.009225364125473947,
+        "cells": 112
+      },
+      {
+        "lane": "SmoothAdvection-RK2-HLLC/mpi-1/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.009225364125473947,
+        "cells": 112
+      },
+      {
+        "lane": "SmoothAdvection-RK2-HLLC/mpi-2/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.009225364125473947,
+        "cells": 112
+      },
+      {
+        "lane": "SmoothAdvection-RK2-HLLC/mpi-4/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.009225364125473947,
+        "cells": 112
+      },
+      {
+        "lane": "SmoothAdvection-RK2-HLLC/mpi-disabled/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.009225364125473947,
+        "cells": 112
+      },
+      {
+        "lane": "SmoothAdvection-RK3-Roe/baseline/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.009225364103603608,
+        "cells": 112
+      },
+      {
+        "lane": "SmoothAdvection-RK3-Roe/mpi-1/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.009225364103603608,
+        "cells": 112
+      },
+      {
+        "lane": "SmoothAdvection-RK3-Roe/mpi-2/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.009225364103603608,
+        "cells": 112
+      },
+      {
+        "lane": "SmoothAdvection-RK3-Roe/mpi-4/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.009225364103603608,
+        "cells": 112
+      },
+      {
+        "lane": "SmoothAdvection-RK3-Roe/mpi-disabled/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.009225364103603608,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-Euler-HLLC/baseline/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015621798437273437,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-Euler-HLLC/mpi-1/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015621798437273437,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-Euler-HLLC/mpi-2/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015621798437273437,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-Euler-HLLC/mpi-4/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015621798437273437,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-Euler-HLLC/mpi-5-tight-pool/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015621798437273437,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-Euler-HLLC/mpi-disabled/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015621798437273437,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK2-HLLC/baseline/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015695836880643764,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK2-HLLC/mpi-1/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015695836880643764,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK2-HLLC/mpi-2/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015695836880643764,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK2-HLLC/mpi-2-omp-2/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015695836880643764,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK2-HLLC/mpi-4/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015695836880643764,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK2-HLLC/mpi-disabled/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015695836880643764,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK2-HLLC-reflecting/baseline/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.011847974860846868,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK2-HLLC-reflecting/mpi-1/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.011847974860846868,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK2-HLLC-reflecting/mpi-2/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.011847974860846868,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK2-HLLC-reflecting/mpi-4/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.011847974860846868,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK2-HLLC-reflecting/mpi-disabled/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.011847974860846868,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK3-HLL/baseline/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015756004964136087,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK3-HLL/mpi-1/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015756004964136087,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK3-HLL/mpi-2/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015756004964136087,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK3-HLL/mpi-4/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015756004964136087,
+        "cells": 112
+      },
+      {
+        "lane": "Sod-RK3-HLL/mpi-disabled/output",
+        "snapshots": 17,
+        "fields": [
+          "DENS",
+          "ENER",
+          "ENTR",
+          "PRES",
+          "SodGas",
+          "TEMP",
+          "VELX",
+          "cell_measure",
+          "coordinate"
+        ],
+        "bitwise_equal": true,
+        "final_time": 0.015756004964136087,
+        "cells": 112
+      }
+    ]
+  },
+  "total_new_application_comparisons": 82,
+  "total_expected_rejections": 14,
+  "total_ctest": 22,
+  "evidence_directory": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu273312-20261101",
+  "limitations": [
+    "Single-node CPU fixed-grid, 1D Cartesian hydro only.",
+    "No MPI CUDA, static/dynamic AMR, source-physics or checkpoint/restart expansion.",
+    "256-step trajectory checks are not a general long-time stability guarantee.",
+    "No scaling speedup claim; this is correctness evidence on a virtualized host.",
+    "Windows/MS-MPI and multi-node transports remain untested.",
+    "GitHub publication is tracked separately; migration is not publication."
+  ],
+  "execution_recovery": "Output-directory separation in runner r1 only; no mathematical or solver change."
+}
