@@ -38,19 +38,24 @@ struct SolverEuler
                       const Numerics::IHydroSolver* hydro,
                       const NumericsConfig &num_cfg)
     {
-        TimeIntegration::require_hydro_geometry_domain(amr_ctrl,boundary_condition,hydro);
-        amr_ctrl.flux_register.Clear();
+        const auto& binding = arch::scheduler::current_stage_binding();
         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
-        if (!active_blocks.empty()) {
-            amr_ctrl.flux_register.EnsureSpecies(amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies());
-        }
+        arch::scheduler::complete_hydro_local_phase(binding.context, [&] {
+            TimeIntegration::require_hydro_geometry_domain(amr_ctrl, boundary_condition, hydro);
+            amr_ctrl.flux_register.Clear();
+            if (!active_blocks.empty()) {
+                amr_ctrl.flux_register.EnsureSpecies(
+                    amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies());
+            }
+        });
         int total_size = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).grid.GetTotalSize();
         int dim = amr_ctrl.tree->GetRootGridDim();
 
         using namespace arch::scheduler;
-        const StageBinding& binding = current_stage_binding();
-        if (binding.handles.size() != active_blocks.size())
-            throw std::logic_error("Euler scheduler handle count mismatch");
+        arch::scheduler::complete_hydro_local_phase(binding.context, [&] {
+            if (binding.handles.size() != active_blocks.size())
+                throw std::logic_error("Euler scheduler handle count mismatch");
+        });
         const auto state_for = [](amr::Block& block,
                                   arch::state::StateSlot slot) -> FluidState& {
             switch (slot) {
@@ -63,50 +68,90 @@ struct SolverEuler
 
         (void)execute_euler_lane(
             binding.context, binding.handles,
-            [&](const StageDescriptor& descriptor,
-                arch::state::CompletionToken token) {
-                std::exception_ptr stage_failure;
-                // Source preparation has finished. Capture the whole real
-                // synchronous read domain before any OMP output/cache work;
-                // this nonmoving metadata owner expires before publication.
-                std::optional<arch::boundary::HostHydroBoundaryDomainAuthority> wall_domain;
-                const arch::boundary::HostHydroBoundaryDomainAuthority* wall_domain_ptr=nullptr;
-                if constexpr(std::is_same_v<std::remove_cvref_t<BCPolicy>,BCHandler>) {
-                    wall_domain.emplace(boundary_condition,amr_ctrl,binding,descriptor);
-                    wall_domain_ptr=&*wall_domain;
-                }
+            [&](const StageDescriptor& descriptor, arch::state::CompletionToken token) {
+                const auto execute_local = [&] {
+                    std::exception_ptr stage_failure;
+                    // Source preparation has finished. Capture the whole real
+                    // synchronous read domain before any OMP output/cache work;
+                    // this nonmoving metadata owner expires before publication.
+                    std::optional<arch::boundary::HostHydroBoundaryDomainAuthority> wall_domain;
+                    const arch::boundary::HostHydroBoundaryDomainAuthority* wall_domain_ptr =
+                        nullptr;
+                    if constexpr (std::is_same_v<std::remove_cvref_t<BCPolicy>, BCHandler>) {
+                        wall_domain.emplace(boundary_condition, amr_ctrl, binding, descriptor);
+                        wall_domain_ptr = &*wall_domain;
+                    }
 #pragma omp parallel
-                {
-                    int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
-                    std::vector<FluidVector> dU(total_size);
-                    std::vector<double> d_spec(n_spec * total_size);
+                    {
+                        int n_spec = active_blocks.empty()
+                                         ? 0
+                                         : amr_ctrl.pool->GetBlock(active_blocks[0])
+                                               .fluid_state.GetNumSpecies();
+                        std::vector<FluidVector> dU;
+                        std::vector<double> d_spec;
+                        bool workspace_ready = true;
+                        try {
+                            dU.resize(total_size);
+                            d_spec.resize(n_spec * total_size);
+                        } catch (...) {
+                            workspace_ready = false;
+#pragma omp critical(arch_hydro_failure)
+                            {
+                                if (!stage_failure)
+                                    stage_failure = std::current_exception();
+                            }
+                        }
 
 #pragma omp for schedule(dynamic)
-                    for (size_t i = 0; i < active_blocks.size(); ++i) {
-                        try {
-                        amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-                        FluidState& old_state = state_for(b, descriptor.old_slot);
-                        FluidState& input_state = state_for(b, descriptor.input_slot);
-                        FluidState& output_state = state_for(b, descriptor.output_slot);
-                        // The main-thread binding is borrowed explicitly by this OMP
-                        // worker; wall authority expires with this patch-stage.
-                        std::optional<arch::boundary::HostHydroBoundaryAuthority> wall;
-                        if constexpr(std::is_same_v<std::remove_cvref_t<BCPolicy>,BCHandler>)
-                            wall.emplace(*wall_domain_ptr,i,active_blocks[i],input_state,b.grid);
-                        hydro->evaluate_patch(&amr_ctrl, active_blocks[i], input_state, b.grid, dt, dU, d_spec, gravity, num_cfg, descriptor.flux_register_weight, nullptr,wall?&*wall:nullptr);
-                        hydro->update_patch(old_state, input_state, output_state, dU, d_spec, b.grid, descriptor.old_weight, descriptor.update_weight, num_cfg, nullptr);
-                        } catch (...) {
+                        for (size_t i = 0; i < active_blocks.size(); ++i) {
+                            if (!workspace_ready)
+                                continue;
+                            try {
+                                amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+                                FluidState& old_state = state_for(b, descriptor.old_slot);
+                                FluidState& input_state = state_for(b, descriptor.input_slot);
+                                FluidState& output_state = state_for(b, descriptor.output_slot);
+                                // The main-thread binding is borrowed explicitly by this OMP
+                                // worker; wall authority expires with this patch-stage.
+                                std::optional<arch::boundary::HostHydroBoundaryAuthority> wall;
+                                if constexpr (std::is_same_v<std::remove_cvref_t<BCPolicy>,
+                                                             BCHandler>)
+                                    wall.emplace(*wall_domain_ptr, i, active_blocks[i], input_state,
+                                                 b.grid);
+                                hydro->evaluate_patch(&amr_ctrl, active_blocks[i], input_state,
+                                                      b.grid, dt, dU, d_spec, gravity, num_cfg,
+                                                      descriptor.flux_register_weight, nullptr,
+                                                      wall ? &*wall : nullptr);
+                                hydro->update_patch(old_state, input_state, output_state, dU,
+                                                    d_spec, b.grid, descriptor.old_weight,
+                                                    descriptor.update_weight, num_cfg, nullptr);
+                            } catch (...) {
 #pragma omp critical(arch_hydro_failure)
-                            { if (!stage_failure) stage_failure = std::current_exception(); }
+                                {
+                                    if (!stage_failure)
+                                        stage_failure = std::current_exception();
+                                }
+                            }
                         }
                     }
-                }
-                // All workers have joined, including on numerical rejection.
+                    // All workers have joined, including on numerical rejection.
                     // Complete-domain identity still gates publication; retain
                     // the original first numerical exception if both fail.
-                    try { if(wall_domain_ptr)wall_domain_ptr->require_complete_domain(); }
-                    catch(...) { if(!stage_failure)stage_failure=std::current_exception(); }
-                    if (stage_failure) std::rethrow_exception(stage_failure);
+                    try {
+                        if (wall_domain_ptr)
+                            wall_domain_ptr->require_complete_domain();
+                    } catch (...) {
+                        if (!stage_failure)
+                            stage_failure = std::current_exception();
+                    }
+                    if (stage_failure)
+                        std::rethrow_exception(stage_failure);
+                };
+                if (binding.context.hydro_rank_completion)
+                    amr_ctrl.ExecuteDistributedHydroStage(
+                        descriptor.stage - 1, descriptor.flux_register_weight, execute_local);
+                else
+                    execute_local();
                 return token;
             },
             [&](arch::state::StateSlot output, arch::state::StateVersion,
@@ -138,9 +183,12 @@ struct SolverEuler
                     std::swap(b.fluid_state, b.state_next);
                 }
             },
-            [&](const HydroPlan&, arch::state::StateSlot,
-                arch::state::CompletionToken token) {
-                amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state);
+            [&](const HydroPlan& plan, arch::state::StateSlot, arch::state::CompletionToken token) {
+                if (binding.context.hydro_rank_completion)
+                    amr_ctrl.ApplyDistributedReflux(dt, &amr::Block::fluid_state,
+                                                    plan.stages.size());
+                else
+                    amr_ctrl.ApplyReflux(dt, &amr::Block::fluid_state);
                 TimeIntegration::accept_reflux_state(amr_ctrl,num_cfg);
                 return token;
             });

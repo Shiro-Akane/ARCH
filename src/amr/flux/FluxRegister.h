@@ -107,6 +107,66 @@ private:
 
 public:
     FluxRegister() = default;
+
+    /** One synchronous Host stage's raw face values, owned by this register.
+     * Workers submit distinct routes; no register/receipt writes occur until
+     * the caller has joined every worker and collectively accepted the stage.
+     * The topology lease and this nonmoving capture outlive all patch calls.
+     */
+    class HostStageCapture {
+        friend class FluxRegister;
+        FluxRegister& owner_;
+        const AmrFluxTopologyPlan& topology_;
+        double weight_;
+        std::vector<std::vector<double>> values_;
+        std::vector<unsigned char> received_;
+
+      public:
+        HostStageCapture(FluxRegister& owner, const AmrFluxTopologyPlan& topology, double weight)
+            : owner_(owner), topology_(topology), weight_(weight), values_(topology.routes.size()),
+              received_(topology.routes.size(), 0) {
+            std::lock_guard lock(owner_.identity_mutex_);
+            if (owner_.host_stage_capture_)
+                throw std::logic_error("Host flux stage capture already active");
+            owner_.host_stage_capture_ = this;
+        }
+        HostStageCapture(const HostStageCapture&) = delete;
+        HostStageCapture(HostStageCapture&&) = delete;
+        ~HostStageCapture() {
+            std::lock_guard lock(owner_.identity_mutex_);
+            if (owner_.host_stage_capture_ != this)
+                std::terminate();
+            owner_.host_stage_capture_ = nullptr;
+        }
+        std::span<const std::vector<double>> complete_values() const {
+            if (std::any_of(received_.begin(), received_.end(),
+                            [](auto value) { return value != 1; }))
+                throw std::invalid_argument("Host flux stage has missing routes");
+            return values_;
+        }
+    };
+    /** Queue the original raw gather; no remote views or receipt pointers escape. */
+    void CaptureHostStageValues(const AmrFluxTopologyPlan& topology,
+                                const AmrFluxRegistrationRoute& route, std::vector<double> values,
+                                double weight) {
+        std::lock_guard lock(identity_mutex_);
+        auto* stage = host_stage_capture_;
+        if (!stage || &stage->topology_ != &topology || stage->weight_ != weight)
+            throw std::logic_error("distributed flux values require the collective stage boundary");
+        const auto* found = topology.find(route.key.source_block, axis_value(route.key.axis));
+        if (found != &route || values.size() != route.plan.operations.size())
+            throw std::invalid_argument("Host flux stage route/layout mismatch");
+        const auto index = static_cast<std::size_t>(found - topology.routes.data());
+        if (stage->received_.at(index))
+            throw std::invalid_argument("Host flux stage repeats a route");
+        stage->values_[index] = std::move(values);
+        stage->received_[index] = 1;
+    }
+
+  private:
+    HostStageCapture* host_stage_capture_ = nullptr;
+
+  public:
     /** Complete Host flux owner backup; values live outside the original arena. */
     class HostSnapshot {
         friend class FluxRegister;
@@ -194,6 +254,8 @@ private:
 public:
 
     void Resize(int max_blocks, int dim) {
+        if (host_stage_capture_)
+            throw std::logic_error("Host flux capture excludes arena mutation");
         if (max_blocks < 0) {
             throw std::invalid_argument("FluxRegister capacity cannot be negative.");
         }
@@ -213,6 +275,8 @@ public:
     }
 
     void EnsureSpecies(int num_species) {
+        if (host_stage_capture_)
+            throw std::logic_error("Host flux capture excludes arena mutation");
         if (num_species < 0) {
             throw std::invalid_argument("FluxRegister species count cannot be negative.");
         }
@@ -233,6 +297,8 @@ public:
     }
 
     void Clear() {
+        if (host_stage_capture_)
+            throw std::logic_error("Host flux capture excludes arena mutation");
         // Clear/resize are scheduler barriers, never concurrent registration.
         std::lock_guard lock(identity_mutex_);
         topology_identity_.reset();
@@ -351,6 +417,8 @@ public:
         double stage_weight = 1.0,
         std::optional<std::uint64_t> topology_fingerprint = std::nullopt)
     {
+        if (host_stage_capture_)
+            throw std::logic_error("Host flux capture excludes immediate registration");
         if (distributed_stage_)
             throw std::logic_error(
                 "collective flux stage requires Clear before serial registration");

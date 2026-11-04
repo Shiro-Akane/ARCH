@@ -113,8 +113,18 @@ inline void RegisterCoarseFineFluxes(AMRControl& amr_ctrl, const AmrFluxTopology
     if (route == nullptr || stage_weight == 0.0)
         return;
 
-    if (topology.partition_size > 1)
-        throw std::logic_error("distributed flux values require the collective stage boundary");
+    if (topology.partition_size > 1) {
+        // A borrowed receipt can die with the patch adapter before collective
+        // registration. Reject it until a concrete owner provides a stage lease.
+        if constexpr (!std::is_same_v<EnergyReceipt, std::nullptr_t>)
+            if (energy_receipt)
+                throw std::logic_error("distributed EnergyReceipt requires a stage lifetime");
+        auto values = GatherCoarseFineFluxValues(topology, *route, grid, flux_buffer,
+                                                 species_flux_buffer, species_count, stage_weight);
+        amr_ctrl.flux_register.CaptureHostStageValues(topology, *route, std::move(values),
+                                                      stage_weight);
+        return;
+    }
     auto values =
         GatherCoarseFineFluxValues(topology, *route, grid, flux_buffer, species_flux_buffer,
                                    species_count, stage_weight, energy_receipt);

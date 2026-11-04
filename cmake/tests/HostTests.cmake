@@ -657,3 +657,25 @@ if(ARCH_ENABLE_MPI)
     set_tests_properties(mpi_distributed_exchange_2 PROPERTIES
         TIMEOUT 300 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
 endif()
+
+# Original Host integrators consume the explicit distributed stage boundary.
+add_executable(arch_distributed_hydro_stage tests/host/amr/test_distributed_hydro_stage.cpp
+    src/driver/runtime/TopologyIdentityRegistry.cpp
+    src/physics/boundary/PhysicalBoundaryHandler.cpp)
+arch_configure_host_test(arch_distributed_hydro_stage "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_distributed_hydro_stage PRIVATE arch_build_contract arch_diffusion_math)
+add_test(NAME distributed_hydro_stage COMMAND arch_distributed_hydro_stage 1)
+set_tests_properties(distributed_hydro_stage PROPERTIES TIMEOUT 300 LABELS mpi ENVIRONMENT "OMP_NUM_THREADS=1;OMP_DYNAMIC=FALSE")
+if(ARCH_ENABLE_MPI)
+    set(hydro_stage_threads 1)
+    if(ARCH_ENABLE_OPENMP)
+        list(APPEND hydro_stage_threads 2)
+    endif()
+    foreach(threads IN LISTS hydro_stage_threads)
+        add_test(NAME mpi_distributed_hydro_stage_2_omp${threads}
+            COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+                ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_distributed_hydro_stage> ${MPIEXEC_POSTFLAGS} ${threads})
+        set_tests_properties(mpi_distributed_hydro_stage_2_omp${threads} PROPERTIES
+            TIMEOUT 300 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=${threads};OMP_DYNAMIC=FALSE" LABELS mpi)
+    endforeach()
+endif()

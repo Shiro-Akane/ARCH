@@ -129,6 +129,59 @@ struct AMRControl {
         return cached->plan;
     }
 
+    /** Complete local Hydro work on the initializing thread before a collective.
+     * Call only from a consistently bound distributed Host lane, after OMP joins.
+     */
+    void CompleteDistributedHydroPhase(std::exception_ptr failure) const {
+#if ARCH_MPI_ENABLED
+        const auto [rank, size] = flux_mpi_detail::require_world();
+        flux_mpi_detail::prepare([&] {
+            if (!tree || size < 2 || tree->PartitionRank() != rank || tree->PartitionSize() != size)
+                throw std::invalid_argument("distributed Hydro communicator/topology mismatch");
+            if (failure)
+                std::rethrow_exception(failure);
+        });
+#else
+        (void)failure;
+        throw std::logic_error("distributed Hydro requires ARCH_ENABLE_MPI=ON");
+#endif
+    }
+
+    /** Run existing local patch work, then register all face values together.
+     * Allocation/gather/solver rejection is agreed before any rank enters the
+     * registration exchange. Failed captures are discarded without receipts.
+     */
+    template <class LocalSolve>
+    void ExecuteDistributedHydroStage(std::uint64_t stage, double weight, LocalSolve&& solve) {
+#if ARCH_MPI_ENABLED
+        const auto [rank, size] = flux_mpi_detail::require_world();
+        std::shared_ptr<const AmrFluxTopologyPlan> topology;
+        std::optional<FluxRegister::HostStageCapture> capture;
+        flux_mpi_detail::prepare([&] {
+            if (!tree || size < 2 || tree->PartitionRank() != rank ||
+                tree->PartitionSize() != size || !amr_plan_detail::is_finite_binary64(weight) ||
+                weight <= 0.)
+                throw std::invalid_argument("invalid distributed Hydro stage binding");
+            (void)RequireFluxTopologyPlan(flux_register.GetNumSpecies());
+            topology = FluxTopologyPlanLease();
+            capture.emplace(flux_register, *topology, weight);
+        });
+        flux_mpi_detail::prepare([&] {
+            std::forward<LocalSolve>(solve)();
+            if (FluxTopologyPlanLease() != topology)
+                throw std::invalid_argument("Host Hydro topology changed during stage");
+            (void)capture->complete_values();
+        });
+        flux_register.ApplyDistributedRegistrationStage(*pool, *tree, ActiveHandles(), *topology,
+                                                        capture->complete_values(), stage, weight);
+#else
+        (void)stage;
+        (void)weight;
+        (void)solve;
+        throw std::logic_error("distributed Hydro requires ARCH_ENABLE_MPI=ON");
+#endif
+    }
+
     /** Explicit collective boundary; every rank calls after all stage registrations. */
     void ApplyDistributedReflux(double dt, FluidState Block::* state_ptr,
                                 std::uint64_t completed_stages) {

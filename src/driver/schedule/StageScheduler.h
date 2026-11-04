@@ -17,6 +17,7 @@
 
 #pragma once
 #include <functional>
+#include <exception>
 
 #include "driver/runtime/StateResidency.h"
 #include "physics/boundary/BoundaryFlux.h"
@@ -291,6 +292,7 @@ struct StageExecutionContext {
     state::StateResidencyLedger& ledger;
     MonotonicSchedulerClock& clock;
     HydroStagePreparation* hydro_preparation = nullptr;
+
     std::function<void(const StageDescriptor&)> hydro_acceptance;
     double step_start_time = 0.0;
     double step_dt = 0.0;
@@ -308,6 +310,9 @@ struct StageExecutionContext {
     // plan calls this before the real boundary callback; it never fills arrays
     // or publishes readiness, unlike physical_boundary_preparation.
     std::function<void(double, arch::boundary::BoundaryPurpose)> configure_boundary_context;
+    // Explicit distributed Host Hydro binding. The existing AMR owner agrees
+    // local failures after workers join; no MPI types or resources live here.
+    std::function<void(std::exception_ptr)> hydro_rank_completion;
 };
 
 static_assert(std::is_same_v<decltype(StageExecutionContext::side),
@@ -416,6 +421,26 @@ inline const StageBinding& current_stage_binding()
     return *detail::active_stage_binding;
 }
 
+/** Agree a fallible local phase before a peer can enter the next operation. */
+template <class Work> void complete_hydro_local_phase(StageExecutionContext& context, Work&& work) {
+    if (!context.hydro_rank_completion) {
+        std::forward<Work>(work)();
+        return;
+    }
+    std::exception_ptr failure;
+    try {
+        std::forward<Work>(work)();
+    } catch (...) {
+        failure = std::current_exception();
+    }
+    context.hydro_rank_completion(failure);
+}
+
+inline bool distributed_hydro_bound() noexcept {
+    return detail::active_stage_binding &&
+           static_cast<bool>(detail::active_stage_binding->context.hydro_rank_completion);
+}
+
 struct StageExecutionResult {
     state::StateVersion version{};
     state::CompletionToken interior_completion{};
@@ -492,14 +517,11 @@ void publish_interior_batch(StageExecutionContext& context,
                             state::StateSlot output,
                             PublicationWitness witness)
 {
-    for (const amr::BlockHandle handle : handles) {
-        const state::SlotCoherence before =
-            context.ledger.inspect({handle, output});
-        if (before.interior.residency != state::StateResidency::Invalid
-            && witness.version <= before.interior.version) {
-            throw std::logic_error("stage version does not advance destination");
-        }
-    }
+    complete_hydro_local_phase(context, [&] {
+        for (const amr::BlockHandle handle : handles)
+            context.ledger.require_interior_publication({handle, output}, context.side,
+                                                        witness.version, witness.completion);
+    });
     for (const amr::BlockHandle handle : handles) {
         context.ledger.publish_interior({handle, output}, context.side,
                                         witness.version,
@@ -514,6 +536,11 @@ void publish_ghost_batch(StageExecutionContext& context,
                          state::StateVersion version,
                          state::CompletionToken completion)
 {
+    complete_hydro_local_phase(context, [&] {
+        for (const amr::BlockHandle handle : handles)
+            context.ledger.require_ghost_publication({handle, output}, context.side, version,
+                                                     completion);
+    });
     for (const amr::BlockHandle handle : handles) {
         context.ledger.publish_ghost({handle, output}, context.side, version,
                                      completion);
@@ -526,17 +553,23 @@ state::CompletionToken execute_completed_boundary(
     StageExecutionContext& context, const HandleRange& handles,
     state::StateSlot slot, state::StateVersion version, Boundary&& boundary)
 {
-    const state::CompletionToken token = context.clock.next_completion();
-    const state::CompletionToken completed =
-        std::forward<Boundary>(boundary)(slot, version, token);
-    if (!state::is_complete(completed) || completed.value != token.value)
-        throw std::logic_error(
-            "boundary completion does not match scheduler token");
-    auto* const rkl=active_rkl_completed_boundary;
-    if(rkl&&rkl->context==&context&&rkl->descriptor->output_slot==slot) {
-        rkl->slot=slot;rkl->version=version;rkl->completion=completed;rkl->completed=true;
-    }
-    if(rkl&&rkl->context==&context)rkl->completed=false;
+    state::CompletionToken token, completed;
+    complete_hydro_local_phase(context, [&] { token = context.clock.next_completion(); });
+    complete_hydro_local_phase(
+        context, [&] { completed = std::forward<Boundary>(boundary)(slot, version, token); });
+    complete_hydro_local_phase(context, [&] {
+        if (!state::is_complete(completed) || completed.value != token.value)
+            throw std::logic_error("boundary completion does not match scheduler token");
+        auto* const rkl = active_rkl_completed_boundary;
+        if (rkl && rkl->context == &context && rkl->descriptor->output_slot == slot) {
+            rkl->slot = slot;
+            rkl->version = version;
+            rkl->completion = completed;
+            rkl->completed = true;
+        }
+        if (rkl && rkl->context == &context)
+            rkl->completed = false;
+    });
     publish_ghost_batch(context, handles, slot, version, completed);
     return completed;
 }
@@ -557,25 +590,26 @@ StageExecutionResult execute_stage(StageExecutionContext& context,
                                    Boundary&& boundary,
                                    Preparation&& prepare = {})
 {
-    detail::validate_stage_inputs(context, handles, descriptor);
-    std::forward<Preparation>(prepare)(descriptor);
-    const PublicationWitness witness = context.clock.next_publication();
-    const state::CompletionToken completed =
-        std::forward<Executor>(executor)(descriptor, witness.completion);
-    if (!state::is_complete(completed)
-        || completed.value != witness.completion.value) {
-        throw std::logic_error("executor completion does not match stage token");
-    }
-    const state::CompletionToken after_execution =
-        std::forward<BeforePublish>(before_publish)(descriptor, completed);
-    if (!state::is_complete(after_execution)
-        || after_execution.value != witness.completion.value) {
-        throw std::logic_error(
-            "before-publication completion does not match stage token");
-    }
-
-    detail::publish_interior_batch(context, handles, descriptor.output_slot,
-                                   witness);
+    PublicationWitness witness;
+    complete_hydro_local_phase(context, [&] {
+        detail::validate_stage_inputs(context, handles, descriptor);
+        std::forward<Preparation>(prepare)(descriptor);
+        witness = context.clock.next_publication();
+    });
+    state::CompletionToken completed;
+    complete_hydro_local_phase(context, [&] {
+        completed = std::forward<Executor>(executor)(descriptor, witness.completion);
+        if (!state::is_complete(completed) || completed.value != witness.completion.value)
+            throw std::logic_error("executor completion does not match stage token");
+    });
+    complete_hydro_local_phase(context, [&] {
+        const auto after_execution =
+            std::forward<BeforePublish>(before_publish)(descriptor, completed);
+        if (!state::is_complete(after_execution) ||
+            after_execution.value != witness.completion.value)
+            throw std::logic_error("before-publication completion does not match stage token");
+    });
+    detail::publish_interior_batch(context, handles, descriptor.output_slot, witness);
     StageExecutionResult result{witness.version, witness.completion, {}};
     if (descriptor.refresh_ghost_after) {
         result.ghost_completion = detail::execute_completed_boundary(
@@ -654,13 +688,16 @@ void rotate_slots(StageExecutionContext& context,
                   state::SlotRotation rotation,
                   PhysicalRotation&& physical_rotation)
 {
-    detail::validate_rotation(rotation);
-    bool any = false;
-    for (const amr::BlockHandle handle : handles) {
-        any = true;
-        context.ledger.quiesce(handle);
-    }
-    if (!any) throw std::invalid_argument("rotation requires at least one block");
+    complete_hydro_local_phase(context, [&] {
+        detail::validate_rotation(rotation);
+        bool any = false;
+        for (const amr::BlockHandle handle : handles) {
+            any = true;
+            context.ledger.quiesce(handle);
+        }
+        if (!any)
+            throw std::invalid_argument("rotation requires at least one block");
+    });
 
     std::forward<PhysicalRotation>(physical_rotation)();
     for (const amr::BlockHandle handle : handles)
@@ -674,40 +711,52 @@ HydroExecutionResult execute_hydro_plan(
     const HydroPlan& plan, Executor&& executor, Boundary&& boundary,
     PhysicalRotation&& physical_rotation, Reflux&& reflux)
 {
-    if (plan.stages.empty())
-        throw std::invalid_argument("Hydro plan requires at least one stage");
-    if (context.configure_boundary_context) {
-        detail::require_boundary_interval(context.step_start_time, context.step_dt);
-        detail::require_timed_hydro_plan(plan);
-    }
-
     HydroExecutionResult result;
-    result.stages.reserve(plan.stages.size());
+    complete_hydro_local_phase(context, [&] {
+        if (plan.stages.empty())
+            throw std::invalid_argument("Hydro plan requires at least one stage");
+        if (context.configure_boundary_context) {
+            detail::require_boundary_interval(context.step_start_time, context.step_dt);
+            detail::require_timed_hydro_plan(plan);
+        }
+
+        result.stages.reserve(plan.stages.size());
+    });
     for (const StageDescriptor& descriptor : plan.stages) {
-        if (context.configure_boundary_context)
-            context.configure_boundary_context(
-                context.step_start_time + descriptor.input_time_fraction * context.step_dt,
-                arch::boundary::BoundaryPurpose::Hydro);
-        if (context.physical_boundary_preparation)
-            context.physical_boundary_preparation(descriptor.input_slot,
-                context.step_start_time + descriptor.input_time_fraction * context.step_dt,
-                arch::boundary::BoundaryPurpose::Hydro);
-        if (context.hydro_flux_capture_begin) context.hydro_flux_capture_begin(descriptor);
+        complete_hydro_local_phase(context, [&] {
+            if (context.configure_boundary_context)
+                context.configure_boundary_context(
+                    context.step_start_time + descriptor.input_time_fraction * context.step_dt,
+                    arch::boundary::BoundaryPurpose::Hydro);
+            if (context.physical_boundary_preparation)
+                context.physical_boundary_preparation(
+                    descriptor.input_slot,
+                    context.step_start_time + descriptor.input_time_fraction * context.step_dt,
+                    arch::boundary::BoundaryPurpose::Hydro);
+            if (context.hydro_flux_capture_begin)
+                context.hydro_flux_capture_begin(descriptor);
+        });
         result.stages.push_back(execute_stage(
             context, handles, descriptor, executor,
             [&](const StageDescriptor& stage, state::CompletionToken token) {
-                if (context.hydro_acceptance) context.hydro_acceptance(stage);
+                if (context.hydro_acceptance)
+                    context.hydro_acceptance(stage);
                 return token;
             },
-            [&](state::StateSlot slot, state::StateVersion version,
-                state::CompletionToken token) {
-                if (context.configure_boundary_context)
-                    context.configure_boundary_context(context.step_start_time
-                        + hydro_output_time_fraction(plan.method, descriptor) * context.step_dt,
-                        arch::boundary::BoundaryPurpose::Hydro);
+            [&](state::StateSlot slot, state::StateVersion version, state::CompletionToken token) {
+                complete_hydro_local_phase(context, [&] {
+                    if (context.configure_boundary_context)
+                        context.configure_boundary_context(
+                            context.step_start_time +
+                                hydro_output_time_fraction(plan.method, descriptor) *
+                                    context.step_dt,
+                            arch::boundary::BoundaryPurpose::Hydro);
+                });
                 return boundary(slot, version, token);
-            }, [&](const StageDescriptor& input) {
-                if (!context.hydro_preparation) return;
+            },
+            [&](const StageDescriptor& input) {
+                if (!context.hydro_preparation)
+                    return;
                 const auto completed = context.hydro_preparation->prepare({
                     plan.method, input, std::span<const amr::BlockHandle>(handles),
                     context.side, context.ledger,
@@ -716,20 +765,24 @@ HydroExecutionResult execute_hydro_plan(
                 if (!state::is_complete(completed))
                     throw std::logic_error("Hydro preparation did not complete");
             }));
-        if (context.hydro_flux_capture_accept) context.hydro_flux_capture_accept(descriptor);
+        complete_hydro_local_phase(context, [&] {
+            if (context.hydro_flux_capture_accept)
+                context.hydro_flux_capture_accept(descriptor);
+        });
     }
     rotate_slots(context, handles, plan.final_rotation,
                  std::forward<PhysicalRotation>(physical_rotation));
 
     if (plan.final_reflux_after_rotation) {
-        const PublicationWitness witness = context.clock.next_publication();
-        const state::CompletionToken completed = std::forward<Reflux>(reflux)(
-            plan, state::StateSlot::Current, witness.completion);
-        if (!state::is_complete(completed)
-            || completed.value != witness.completion.value) {
-            throw std::logic_error(
-                "Hydro reflux completion does not match scheduler token");
-        }
+        PublicationWitness witness;
+        complete_hydro_local_phase(context, [&] { witness = context.clock.next_publication(); });
+        complete_hydro_local_phase(context, [&] {
+            const state::CompletionToken completed =
+                std::forward<Reflux>(reflux)(plan, state::StateSlot::Current, witness.completion);
+            if (!state::is_complete(completed) || completed.value != witness.completion.value) {
+                throw std::logic_error("Hydro reflux completion does not match scheduler token");
+            }
+        });
         detail::publish_interior_batch(
             context, handles, state::StateSlot::Current, witness);
         result.final_reflux = witness;
@@ -828,7 +881,8 @@ HydroExecutionResult execute_hydro_lane(
     HydroMethod method, Executor&& executor, Boundary&& boundary,
     PhysicalRotation&& physical_rotation, Reflux&& reflux)
 {
-    const HydroPlan plan = make_hydro_plan(method);
+    HydroPlan plan;
+    complete_hydro_local_phase(context, [&] { plan = make_hydro_plan(method); });
     return execute_hydro_plan(
         context, handles, plan, std::forward<Executor>(executor),
         std::forward<Boundary>(boundary),

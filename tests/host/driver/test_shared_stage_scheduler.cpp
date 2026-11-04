@@ -2145,13 +2145,13 @@ void test_production_lane_fingerprints_and_authority_absence()
         const auto domain = lane->find("require_hydro_geometry_domain(");
         const auto clear = lane->find("amr_ctrl.flux_register.Clear()");
         expect(domain != std::string::npos && clear != std::string::npos && domain < clear
-                   && lane->find("require_hydro_geometry_domain(amr_ctrl,boundary_condition,hydro)")
+                   && lane->find("require_hydro_geometry_domain(amr_ctrl, boundary_condition, hydro)")
                         != std::string::npos,
                "actual solver and domain preflight precede register mutation");
         expect(source_occurrences(*lane, "execute_stage(") == 0
                    && source_occurrences(*lane, "rotate_slots(") == 0,
                "each Hydro adapter delegates scheduler ordering");
-        expect(source_occurrences(*lane, "amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state)") == 1,
+        expect(source_occurrences(*lane, "amr_ctrl.ApplyReflux(dt, &amr::Block::fluid_state)") == 1,
                "each Hydro physical adapter supplies one reflux callback");
         expect(source_occurrences(*lane, "require_hydro_geometry_domain(") == 1
                    && source_occurrences(*lane, "TimeIntegration::synchronize_domain_boundary(") == 1
@@ -2193,14 +2193,14 @@ void test_production_lane_fingerprints_and_authority_absence()
     expect(sync_begin!=std::string::npos&&sync_end!=std::string::npos,
            "one actual-domain boundary helper remains discoverable");
     const auto sync=boundary_helper.substr(sync_begin,sync_end-sync_begin);
-    const auto physical_boundary = sync.find("apply_domain_boundary(control,boundary,member)");
+    const auto physical_boundary = sync.find("apply_domain_boundary(control, boundary, member)");
     const auto exchange = sync.find("ghost_exchange.ExecuteExchange(");
     expect(source_occurrences(boundary_helper,"inline void synchronize_domain_boundary(")==1
                && physical_boundary!=std::string::npos && exchange!=std::string::npos
                && physical_boundary<exchange
-               && source_occurrences(sync,"apply_domain_boundary(control,boundary,member)")==1
+               && source_occurrences(sync,"apply_domain_boundary(control, boundary, member)")==1
                && source_occurrences(sync,"ghost_exchange.ExecuteExchange(")==1
-               && sync.find("member,handles)")!=std::string::npos
+               && sync.find("member, handles)")!=std::string::npos
                && sync.find("publish_ghost(")==std::string::npos,
            "shared boundary owner completes actual physical/exchange data while scheduler owns GhostValid");
 

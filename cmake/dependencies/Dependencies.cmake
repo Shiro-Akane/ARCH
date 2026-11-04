@@ -23,7 +23,7 @@ if(ARCH_ENABLE_OPENMP)
     endif()
     # These existing tests instantiate real Host boundary/RK templates in
     # their own TUs; a linked runtime alone cannot enable their OMP pragmas.
-    foreach(target arch_boundary_plan arch_gravity_stage_contract)
+    foreach(target arch_boundary_plan arch_gravity_stage_contract arch_distributed_hydro_stage)
         if(TARGET ${target})
             target_link_libraries(${target} PRIVATE OpenMP::OpenMP_CXX)
             target_compile_definitions(${target} PRIVATE ARCH_OPENMP_ENABLED=1)

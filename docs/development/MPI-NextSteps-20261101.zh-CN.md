@@ -1,8 +1,8 @@
-# MPI 下一阶段实施计划（2026-11-04 更新）
+# MPI 下一阶段实施计划（2026-11-05 更新）
 
 ## 当前起点与状态
 
-2026-11-04 再次 fetch 后，上游 main 仍为 2e05e66e（v1.4.1）；固定网格 CPU MPI 候选为 e43183d0，扩大实验和证据提交为 c6b0d628。A1 全局拓扑身份与所有权已在 55708157 完成，A2 远端邻接在 d7bff58e 完成。B1 实际跨 rank 粗细 ghost 交换已在 cbdf0b73 完成，其 GitHub CI 41545717485 已核实成功。B2a 跨 rank 通量注册/reflux 已在 3ae3493d 完成，其托管 CI 41816686932 已核实成功。本次推进 B2b 的非根同层交换与 ghost 执行顺序。B2 的完整 mixed-level 时间推进仍未闭合，数据迁移和 CUDA MPI 尚未完成，应用预检继续拒绝 MPI-AMR。
+2026-11-05 再次 fetch 后，上游 main 仍为 2e05e66e（v1.4.1）；固定网格 CPU MPI 候选为 e43183d0，扩大实验和证据提交为 c6b0d628。A1 全局拓扑身份与所有权已在 55708157 完成，A2 远端邻接在 d7bff58e 完成。B1 实际跨 rank 粗细 ghost 交换已在 cbdf0b73 完成，其 GitHub CI 41545717485 已核实成功。B2a 跨 rank 通量注册/reflux 已在 3ae3493d 完成，其托管 CI 41816686932 已核实成功。B2b 的完整交换顺序已在 a3a713f0 完成，GitHub CI 41829575510 已核实成功。本次继续接入原生 Host Hydro 阶段，见下文 2026-11-05 增量。B2 的完整应用步提交仍未闭合，数据迁移和 CUDA MPI 尚未完成，应用预检继续拒绝 MPI-AMR。
 
 开发、构建、测试、原始证据和 Git 发布仍只在 gpu-273312 / gpu-273312-ts（当前 100.97.101.5；直连 150.65.181.202） 的 /home/ubuntu/projects/ARCH-mpi 进行。旧 ARCH 工作区与历史实验不覆盖。现有实现达到“已有自动回归和扩展证据的 CPU 固定网格 MPI 候选”，没有达到完整 MPI 支持。
 
@@ -191,7 +191,7 @@ A–C 可先由直接调用生产设施的原生测试夹具验证，不能以�
 
 该入口当前的直接消费者仍是原生测试。临时拓扑/计划开销随全局叶数增长，面缓冲随本地交换面增长；尚无大规模性能或峰值 RSS 结论。原池容量策略不变，夹具每 rank 40 槽不代表应用全局容量预算。
 
-B2b 仍需把这些操作接入原 scheduler：协调 gather/本地求解失败、提交通量、处理 EnergyReceipt 生命周期及 reflux 完成顺序，最后完成 accepted-step 的串行/双 rank 对照。应用 MPI-AMR 预检继续关闭；GPU staging、动态迁移、重启和多节点验收仍各自独立。
+交换部分完成时，B2b 尚需接入原 scheduler。下述增量已协调本地求解/通量捕获/原生 Hydro 阶段/reflux；EnergyReceipt 的真实消费者生命周期和完整 DriverRuntime accepted-step 仍待完成。应用 MPI-AMR 预检继续关闭；GPU staging、动态迁移、重启和多节点验收仍各自独立。
 
 ### B2b 交换部分验收记录
 
@@ -210,6 +210,41 @@ B2b 仍需把这些操作接入原 scheduler：协调 gather/本地求解失败�
 | production-multidim.tar.gz | 34196967 | 791 | d3fb9c1463fbb02b3ca233fb8de3518481efa9d81ad5d30bdfe762de68497840 |
 
 该记录只关闭 B2b 的交换部分。完整 accepted-step、EnergyReceipt 与 scheduler 提交、动态迁移、GPU、输出/重启和性能验收仍未完成；应用 MPI-AMR 预检仍关闭。
+
+## B2b 增量：原生 Host Hydro 阶段（2026-11-05）
+
+[AMRControl](../../src/amr/AMRControl.h) 在已有通量 owner 中协调本地阶段和跨 rank 失败；[FluxRegister](../../src/amr/flux/FluxRegister.h) 的 HostStageCapture 只在一次同步求解期间持有原始面值。OpenMP worker 按原配方 gather，全部 join 后才共同注册，随后仍用原 ApplyDistributedRegistrationStage/ApplyDistributedReflux。它不拥有网格、内存池、时间推进或远端 FluidState。
+
+[StageScheduler](../../src/driver/schedule/StageScheduler.h) 的现有执行上下文增加显式 Host Hydro 完成回调。默认不绑定，原固定网格应用路径保持原选择。绑定后，各 rank 在本地准备、求解、接受回调、边界完成及发布检查之间汇合失败；原 residency ledger 的发布校验提取为只读方法，所有 rank 校验通过后才发布。Euler/RK2/RK3 继续使用原阶段表、evaluate_patch、update_patch、槽轮换及 reflux 算术；没有新的积分器。工作数组分配失败在 OpenMP team 内捕获，所有 worker 均到达 join，再共同拒绝。
+
+[原生测试](../../tests/host/amr/test_distributed_hydro_stage.cpp) 显式绑定该入口：CPU Cartesian 二维、两个根块中右根细化，共五个叶块；两个 rank、全周期边界、IdealGas/HLLC/PCM。Euler/RK2/RK3 × 常量/平滑周期场共六组，每组三个同步步。每步将三个槽的全部场、species 和 ghost 与相同网格的原串行执行逐位比较；另独立检查常量保持、七个守恒量、可容许性和池活动块数。守恒门槛沿用现有 Host Hydro 事务测试的 2e-11 + 2e-12×|初值|。
+
+十二种集合拒绝覆盖单 rank 求解异常、缺失/重复通量、后续阶段异常、输入 ledger、几何、接受回调、时钟耗尽、边界配置/执行和非空借用 EnergyReceipt；失败不得发布成功阶段/ghost。部分首次阶段拒绝后直接用同一 owner 重试成功。CI 保留单进程测试，MPI ON 另要求双进程 OMP=1/2。
+
+这一增量仍有明确边界：
+
+- 当前直接消费者是原生 Host 测试，尚未由完整 DriverRuntime 事务接受并提交应用步。失败可留下候选数组和先前阶段的寄存器内容；原事务 owner 后续须承担恢复，不能把集合拒绝当作整步回滚原子性。
+- 非空借用 EnergyReceipt 在分布式 gather 前拒绝，避免 patch 结束后悬空；没有提前创建无真实消费者的通用 receipt 管理器。接入真实能量账本消费者时，再由其已有 owner 提供跨阶段生命周期并验收。
+- 所有参与 rank 必须一致绑定、在初始化线程按同序调用；本案例两端都有本地叶块。没有验收空本地分区、动态迁移、自动细化传播、源项耦合、CUDA、分布式输出/重启或多节点性能。
+- 应用 MPI-AMR 预检继续关闭，原池分配策略和数学叶文件保持不变。本轮没有新的性能结论。
+
+### B2b Host Hydro 阶段验收记录
+
+证据位于 /home/ubuntu/projects/ARCH-mpi-evidence-hydro-stage-20261105/final，源码基于 a3a713f0 的 dirty 工作树；source.json 冻结 16 个代码/测试/构建文件，文档在测试后补齐。二进制与冻结基线的 SHA-256 见 production-source.json；不将预提交构建标记为发布提交构建。
+
+- Release MPI ON/OFF 完整应用构建成功，两配置分别 28/18 项 CTest 通过；Debug 重新构建受影响目标，分别 26/16 项通过。合计 88 项、无跳过，其中 Debug ON 的一项 MPI 启动预检复用已有应用，不计作当前完整 Debug 应用验收；其余 87 项对应本轮重建目标或 Release 应用。
+- 新 Hydro 测试在四配置通过；MPI ON 的 OMP=1/2 均检查实际 team size，JUnit 明确记录 actual threads=1/2。另用实际一线程运行要求两线程的入口，确认线程数不符确实拒绝。
+- 初轮发现新目标未链接 OpenMP，只有环境变量和测试名称，不能证明两线程执行。其日志及源码冻结记录保存在 attempt-without-openmp，已被修正后的四配置运行替代。其他构建目标名错误和开发中拒绝记录也保留，不将失败改判为通过。
+- 未修改的生产积分脚本完成 55 组与独立冻结串行基线的逐位比较及 10 项预期拒绝。629 项工具测试无跳过通过；架构、文档、actionlint、CI MPI ON/OFF inventory/结果完整性及 diff 检查通过。
+- 原始生产证据共 2,340 个文件，归档逐一读回核对 SHA-256，并实际重开 HDF5；随后只清理已验证的本轮 RAM 暂存。四配置 native 构建按单任务运行，每项开始检查 16 GiB 磁盘下限及 512 MiB 预留；不是新的物理或性能验收门槛。
+- arithmetic-preservation.json 记录原 Hydro/RKL 阶段表、实际 evaluate_patch/update_patch/槽交换调用及原通量/reflux 算术主体保持不变；没有修改数学叶、物理定义、容差或既有验收阈值。
+
+| 原始证据归档 | 字节数 | 文件数 | SHA-256 |
+| --- | ---: | ---: | --- |
+| production-fixed_grid.tar.gz | 38070127 | 1549 | d1d9a0b5bd30db6eb7670e28fdcff6faee64d7bfd3dc41b0f74a985163fb2102 |
+| production-multidim.tar.gz | 34185271 | 791 | 7ae55cb787059484b23f166058acbccee1bb6883b540f510ccfd5c20b5e2d93f |
+
+下一步先接入现有 DriverRuntime 的 Host 步事务，以同一五叶案例验证最终接受、失败恢复及真实能量账本消费者；其后再推进容量预留/字段迁移和 CUDA staging。原生 Hydro 阶段通过不等于这些项目已经完成。
 
 ## 所有权、迁移与提交的具体设计
 
@@ -266,7 +301,7 @@ owner 变更即使不改变叶 key 集合，也必须触发新的拓扑发布；
 | 分支 / PR | 当前职责与推进方式 |
 | --- | --- |
 | MPI/execution-preflight / #25 | 保留已验收的固定网格候选及其 CI，供现有集成审阅。必要修复仍在此分支提交；不合并 main，除非得到明确合并指令。 |
-| MPI/scaling-16 / #26 | 继续承载扩大实验、当前设计及接下来的最小案例增量。它已经包含 #25；本轮在 B2a 通量注册/reflux 算子之后推进 B2b 的非根同层与完整交换顺序，沿用 #26 并同步更新标题/说明。 |
+| MPI/scaling-16 / #26 | 继续承载扩大实验、当前设计及接下来的最小案例增量。它已经包含 #25；本轮在完整 ghost 交换之后推进 B2b 的原生 Host Hydro 阶段，沿用 #26 并同步更新标题/说明。 |
 | codex/mpi-fixed-grid-validated-20261102 / #24 | 已被上述历史包含。2026-11-03 核对时 #24 已关闭，朋友仓库旧分支已移除；个人仓库旧引用仅作历史快照，不再推进。 |
 
 所有新提交仍同步推送双方仓库。同一修改只在一条分支实现；必要时通过正常合并带入后继分支，不对两个分支分别维护两份实现。#25 集成后，再以实际 main 状态整理 #26 的 base 和差异；不为更名增加额外并行开发线，不随意重写已审阅历史。

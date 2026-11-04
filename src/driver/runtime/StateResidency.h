@@ -221,10 +221,8 @@ public:
         }
     }
 
-    void publish_interior(StateKey key, ExecutionSide side,
-                          StateVersion new_version,
-                          CompletionToken completed_operation)
-    {
+    void require_interior_publication(StateKey key, ExecutionSide side, StateVersion new_version,
+                                      CompletionToken completed_operation) const {
         if(snapshot_owner_&&side!=snapshot_owner_->side_)
             throw std::logic_error("Metadata snapshot excludes publication from the other side");
         validate_side(side);
@@ -233,7 +231,7 @@ public:
         if (!is_complete(completed_operation))
             throw std::logic_error("interior publication requires completion");
 
-        Entry& entry = require_entry(key);
+        const Entry& entry = require_entry(key);
         require_slot_without_pending(entry.coherence);
         if (entry.coherence.interior.residency != StateResidency::Invalid
             && new_version <= entry.coherence.interior.version) {
@@ -241,7 +239,12 @@ public:
         }
         require_new_token(completed_operation.value,
                           entry.interior_last_token_id);
+    }
 
+    void publish_interior(StateKey key, ExecutionSide side, StateVersion new_version,
+                          CompletionToken completed_operation) {
+        require_interior_publication(key, side, new_version, completed_operation);
+        Entry& entry = require_entry(key);
         entry.interior_last_token_id = completed_operation.value;
         entry.coherence.interior = {
             residency_for(side), new_version, completed_operation,
@@ -250,10 +253,8 @@ public:
         entry.coherence.ghost_source_version = {};
     }
 
-    void publish_ghost(StateKey key, ExecutionSide side,
-                       StateVersion source_version,
-                       CompletionToken completed_operation)
-    {
+    void require_ghost_publication(StateKey key, ExecutionSide side, StateVersion source_version,
+                                   CompletionToken completed_operation) const {
         if(snapshot_owner_&&side!=snapshot_owner_->side_)
             throw std::logic_error("Metadata snapshot excludes publication from the other side");
         validate_side(side);
@@ -262,14 +263,19 @@ public:
         if (!is_complete(completed_operation))
             throw std::logic_error("ghost publication requires completion");
 
-        Entry& entry = require_entry(key);
+        const Entry& entry = require_entry(key);
         require_slot_without_pending(entry.coherence);
         require_region_readable(entry.coherence.interior, side, source_version);
         if (source_version != entry.coherence.interior.version)
             throw std::logic_error("ghost source version must match interior");
         require_new_token(completed_operation.value,
                           entry.ghost_last_token_id);
+    }
 
+    void publish_ghost(StateKey key, ExecutionSide side, StateVersion source_version,
+                       CompletionToken completed_operation) {
+        require_ghost_publication(key, side, source_version, completed_operation);
+        Entry& entry = require_entry(key);
         entry.ghost_last_token_id = completed_operation.value;
         entry.coherence.ghost = {
             residency_for(side), source_version, completed_operation,
