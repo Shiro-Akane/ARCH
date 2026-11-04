@@ -143,8 +143,10 @@ void check_case(int dim, bool periodic) {
             "stale remote AMR plan unexpectedly accepted");
         require(snapshot() == before, "rejected remote execution wrote destination");
     }
-    rejects([&] { (void)c.RequireFluxTopologyPlan(2); }, "remote AMR reflux unexpectedly accepted",
-            "remote AMR reflux execution is not implemented");
+    c.flux_register.EnsureSpecies(2);
+    (void)c.RequireFluxTopologyPlan(2);
+    rejects([&] { c.ApplyReflux(.01); }, "reflux accepted without completed collective stages",
+            "MPI reflux requires the collective stage boundary");
     require(snapshot() == before, "rejected reflux wrote destination");
     auto descriptors = distributed.registry.blocks();
     auto remote = std::find_if(descriptors.begin(), descriptors.end(),

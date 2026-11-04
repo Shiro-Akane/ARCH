@@ -96,10 +96,9 @@ struct AMRControl {
             || cached->dimension != dimension
             || cached->epoch != handles.front().epoch
             || !matches_amr_flux_geometry(*cached,*pool,tree->GetActiveBlocks(),source_block)) {
-            cached = std::make_shared<const AmrFluxTopologyPlan>(
-                build_amr_flux_topology_plan(
-                    *pool, tree->GetActiveBlocks(), handles,
-                    dimension, species_count));
+            cached = std::make_shared<const AmrFluxTopologyPlan>(build_amr_flux_topology_plan(
+                *pool, tree->GetActiveBlocks(), handles, dimension, species_count,
+                &tree->GetRootGrid(), tree->PartitionRank(), tree->PartitionSize()));
             std::atomic_store_explicit(
                 &reflux_topology_plan_,
                 std::shared_ptr<const CachedRefluxPlan>{},
@@ -130,6 +129,12 @@ struct AMRControl {
         return cached->plan;
     }
 
+    /** Explicit collective boundary; every rank calls after all stage registrations. */
+    void ApplyDistributedReflux(double dt, FluidState Block::* state_ptr,
+                                std::uint64_t completed_stages) {
+        flux_register.ExecuteDistributedReflux(pool, *tree, active_handles_, dt, state_ptr,
+                                               completed_stages);
+    }
 
     void ApplyReflux(double dt, FluidState Block::* state_ptr = &Block::fluid_state) {
         const auto& active_blocks = tree->GetActiveBlocks();
@@ -137,6 +142,10 @@ struct AMRControl {
             flux_register.GetNumSpecies());
         const auto& topology=RequireFluxTopologyPlan(
             flux_register.GetNumSpecies(),-1);
+        // Fixed-grid MPI still uses this legacy empty local operation. Mixed-level
+        // contributions must enter through the explicit all-rank boundary above.
+        if (tree->PartitionSize() > 1 && !topology.routes.empty())
+            throw std::invalid_argument("MPI reflux requires the collective stage boundary");
         flux_register.ValidateTopologyIdentity(topology.fingerprint);
         flux_register.ExecuteRefluxPlan(
             plan, pool, active_blocks, ActiveHandles(), state_ptr, dt);

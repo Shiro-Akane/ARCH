@@ -627,3 +627,18 @@ if(ARCH_ENABLE_MPI)
     set_tests_properties(mpi_coarse_fine_exchange_2 PROPERTIES
         TIMEOUT 60 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
 endif()
+
+# Source-owned stage values publish to the original coarse-owner flux arena.
+add_executable(arch_flux_reflux_exchange tests/host/amr/test_flux_reflux_exchange.cpp
+    src/driver/runtime/TopologyIdentityRegistry.cpp)
+arch_configure_host_test(arch_flux_reflux_exchange "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_flux_reflux_exchange PRIVATE arch_build_contract)
+add_test(NAME flux_reflux_exchange COMMAND arch_flux_reflux_exchange)
+set_tests_properties(flux_reflux_exchange PROPERTIES TIMEOUT 180 LABELS mpi)
+if(ARCH_ENABLE_MPI)
+    add_test(NAME mpi_flux_reflux_exchange_2
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_flux_reflux_exchange> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(mpi_flux_reflux_exchange_2 PROPERTIES
+        TIMEOUT 180 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
+endif()
