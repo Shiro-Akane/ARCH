@@ -21,6 +21,7 @@
 #include <array>
 #include <bit>
 #include <cmath>
+#include <climits>
 #include <exception>
 #include <limits>
 #include <set>
@@ -448,57 +449,397 @@ public:
         execute_coordinate_seam_plan(plans.coordinate_seam, pool, state_ptr);
     }
 
-private:
-  /** Collective CPU Cartesian face transfer; every rank enters on the MPI
-   * initializing thread after Host workers join. Requests contain topology
-   * only. The source owner runs the native gather and returns final ghost
-   * values. Nothing is scattered until every rank has validated its reply.
-   */
-  void ExecuteRemoteCoarseFinePlan(const CoarseFineTransferPlan& plan,
-                                   const std::shared_ptr<MemoryPool>& pool,
-                                   const std::shared_ptr<AmrTree>& tree, int dim,
-                                   FluidState Block::* slot, std::span<const BlockHandle> handles) {
+    /** All ranks call after Host workers join. Reuses serial X/Y/Z recipes,
+     * coarse/fine faces and 2-D corner completion. Only compact topology is
+     * global; fields stay on their owners. Failure leaves ghosts invalid:
+     * completed earlier sweeps are not rolled back. Active cells are untouched.
+     */
+    void ExecuteDistributedExchange(const std::shared_ptr<MemoryPool>& pool,
+                                    const std::shared_ptr<AmrTree>& tree, int dim,
+                                    FluidState Block::* slot,
+                                    std::span<const BlockHandle> handles) {
+        // A serial reference inside WORLD must not participate.
+        if (tree && tree->PartitionSize() == 1) {
+            ExecuteExchange(pool, tree, dim, slot, handles);
+            return;
+        }
 #if ARCH_MPI_ENABLED
-      int initialized = 0;
-      MPI_Initialized(&initialized);
-      if (!initialized)
-          throw std::logic_error("coarse-fine MPI is not initialized");
-      const auto check = [](int code) {
-          if (code != MPI_SUCCESS) {
-              MPI_Abort(MPI_COMM_WORLD, code);
-              throw std::runtime_error("coarse-fine MPI transport failed");
-          }
-      };
-      int main_thread = 0, thread_level = 0, rank = 0, size = 0;
-      check(MPI_Is_thread_main(&main_thread));
-      check(MPI_Query_thread(&thread_level));
-      if (!main_thread || thread_level < MPI_THREAD_FUNNELED) {
-          MPI_Abort(MPI_COMM_WORLD, 1);
-          throw std::logic_error("coarse-fine MPI requires the initializing thread");
-      }
-      check(MPI_Comm_rank(MPI_COMM_WORLD, &rank));
-      check(MPI_Comm_size(MPI_COMM_WORLD, &size));
-      // Allocation/validation failures are agreed at each boundary, including
-      // ranks with no requested faces. A peer failure never permits a write.
-      const auto phase = [&](auto&& action) {
-          std::exception_ptr error;
-          try {
-              action();
-          } catch (...) {
-              error = std::current_exception();
-          }
-          int failed = error ? 1 : 0, any_failed = 0;
-          check(MPI_Allreduce(&failed, &any_failed, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD));
-          if (any_failed) {
-              if (error)
-                  std::rethrow_exception(error);
-              throw std::runtime_error("coarse-fine MPI peer rejected preparation");
-          }
-      };
-      struct Query {
-          AmrEndpoint source, destination;
-          int face;
-      };
+        const auto [rank, size] = RequireMpiWorld();
+        struct Transfer {
+            int source = -1, destination = -1, from = -1, to = -1;
+            LogicalExchangeBox source_box{}, destination_box{};
+            std::size_t send = 0, receive = 0;
+        };
+        struct Sweep {
+            std::vector<int> send_counts, receive_counts, send_offsets, receive_offsets;
+            std::vector<Transfer> transfers;
+            std::vector<std::uint64_t> send, receive;
+        };
+        std::array<Sweep, 6> sweeps;
+        std::vector<HostExchangeBlockView> views;
+        std::map<AmrEndpoint, int> local;
+        CoarseFineTransferPlan coarse_fine;
+        int species = 0;
+        // Endpoint plus six (endpoint, owner) same-level descriptors.
+        constexpr int words_per_block = 7 + 6 * 8;
+        std::vector<std::uint64_t> words, global;
+        std::vector<int> counts, offsets;
+        std::array<std::uint64_t, 18> signature{}, minimum{}, maximum{};
+        const auto encode = [](auto& out, const AmrEndpoint& e) {
+            out.insert(out.end(), {static_cast<std::uint64_t>(e.logical.dimension),
+                                   static_cast<std::uint64_t>(e.logical.level),
+                                   e.logical.logical_x1, e.logical.logical_x2, e.logical.logical_x3,
+                                   e.handle.uid.value, e.handle.epoch.value});
+        };
+        PrepareMpi([&] {
+            if (!pool || !tree || dim < 1 || dim > 3 || tree->PartitionRank() != rank ||
+                tree->PartitionSize() != size || tree->GetRootGridDim() != dim)
+                throw std::invalid_argument("distributed exchange communicator/topology mismatch");
+            const int state_slot = slot == &Block::fluid_state     ? 0
+                                   : slot == &Block::state_next    ? 1
+                                   : slot == &Block::state_scratch ? 2
+                                                                   : -1;
+            if (state_slot < 0)
+                throw std::invalid_argument("distributed exchange invalid state slot");
+            const auto& active = tree->GetActiveBlocks();
+            if (active.empty() || handles.size() != active.size())
+                throw std::invalid_argument(
+                    "distributed exchange requires nonempty committed storage");
+            if (active.size() > static_cast<std::size_t>(INT_MAX / words_per_block))
+                throw std::overflow_error("distributed exchange topology exceeds INT_MAX");
+            species = (pool->GetBlock(active.front()).*slot).GetNumSpecies();
+            if (species < 0 || species > INT_MAX - 6)
+                throw std::invalid_argument("distributed exchange invalid species extent");
+            const auto& root = tree->GetRootGrid();
+            if (root.geometry != "cartesian")
+                throw std::invalid_argument("distributed exchange requires Cartesian geometry");
+            signature = {2,
+                         static_cast<std::uint64_t>(dim),
+                         static_cast<std::uint64_t>(species),
+                         static_cast<std::uint64_t>(state_slot),
+                         handles.front().epoch.value,
+                         BLOCK_NX,
+                         BLOCK_NY,
+                         BLOCK_NZ,
+                         MAX_NG,
+                         static_cast<std::uint64_t>(root.nblockx1),
+                         static_cast<std::uint64_t>(root.nblockx2),
+                         static_cast<std::uint64_t>(root.nblockx3),
+                         std::bit_cast<std::uint64_t>(root.x1_min),
+                         std::bit_cast<std::uint64_t>(root.x1_max),
+                         std::bit_cast<std::uint64_t>(root.x2_min),
+                         std::bit_cast<std::uint64_t>(root.x2_max),
+                         std::bit_cast<std::uint64_t>(root.x3_min),
+                         std::bit_cast<std::uint64_t>(root.x3_max)};
+            std::map<int, std::size_t> indices;
+            for (std::size_t i = 0; i < active.size(); ++i)
+                if (!indices.emplace(active[i], i).second)
+                    throw std::invalid_argument("distributed exchange duplicate local storage");
+            views.reserve(active.size());
+            for (std::size_t i = 0; i < active.size(); ++i) {
+                auto& b = pool->GetBlock(active[i]);
+                b.RequireLogicalGeometryIdentity(root);
+                coarse_fine_host::validate_state(b, slot, species);
+                const AmrEndpoint endpoint{logical_key(b, dim), handles[i]};
+                if (!is_valid(handles[i]) || handles[i].epoch != handles.front().epoch ||
+                    !local.emplace(endpoint, static_cast<int>(i)).second)
+                    throw std::invalid_argument(
+                        "distributed exchange stale/duplicate local endpoint");
+                encode(words, endpoint);
+                for (int face = 0; face < 6; ++face) {
+                    const auto& n = b.face_neighbors[face];
+                    if (n.count < 0 || n.count > 4 || (face >= 2 * dim && n.count))
+                        throw std::invalid_argument("distributed exchange invalid neighbor count");
+                    if (n.count && n.level_diff == 0) {
+                        if (n.count != 1)
+                            throw std::invalid_argument(
+                                "distributed exchange same-level cardinality");
+                        const auto e = neighbor_endpoint(n.blocks[0], *pool, indices, handles, dim,
+                                                         rank, size);
+                        if (e.logical.level != b.level)
+                            throw std::invalid_argument(
+                                "distributed exchange neighbor level drifted");
+                        encode(words, e);
+                        words.push_back(n.blocks[0].owner_rank);
+                    } else
+                        words.insert(words.end(), 8, 0);
+                }
+                auto& state = b.*slot;
+                views.push_back({endpoint.logical,
+                                 endpoint.handle,
+                                 {dim,
+                                  {b.grid.Is(), b.grid.Js(), b.grid.Ks()},
+                                  {b.grid.GetTotalX(), b.grid.GetTotalY(), b.grid.GetTotalZ()},
+                                  {1, b.grid.stride_y, b.grid.stride_z},
+                                  b.grid.GetTotalSize()},
+                                 {state.rho.data(), state.mom_u.data(), state.mom_v.data(),
+                                  state.mom_w.data(), state.eng.data(), state.enuc_rate.data()},
+                                 species ? state.mass_fractions.data() : nullptr,
+                                 species,
+                                 b.grid.GetTotalSize()});
+            }
+            coarse_fine = BuildCoarseFinePlan(pool, tree, dim, handles);
+            counts.resize(size);
+        });
+        CheckMpi(MPI_Allreduce(signature.data(), minimum.data(), signature.size(), MPI_UINT64_T,
+                               MPI_MIN, MPI_COMM_WORLD));
+        CheckMpi(MPI_Allreduce(signature.data(), maximum.data(), signature.size(), MPI_UINT64_T,
+                               MPI_MAX, MPI_COMM_WORLD));
+        if (minimum != maximum)
+            throw std::invalid_argument("distributed exchange rank identity/layout/slot mismatch");
+        const int count = static_cast<int>(words.size());
+        CheckMpi(MPI_Allgather(&count, 1, MPI_INT, counts.data(), 1, MPI_INT, MPI_COMM_WORLD));
+        PrepareMpi([&] {
+            for (int n : counts)
+                if (n <= 0 || n % words_per_block)
+                    throw std::invalid_argument("distributed exchange truncated topology");
+            global.resize(MpiOffsets(counts, offsets));
+        });
+        CheckMpi(MPI_Allgatherv(words.data(), count, MPI_UINT64_T, global.data(), counts.data(),
+                                offsets.data(), MPI_UINT64_T, MPI_COMM_WORLD));
+        int has_coarse_fine = !coarse_fine.operations.empty(), any_coarse_fine = 0;
+        CheckMpi(
+            MPI_Allreduce(&has_coarse_fine, &any_coarse_fine, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD));
+        PrepareMpi([&] {
+            const auto decode = [&](std::size_t at) {
+                const auto* w = global.data() + at;
+                if (w[0] != static_cast<std::uint64_t>(dim) || w[1] > 31 || w[2] > UINT32_MAX ||
+                    w[3] > UINT32_MAX || w[4] > UINT32_MAX || !w[5] ||
+                    w[6] != handles.front().epoch.value)
+                    throw std::invalid_argument("distributed exchange invalid endpoint encoding");
+                return AmrEndpoint{{dim, static_cast<int>(w[1]), static_cast<std::uint32_t>(w[2]),
+                                    static_cast<std::uint32_t>(w[3]),
+                                    static_cast<std::uint32_t>(w[4])},
+                                   {{w[5]}, {w[6]}}};
+            };
+            std::map<AmrEndpoint, int> owners;
+            std::map<int, std::vector<SameLevelTopologyEntry>> levels;
+            std::map<LogicalBlockKey, std::size_t> entry_indices;
+            std::set<BlockHandle> identities;
+            for (int peer = 0; peer < size; ++peer) {
+                const auto end = static_cast<std::size_t>(offsets[peer]) + counts[peer];
+                for (std::size_t at = offsets[peer]; at < end; at += words_per_block) {
+                    const auto e = decode(at);
+                    auto& entries = levels[e.logical.level];
+                    if (!entry_indices.emplace(e.logical, entries.size()).second ||
+                        !identities.insert(e.handle).second || !owners.emplace(e, peer).second)
+                        throw std::invalid_argument(
+                            "distributed exchange duplicate global endpoint");
+                    entries.push_back({e.logical, e.handle, {}});
+                }
+            }
+            for (int peer = 0; peer < size; ++peer) {
+                const auto end = static_cast<std::size_t>(offsets[peer]) + counts[peer];
+                for (std::size_t at = offsets[peer]; at < end; at += words_per_block) {
+                    const auto e = decode(at);
+                    auto& entry = levels.at(e.logical.level).at(entry_indices.at(e.logical));
+                    for (int face = 0; face < 6; ++face) {
+                        const auto n = at + 7 + face * 8;
+                        if (!global[n + 5])
+                            continue;
+                        const auto neighbor = decode(n);
+                        if (face >= 2 * dim || neighbor.logical.level != e.logical.level ||
+                            global[n + 7] >= static_cast<std::uint64_t>(size) ||
+                            owners.at(neighbor) != static_cast<int>(global[n + 7]))
+                            throw std::invalid_argument(
+                                "distributed exchange neighbor owner mismatch");
+                        entry.neighbors[face] = neighbor.logical;
+                    }
+                }
+            }
+            for (auto& sweep : sweeps) {
+                sweep.send_counts.assign(size, 0);
+                sweep.receive_counts.assign(size, 0);
+            }
+            const auto append = [&](const SameLevelExchangePlan& plan, int first_sweep) {
+                for (const auto& operation : plan.operations) {
+                    const AmrEndpoint source{operation.source.logical, operation.source.handle};
+                    const AmrEndpoint destination{operation.destination.logical,
+                                                  operation.destination.handle};
+                    const int from = owners.at(source), to = owners.at(destination);
+                    if (from != rank && to != rank)
+                        continue;
+                    auto& sweep = sweeps[first_sweep + static_cast<int>(operation.phase)];
+                    const auto cells =
+                        exchange_detail::checked_product(operation.source_box.extent);
+                    if (cells > static_cast<std::uint64_t>(INT_MAX / (6 + species)))
+                        throw std::overflow_error("distributed exchange face exceeds INT_MAX");
+                    const int values = static_cast<int>(cells) * (6 + species);
+                    Transfer transfer;
+                    transfer.from = from;
+                    transfer.to = to;
+                    transfer.source_box = operation.source_box;
+                    transfer.destination_box = operation.destination_box;
+                    const auto bind = [&](const AmrEndpoint& endpoint,
+                                          const LogicalExchangeBox& box) {
+                        const int index = local.at(endpoint);
+                        exchange_detail::validate_host_view(plan, views[index]);
+                        exchange_detail::for_each_box_cell(box, [&](const auto& cell,
+                                                                    std::uint64_t) {
+                            (void)exchange_detail::flatten_host_exchange(views[index].layout, cell);
+                        });
+                        return index;
+                    };
+                    if (from == rank) {
+                        transfer.source = bind(source, operation.source_box);
+                        transfer.send = sweep.send_counts[to];
+                        if (values > INT_MAX - sweep.send_counts[to])
+                            throw std::overflow_error(
+                                "distributed exchange peer send exceeds INT_MAX");
+                        sweep.send_counts[to] += values;
+                    }
+                    if (to == rank) {
+                        transfer.destination = bind(destination, operation.destination_box);
+                        transfer.receive = sweep.receive_counts[from];
+                        if (values > INT_MAX - sweep.receive_counts[from])
+                            throw std::overflow_error(
+                                "distributed exchange peer receive exceeds INT_MAX");
+                        sweep.receive_counts[from] += values;
+                    }
+                    sweep.transfers.push_back(transfer);
+                }
+            };
+            for (const auto& [level, entries] : levels) {
+                (void)level;
+                const auto plan = make_same_level_exchange_plan(
+                    entries, dim, {BLOCK_NX, dim >= 2 ? BLOCK_NY : 1, dim == 3 ? BLOCK_NZ : 1},
+                    MAX_NG, handles.front().epoch);
+                append(plan, 0);
+                if (dim == 2 && any_coarse_fine)
+                    append(make_same_level_corner_completion_plan(plan), 3);
+            }
+            for (auto& sweep : sweeps) {
+                sweep.send.resize(MpiOffsets(sweep.send_counts, sweep.send_offsets));
+                sweep.receive.resize(MpiOffsets(sweep.receive_counts, sweep.receive_offsets));
+                for (auto& transfer : sweep.transfers) {
+                    if (transfer.source >= 0)
+                        transfer.send += sweep.send_offsets[transfer.to];
+                    if (transfer.destination >= 0)
+                        transfer.receive += sweep.receive_offsets[transfer.from];
+                }
+            }
+        });
+        const auto execute = [&](Sweep& sweep) {
+            // All allocation/index checks precede the first sweep; metadata and
+            // borrowed storage remain fixed until the entire exchange returns.
+            for (const auto& transfer : sweep.transfers)
+                if (transfer.source >= 0) {
+                    const auto& view = views[transfer.source];
+                    exchange_detail::for_each_box_cell(
+                        transfer.source_box, [&](const auto& cell, std::uint64_t n) {
+                            const auto index =
+                                exchange_detail::flatten_host_exchange(view.layout, cell);
+                            for (int field = 0; field < 6 + species; ++field)
+                                sweep.send[transfer.send + n * (6 + species) + field] =
+                                    std::bit_cast<std::uint64_t>(
+                                        exchange_detail::host_exchange_field(view, field)[index]);
+                        });
+                }
+            CheckMpi(MPI_Alltoallv(sweep.send.data(), sweep.send_counts.data(),
+                                   sweep.send_offsets.data(), MPI_UINT64_T, sweep.receive.data(),
+                                   sweep.receive_counts.data(), sweep.receive_offsets.data(),
+                                   MPI_UINT64_T, MPI_COMM_WORLD));
+            for (const auto& transfer : sweep.transfers)
+                if (transfer.destination >= 0) {
+                    const auto& view = views[transfer.destination];
+                    exchange_detail::for_each_box_cell(
+                        transfer.destination_box, [&](const auto& cell, std::uint64_t n) {
+                            const auto index =
+                                exchange_detail::flatten_host_exchange(view.layout, cell);
+                            for (int field = 0; field < 6 + species; ++field)
+                                exchange_detail::host_exchange_field(view, field)[index] =
+                                    std::bit_cast<double>(sweep.receive[transfer.receive +
+                                                                        n * (6 + species) + field]);
+                        });
+                }
+        };
+        for (int axis = 0; axis < dim; ++axis)
+            execute(sweeps[axis]);
+        // Empty-work ranks participate; local plan emptiness cannot select collectives.
+        ExecuteRemoteCoarseFinePlan(coarse_fine, pool, tree, dim, slot, handles);
+        if (dim == 2 && any_coarse_fine)
+            for (int axis = 0; axis < dim; ++axis)
+                execute(sweeps[3 + axis]);
+#else
+        (void)pool;
+        (void)dim;
+        (void)slot;
+        (void)handles;
+        throw std::logic_error("distributed exchange requires ARCH_ENABLE_MPI=ON");
+#endif
+    }
+
+  private:
+#if ARCH_MPI_ENABLED
+    static void CheckMpi(int code) {
+        if (code != MPI_SUCCESS) {
+            MPI_Abort(MPI_COMM_WORLD, code);
+            throw std::runtime_error("ghost MPI transport failed");
+        }
+    }
+    static std::pair<int, int> RequireMpiWorld() {
+        int initialized = 0;
+        CheckMpi(MPI_Initialized(&initialized));
+        if (!initialized)
+            throw std::logic_error("ghost MPI is not initialized");
+        int main_thread = 0, thread_level = 0, rank = 0, size = 0;
+        CheckMpi(MPI_Is_thread_main(&main_thread));
+        CheckMpi(MPI_Query_thread(&thread_level));
+        if (!main_thread || thread_level < MPI_THREAD_FUNNELED) {
+            MPI_Abort(MPI_COMM_WORLD, 1);
+            throw std::logic_error("ghost MPI requires the initializing thread");
+        }
+        CheckMpi(MPI_Comm_rank(MPI_COMM_WORLD, &rank));
+        CheckMpi(MPI_Comm_size(MPI_COMM_WORLD, &size));
+        return {rank, size};
+    }
+    template <class Action> static void PrepareMpi(Action&& action) {
+        std::exception_ptr error;
+        try {
+            action();
+        } catch (...) {
+            error = std::current_exception();
+        }
+        int failed = error ? 1 : 0, any_failed = 0;
+        CheckMpi(MPI_Allreduce(&failed, &any_failed, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD));
+        if (any_failed) {
+            if (error)
+                std::rethrow_exception(error);
+            throw std::runtime_error("ghost MPI peer rejected preparation");
+        }
+    }
+    static int MpiOffsets(const std::vector<int>& counts, std::vector<int>& offsets) {
+        offsets.resize(counts.size());
+        int total = 0;
+        for (std::size_t i = 0; i < counts.size(); ++i) {
+            if (counts[i] < 0 || counts[i] > INT_MAX - total)
+                throw std::overflow_error("ghost MPI count exceeds INT_MAX");
+            offsets[i] = total;
+            total += counts[i];
+        }
+        return total;
+    }
+#endif
+    /** Collective CPU Cartesian face transfer; every rank enters on the MPI
+     * initializing thread after Host workers join. Requests contain topology
+     * only. The source owner runs the native gather and returns final ghost
+     * values. Nothing is scattered until every rank has validated its reply.
+     */
+    void ExecuteRemoteCoarseFinePlan(const CoarseFineTransferPlan& plan,
+                                     const std::shared_ptr<MemoryPool>& pool,
+                                     const std::shared_ptr<AmrTree>& tree, int dim,
+                                     FluidState Block::* slot,
+                                     std::span<const BlockHandle> handles) {
+#if ARCH_MPI_ENABLED
+        const auto [rank, size] = RequireMpiWorld();
+        const auto check = CheckMpi;
+        const auto phase = [](auto&& action) {
+            PrepareMpi(std::forward<decltype(action)>(action));
+        };
+        struct Query {
+            AmrEndpoint source, destination;
+            int face;
+        };
       constexpr int query_words = 15; // Two explicit 7-word endpoints and a face.
       int species = 0;
       std::array<std::uint64_t, 18> signature{}, minimum{}, maximum{};
@@ -519,17 +860,7 @@ private:
           finalize_amr_plan(face);
           return compile_coarse_fine_cell_plan(face, species);
       };
-      const auto offsets = [](const std::vector<int>& counts, std::vector<int>& displacements) {
-          displacements.resize(counts.size());
-          int total = 0;
-          for (std::size_t i = 0; i < counts.size(); ++i) {
-              if (counts[i] < 0 || counts[i] > std::numeric_limits<int>::max() - total)
-                  throw std::overflow_error("coarse-fine MPI count exceeds INT_MAX");
-              displacements[i] = total;
-              total += counts[i];
-          }
-          return total;
-      };
+      const auto offsets = MpiOffsets;
       const auto encode = [](std::vector<std::uint64_t>& words, const AmrEndpoint& endpoint) {
           const auto& k = endpoint.logical;
           words.insert(words.end(),

@@ -642,3 +642,18 @@ if(ARCH_ENABLE_MPI)
     set_tests_properties(mpi_flux_reflux_exchange_2 PROPERTIES
         TIMEOUT 180 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
 endif()
+
+# Complete distributed face/corner ordering uses the existing exchange recipes.
+add_executable(arch_distributed_exchange tests/host/amr/test_distributed_exchange.cpp
+    src/driver/runtime/TopologyIdentityRegistry.cpp)
+arch_configure_host_test(arch_distributed_exchange "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_distributed_exchange PRIVATE arch_build_contract)
+add_test(NAME distributed_exchange COMMAND arch_distributed_exchange)
+set_tests_properties(distributed_exchange PROPERTIES TIMEOUT 300 LABELS mpi)
+if(ARCH_ENABLE_MPI)
+    add_test(NAME mpi_distributed_exchange_2
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_distributed_exchange> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(mpi_distributed_exchange_2 PROPERTIES
+        TIMEOUT 300 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
+endif()
