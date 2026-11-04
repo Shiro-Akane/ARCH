@@ -223,7 +223,7 @@ A–C 可先由直接调用生产设施的原生测试夹具验证，不能以�
 
 这一增量仍有明确边界：
 
-- 当前直接消费者是原生 Host 测试，尚未由完整 DriverRuntime 事务接受并提交应用步。失败可留下候选数组和先前阶段的寄存器内容；原事务 owner 后续须承担恢复，不能把集合拒绝当作整步回滚原子性。
+- 当前直接消费者是原生 Host 测试，尚未由完整 DriverRuntime 事务接受并提交应用步。失败可留下候选数组和先前阶段的寄存器内容；后续须由原运行时 owner 承担恢复，不能把集合拒绝当作整步回滚原子性。
 - 非空借用 EnergyReceipt 在分布式 gather 前拒绝，避免 patch 结束后悬空；没有提前创建无真实消费者的通用 receipt 管理器。接入真实能量账本消费者时，再由其已有 owner 提供跨阶段生命周期并验收。
 - 所有参与 rank 必须一致绑定、在初始化线程按同序调用；本案例两端都有本地叶块。没有验收空本地分区、动态迁移、自动细化传播、源项耦合、CUDA、分布式输出/重启或多节点性能。
 - 应用 MPI-AMR 预检继续关闭，原池分配策略和数学叶文件保持不变。本轮没有新的性能结论。
@@ -235,6 +235,8 @@ A–C 可先由直接调用生产设施的原生测试夹具验证，不能以�
 - Release MPI ON/OFF 完整应用构建成功，两配置分别 28/18 项 CTest 通过；Debug 重新构建受影响目标，分别 26/16 项通过。合计 88 项、无跳过，其中 Debug ON 的一项 MPI 启动预检复用已有应用，不计作当前完整 Debug 应用验收；其余 87 项对应本轮重建目标或 Release 应用。
 - 新 Hydro 测试在四配置通过；MPI ON 的 OMP=1/2 均检查实际 team size，JUnit 明确记录 actual threads=1/2。另用实际一线程运行要求两线程的入口，确认线程数不符确实拒绝。
 - 初轮发现新目标未链接 OpenMP，只有环境变量和测试名称，不能证明两线程执行。其日志及源码冻结记录保存在 attempt-without-openmp，已被修正后的四配置运行替代。其他构建目标名错误和开发中拒绝记录也保留，不将失败改判为通过。
+- 托管 CI 的 OMP=2 随后暴露参考执行的顺序问题：旧单进程 OpenMP 即时通量注册依赖原子加法的到达次序。取消绑核可复现；隔离诊断在单进程中只延迟首块 10 ms，也出现末位差异，没有改变任何数学运算。原始失败记录与诊断位于 omp-order-investigation，未改判。
+- 逐位参考现明确固定为原单线程串行执行；候选仍实际运行 OMP=1/2，比较字段和精度门槛不变。修订后四配置的八项 Hydro 测试全部重建通过，并额外完成 20 次无绑核、双 rank、双线程重复验证。其余 80 项原记录保持，生产代码完全未变。该证据不证明旧单进程多线程即时注册本身具有确定累加次序。
 - 未修改的生产积分脚本完成 55 组与独立冻结串行基线的逐位比较及 10 项预期拒绝。629 项工具测试无跳过通过；架构、文档、actionlint、CI MPI ON/OFF inventory/结果完整性及 diff 检查通过。
 - 原始生产证据共 2,340 个文件，归档逐一读回核对 SHA-256，并实际重开 HDF5；随后只清理已验证的本轮 RAM 暂存。四配置 native 构建按单任务运行，每项开始检查 16 GiB 磁盘下限及 512 MiB 预留；不是新的物理或性能验收门槛。
 - arithmetic-preservation.json 记录原 Hydro/RKL 阶段表、实际 evaluate_patch/update_patch/槽交换调用及原通量/reflux 算术主体保持不变；没有修改数学叶、物理定义、容差或既有验收阈值。
@@ -244,7 +246,9 @@ A–C 可先由直接调用生产设施的原生测试夹具验证，不能以�
 | production-fixed_grid.tar.gz | 38070127 | 1549 | d1d9a0b5bd30db6eb7670e28fdcff6faee64d7bfd3dc41b0f74a985163fb2102 |
 | production-multidim.tar.gz | 34185271 | 791 | 7ae55cb787059484b23f166058acbccee1bb6883b540f510ccfd5c20b5e2d93f |
 
-下一步先接入现有 DriverRuntime 的 Host 步事务，以同一五叶案例验证最终接受、失败恢复及真实能量账本消费者；其后再推进容量预留/字段迁移和 CUDA staging。原生 Hydro 阶段通过不等于这些项目已经完成。
+下一步在现有 [DriverRuntime](../../src/driver/runtime/DriverRuntime.cpp) / [DriverMacroStep](../../src/driver/stages/DriverMacroStep.h) 执行边界补齐最终接受与失败处理。当前普通宏步只执行一次 proposal/实际步，没有整步回滚事务；[现有 Host 测试](../../tests/host/driver/test_host_hydro_transaction.cpp) 也明确区分预检拒绝与不存在的普通宏步回滚。FluxRegister 和 ledger 已有局部快照能力，但完整场数组、控制器、时钟及诊断账本的共同恢复仍需由 DriverRuntime 直接拥有和验证，不另建 MPI 事务管理器。
+
+先用同一五叶案例验证 final Current/ghost/EOS 接受、全 rank 提交确认以及失败后的状态与时间不推进；恢复前必须覆盖所有已写候选和账本，不能只恢复通量。真实能量账本消费者及其阶段生命周期单独落实，然后推进容量预留/字段迁移和 CUDA staging。原生 Hydro 阶段通过不等于这些项目已经完成。
 
 ## 所有权、迁移与提交的具体设计
 

@@ -187,6 +187,16 @@ struct FaultSolver final : Numerics::IHydroSolver {
         original.update_patch(old, in, out, du, dx, grid, a, b, config, stream);
     }
 };
+// The bitwise oracle is the original single-thread serial execution.
+// Legacy immediate OMP flux registration can interleave atomic additions;
+// it is not a deterministic ordering oracle for the collected MPI stage.
+struct SerialReferenceThreads {
+#ifdef _OPENMP
+    int previous = omp_get_max_threads();
+    SerialReferenceThreads() { omp_set_num_threads(1); }
+    ~SerialReferenceThreads() { omp_set_num_threads(previous); }
+#endif
+};
 void successful_cases() {
     for (int method = 0; method < 3; ++method)
         for (bool wave : {false, true}) {
@@ -197,6 +207,7 @@ void successful_cases() {
             const auto initial = totals(reference);
             for (int step = 0; step < 3; ++step) {
                 {
+                    SerialReferenceThreads serial_reference;
                     scheduler::ScopedStageBinding binding(b.context, reference.handles);
                     b.ghosts();
                     b.step(method);
@@ -407,7 +418,7 @@ int main(int argc, char** argv) {
         receipt_and_boundary_rejections();
         if (rank == 0)
             std::cout << "Hydro: 6 method/field cases x 3 steps; collective rejection cases="
-                      << (ranks > 1 ? 12 : 0) << "; actual threads=" << observed_threads << "\n";
+                      << (ranks > 1 ? 12 : 0) << "; actual threads=" << observed_threads << "; reference threads=1\n";
     } catch (const std::exception& error) {
         std::cerr << "rank " << rank << ": " << error.what() << "\n";
 #if ARCH_MPI_ENABLED
