@@ -585,7 +585,7 @@ public:
               config_(std::move(other.config_)),
               old_active_(std::move(other.old_active_)),
               proposed_active_(std::move(other.proposed_active_)),
-              allocated_(std::move(other.allocated_)),
+              reservation_(std::move(other.reservation_)),
               retire_(std::move(other.retire_)),
               old_refinement_(std::move(other.old_refinement_)),
               refinements_(std::move(other.refinements_)),
@@ -765,6 +765,7 @@ public:
         {
             if (owner_ == nullptr || !activated_ || !migration_complete_ || published_)
                 std::terminate();
+            reservation_->CommitNoexcept();
             published_ = true;
         }
 
@@ -772,6 +773,7 @@ public:
         {
             if (owner_ == nullptr || changed_ || published_)
                 std::terminate();
+            reservation_->CommitNoexcept();
             published_ = true;
         }
 
@@ -788,7 +790,6 @@ public:
                 std::terminate();
             for (const int id : retire_) owner_->pool->FreeBlock(id);
             retire_.clear();
-            allocated_.clear();
             retired_released_ = true;
         }
 
@@ -920,12 +921,11 @@ public:
                     owner_->UpdateNeighbors(config_);
                     activated_ = false;
                 }
-                for (const int id : allocated_) owner_->pool->FreeBlock(id);
+                reservation_.reset();
                 for (const auto& snapshot : old_refinement_) {
                     Block& block = owner_->pool->GetBlock(snapshot.id);
                     block.refine_flag = snapshot.refine_flag;
                 }
-                allocated_.clear();
                 owner_ = nullptr;
             } catch (...) {
                 std::terminate();
@@ -936,7 +936,7 @@ public:
         SimConfig config_{};
         std::vector<int> old_active_;
         std::vector<int> proposed_active_;
-        std::vector<int> allocated_;
+        std::optional<MemoryPool::Reservation> reservation_;
         std::vector<int> retire_;
         std::vector<RefinementSnapshot> old_refinement_;
         std::vector<RefinementRelation> refinements_;
@@ -972,6 +972,8 @@ public:
         if (observer) observer(*this);
 
         const int num_children = 1 << root_grid.dim;
+        std::size_t required_slots = 0;
+        // Select each relation once, before constructing any candidate storage.
         for (const int block_id : active_blocks) {
             Block& block = pool->GetBlock(block_id);
             if (block.refine_flag == 1) {
@@ -979,36 +981,9 @@ public:
                 typename PreparedRegrid::RefinementRelation relation{};
                 relation.parent = block_id;
                 relation.children.reserve(num_children);
-                for (int child_index = 0; child_index < num_children;
-                     ++child_index) {
-                    PoolBlockAllocationGuard allocation(
-                        *pool, pool->AllocateBlock());
-                    const int child_id = allocation.id();
-                    if (allocation_observer)
-                        allocation_observer(*this, child_id);
-                    allocation.transfer_to(prepared.allocated_);
-                    Block& child = pool->GetBlock(child_id);
-                    child.level = block.level + 1;
-                    child.logical_x1 = (block.logical_x1 << 1)
-                        + ((child_index & 1) ? 1 : 0);
-                    child.logical_x2 = (block.logical_x2 << 1)
-                        + ((root_grid.dim >= 2 && (child_index & 2)) ? 1 : 0);
-                    child.logical_x3 = (block.logical_x3 << 1)
-                        + ((root_grid.dim == 3 && (child_index & 4)) ? 1 : 0);
-                    child.morton_code = encodeMorton(
-                        child.level, child.logical_x1,
-                        child.logical_x2, child.logical_x3);
-                    child.InitGeometry(
-                        root_grid, root_dx1, root_dx2, root_dx3);
-                    const int species = block.fluid_state.GetNumSpecies();
-                    child.fluid_state.InitSpecies(species);
-                    child.state_next.InitSpecies(species);
-                    child.state_scratch.InitSpecies(species);
-                    relation.children.push_back(child_id);
-                    prepared.proposed_active_.push_back(child_id);
-                }
                 prepared.refinements_.push_back(std::move(relation));
                 prepared.retire_.push_back(block_id);
+                required_slots += num_children;
             } else if (block.refine_flag == -1) {
                 const bool first = ((block.logical_x1 & 1) == 0)
                     && (root_grid.dim < 2 || (block.logical_x2 & 1) == 0)
@@ -1041,28 +1016,8 @@ public:
                 }
                 if (can_merge) {
                     prepared.changed_ = true;
-                    PoolBlockAllocationGuard allocation(
-                        *pool, pool->AllocateBlock());
-                    const int parent_id = allocation.id();
-                    if (allocation_observer)
-                        allocation_observer(*this, parent_id);
-                    allocation.transfer_to(prepared.allocated_);
-                    Block& parent = pool->GetBlock(parent_id);
-                    parent.level = block.level - 1;
-                    parent.logical_x1 = block.logical_x1 >> 1;
-                    parent.logical_x2 = block.logical_x2 >> 1;
-                    parent.logical_x3 = block.logical_x3 >> 1;
-                    parent.morton_code = encodeMorton(
-                        parent.level, parent.logical_x1,
-                        parent.logical_x2, parent.logical_x3);
-                    parent.InitGeometry(
-                        root_grid, root_dx1, root_dx2, root_dx3);
-                    const int species = block.fluid_state.GetNumSpecies();
-                    parent.fluid_state.InitSpecies(species);
-                    parent.state_next.InitSpecies(species);
-                    parent.state_scratch.InitSpecies(species);
-                    prepared.restrictions_.push_back({siblings, parent_id});
-                    prepared.proposed_active_.push_back(parent_id);
+                    prepared.restrictions_.push_back({siblings, -1});
+                    ++required_slots;
                     for (const int sibling : siblings) {
                         prepared.retire_.push_back(sibling);
                         pool->GetBlock(sibling).refine_flag = 2;
@@ -1072,6 +1027,65 @@ public:
                 }
             } else if (block.refine_flag != 2) {
                 prepared.proposed_active_.push_back(block_id);
+            }
+        }
+        // Retired blocks remain live until publication: reserve the full
+        // temporary peak, including all children and restricted parents.
+        prepared.reservation_.emplace(pool->ReserveBlocks(required_slots));
+        auto refinement = prepared.refinements_.begin();
+        auto restriction = prepared.restrictions_.begin();
+        // Preserve the original interleaved allocation order across relations.
+        for (const int block_id : active_blocks) {
+            const Block& block = pool->GetBlock(block_id);
+            if (refinement != prepared.refinements_.end()
+                && refinement->parent == block_id) {
+                auto& relation = *refinement++;
+                for (int child_index = 0; child_index < num_children;
+                     ++child_index) {
+                    const int child_id = prepared.reservation_->AllocateBlock();
+                    if (allocation_observer)
+                        allocation_observer(*this, child_id);
+                    Block& child = pool->GetBlock(child_id);
+                    child.level = block.level + 1;
+                    child.logical_x1 = (block.logical_x1 << 1)
+                        + ((child_index & 1) ? 1 : 0);
+                    child.logical_x2 = (block.logical_x2 << 1)
+                        + ((root_grid.dim >= 2 && (child_index & 2)) ? 1 : 0);
+                    child.logical_x3 = (block.logical_x3 << 1)
+                        + ((root_grid.dim == 3 && (child_index & 4)) ? 1 : 0);
+                    child.morton_code = encodeMorton(
+                        child.level, child.logical_x1,
+                        child.logical_x2, child.logical_x3);
+                    child.InitGeometry(
+                        root_grid, root_dx1, root_dx2, root_dx3);
+                    const int species = block.fluid_state.GetNumSpecies();
+                    child.fluid_state.InitSpecies(species);
+                    child.state_next.InitSpecies(species);
+                    child.state_scratch.InitSpecies(species);
+                    relation.children.push_back(child_id);
+                    prepared.proposed_active_.push_back(child_id);
+                }
+            } else if (restriction != prepared.restrictions_.end()
+                       && restriction->children.front() == block_id) {
+                const int parent_id = prepared.reservation_->AllocateBlock();
+                if (allocation_observer) allocation_observer(*this, parent_id);
+                Block& parent = pool->GetBlock(parent_id);
+                parent.level = block.level - 1;
+                parent.logical_x1 = block.logical_x1 >> 1;
+                parent.logical_x2 = block.logical_x2 >> 1;
+                parent.logical_x3 = block.logical_x3 >> 1;
+                parent.morton_code = encodeMorton(
+                    parent.level, parent.logical_x1,
+                    parent.logical_x2, parent.logical_x3);
+                parent.InitGeometry(
+                    root_grid, root_dx1, root_dx2, root_dx3);
+                const int species = block.fluid_state.GetNumSpecies();
+                parent.fluid_state.InitSpecies(species);
+                parent.state_next.InitSpecies(species);
+                parent.state_scratch.InitSpecies(species);
+                restriction->parent = parent_id;
+                ++restriction;
+                prepared.proposed_active_.push_back(parent_id);
             }
         }
         std::sort(prepared.proposed_active_.begin(),
