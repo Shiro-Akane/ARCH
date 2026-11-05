@@ -167,6 +167,8 @@ public:
     HostStageCapture* host_stage_capture_ = nullptr;
 
   public:
+    bool DistributedRefluxComplete() const noexcept { return distributed_reflux_applied_; }
+
     /** Complete Host flux owner backup; values live outside the original arena. */
     class HostSnapshot {
         friend class FluxRegister;

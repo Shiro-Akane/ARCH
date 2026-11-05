@@ -148,31 +148,37 @@ void DriverRuntime::complete_device_boundary(StateSlot slot)
 /** Fill missing host or device ghosts before a stage reads the state. */
 void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
 {
-    const auto member = TimeIntegration::hydro_boundary_state_member(slot);
     if (compute_backend) { complete_device_boundary(slot); return; }
-    // Freeze the actual domain/ledger/BC time before any fallible ghost writes.
-    // Existing pre-initialization callers retain their interior-only behavior;
-    // native candidates must have their real EOS and staged ledger available.
     std::optional<StageExecutionContext> context;
+    std::optional<scheduler::ScopedStageBinding> distributed_binding;
     state::StateVersion version{};
-    if (residency_ledger && !stage_handles.empty()) {
-        context.emplace(stage_context());
-        version = residency_ledger->inspect({stage_handles.front(), slot}).interior.version;
-    }
-    for (int id:amr_ctrl.tree->GetActiveBlocks())
-        (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
-    TimeIntegration::synchronize_domain_boundary(amr_ctrl, bc_handler,
-        member, stage_handles);
-    if (context) {
-        (void)arch::scheduler::complete_boundary(*context, stage_handles, slot, version,
-            [](StateSlot, arch::state::StateVersion, arch::state::CompletionToken token) { return token; });
-    }
+    FluidState amr::Block::* member=nullptr;
+    std::exception_ptr failure;
+    try {
+        member=TimeIntegration::hydro_boundary_state_member(slot);
+        if(residency_ledger&&!stage_handles.empty()) {
+            context.emplace(stage_context());
+            version = residency_ledger->inspect({stage_handles.front(), slot}).interior.version;
+            if(context->hydro_rank_completion&&!scheduler::distributed_hydro_bound())
+                distributed_binding.emplace(*context,stage_handles);
+        }
+        for(int id:amr_ctrl.tree->GetActiveBlocks())
+            (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
+    } catch(...) {failure=std::current_exception();}
+    if(amr_ctrl.tree->PartitionSize()>1&&residency_ledger&&distributed_hydro_topology())
+        amr_ctrl.CompleteDistributedHydroPhase(failure);
+    else if(failure)std::rethrow_exception(failure);
+    TimeIntegration::synchronize_domain_boundary(amr_ctrl,bc_handler,member,stage_handles);
+    if(context)
+        (void)scheduler::complete_boundary(*context, stage_handles, slot, version,
+            [](StateSlot,state::StateVersion,state::CompletionToken token){return token;});
 
 }
 
 /** Download accepted resident state only when host output needs it. */
 void DriverRuntime::materialize_current_for_host()
 {
+    if(host_hydro_attempt_)throw std::logic_error("Cannot expose unaccepted Host Hydro state");
     ensure_fluid_ghosts(StateSlot::Current);
     if (!compute_backend) return;
     const auto& active = amr_ctrl.tree->GetActiveBlocks();

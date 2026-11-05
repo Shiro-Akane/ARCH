@@ -193,27 +193,29 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         // Freeze scalar caps from this accepted entry before any rejected
         // macro invalidates gravity. Regrid/output above are not replayed.
         const double accepted_dt_cap=std::min({candidates.hydro,candidates.diffusion_sts,gravity_stage.timestep()});
-        const double dt=execute_driver_macro_attempts(runtime,ctrl,dt_burn_global,accepted_dt_cap,
+        const double dt=execute_driver_macro_attempts(runtime,ctrl,dt_burn_global,accepted_dt_cap,hydro,eos,
             [&](double dt,std::uint64_t attempt_index) {
-            bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Hydro);
             auto stage_context = runtime.stage_context();
-            stage_context.hydro_preparation = gravity_stage.active() ? &gravity_stage : nullptr;
-            stage_context.step_start_time = ctrl.t_current;
-            stage_context.step_dt = dt;
-            // Plan owners set input/output physical clocks through this one hook.
-            // Configuration changes the callback snapshot only: actual BC, exchange
-            // and scientific acceptance retain their existing scheduler owners.
-            stage_context.configure_boundary_context = [&](double time,
-                arch::boundary::BoundaryPurpose purpose) {
-                bc_handler.configure_stage(time, purpose);
-            };
-            if (bc_handler.has_user())
-                stage_context.physical_boundary_preparation = [&](arch::state::StateSlot slot, double time,
+            arch::scheduler::complete_hydro_local_phase(stage_context,[&] {
+                bc_handler.configure_stage(ctrl.t_current, arch::boundary::BoundaryPurpose::Hydro);
+                stage_context.hydro_preparation = gravity_stage.active() ? &gravity_stage : nullptr;
+                stage_context.step_start_time = ctrl.t_current;
+                stage_context.step_dt = dt;
+                // Plan owners set input/output physical clocks through this one hook.
+                // Configuration changes the callback snapshot only: actual BC, exchange
+                // and scientific acceptance retain their existing scheduler owners.
+                stage_context.configure_boundary_context = [&](double time,
                     arch::boundary::BoundaryPurpose purpose) {
-                    stage_context.configure_boundary_context(time, purpose);
-                    runtime.ensure_fluid_ghosts(slot);
+                    bc_handler.configure_stage(time, purpose);
                 };
-            runtime.bind_boundary_accounting(stage_context);
+                if (bc_handler.has_user())
+                    stage_context.physical_boundary_preparation = [&](arch::state::StateSlot slot, double time,
+                        arch::boundary::BoundaryPurpose purpose) {
+                        stage_context.configure_boundary_context(time, purpose);
+                        runtime.ensure_fluid_ghosts(slot);
+                    };
+                runtime.bind_boundary_accounting(stage_context);
+            });
             ScopedStageBinding stage_binding(stage_context, runtime.handles());
             execute_driver_macro_step(runtime,stage_context,hydro,has_burn,
                 [&](BurnHalf half,double half_dt,arch::state::CompletionToken token) {

@@ -493,6 +493,7 @@ bool DriverRuntime::perform_regrid(int step, double time, bool jeans_repair_only
 }
 bool DriverRuntime::perform_regrid_impl(int step,double time,bool jeans_repair_only)
 {
+    if(host_hydro_attempt_)throw std::logic_error("Cannot regrid during Host Hydro attempt");
     const auto started = std::chrono::steady_clock::now();
     const auto before = compute_backend ? compute_backend->counters()
         : arch::backend::BackendCounters{};

@@ -659,11 +659,9 @@ if(ARCH_ENABLE_MPI)
 endif()
 
 # Original Host integrators consume the explicit distributed stage boundary.
-add_executable(arch_distributed_hydro_stage tests/host/amr/test_distributed_hydro_stage.cpp
-    src/driver/runtime/TopologyIdentityRegistry.cpp
-    src/physics/boundary/PhysicalBoundaryHandler.cpp)
+add_executable(arch_distributed_hydro_stage tests/host/amr/test_distributed_hydro_stage.cpp)
 arch_configure_host_test(arch_distributed_hydro_stage "${CMAKE_CURRENT_SOURCE_DIR}/tests")
-target_link_libraries(arch_distributed_hydro_stage PRIVATE arch_build_contract arch_diffusion_math)
+target_link_libraries(arch_distributed_hydro_stage PRIVATE arch_driver_runtime arch_diffusion_math)
 add_test(NAME distributed_hydro_stage COMMAND arch_distributed_hydro_stage 1)
 set_tests_properties(distributed_hydro_stage PROPERTIES TIMEOUT 300 LABELS mpi ENVIRONMENT "OMP_NUM_THREADS=1;OMP_DYNAMIC=FALSE")
 if(ARCH_ENABLE_MPI)

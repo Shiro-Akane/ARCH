@@ -171,7 +171,7 @@
 | A2：远端邻接（已完成） | AmrTree、Block 邻居描述及原计划生成器 | 本地/远端端点并存，邻接互反、2:1 平衡、周期双向与旧 handle 检查通过。 |
 | B1：粗细 ghost 字段交换（已完成） | GhostExchange、原粗细 cell 配方与 Host 执行 | 实际双 rank 结果与串行逐位一致；常量、trace species、三槽、空工作、单 rank 失败不写入与恢复；限算子面交换 |
 | B2a：通量注册/reflux 集合算子（已完成） | 原 flux 配方、FluxRegister、AMRControl | 原始面值跨 rank、粗 owner 原次序累加、独立界面预算、全字段逐位对照、单 rank 失败不写入与阶段回滚 |
-| B2b：完整交换/推进（进行中） | 原同层/粗细交换与 scheduler | 补齐非根块同层通信、棱角顺序、gather/求解失败协调及 accepted-step 对照，保留既有物理/守恒门槛 |
+| B2b：完整交换/推进（规定静态 Host 案例已验收） | 原同层/粗细交换、scheduler、DriverRuntime/DriverMacroStep | 非根同层/棱角交换、阶段故障协调、最终接受和整步恢复通过；源项、迁移及应用入口仍分别验收，见第三项记录 |
 | C：迁移与提交 | PreparedRegrid、MemoryPool、TopologyTransaction、DriverRegrid | 一个细叶跨 owner 往返，accepted 字段/身份不丢失；容量、故障、stale view 与提交顺序检查通过 |
 | D：应用入口与回归 | 原 ExecutionPreflight、真实运行和现有 CI | A–C 完成后只开放明确通过的能力范围，查询与运行一致；四种构建、固定网格及受影响单进程 AMR 回归通过 |
 
@@ -246,9 +246,47 @@ A–C 可先由直接调用生产设施的原生测试夹具验证，不能以�
 | production-fixed_grid.tar.gz | 38070127 | 1549 | d1d9a0b5bd30db6eb7670e28fdcff6faee64d7bfd3dc41b0f74a985163fb2102 |
 | production-multidim.tar.gz | 34185271 | 791 | 7ae55cb787059484b23f166058acbccee1bb6883b540f510ccfd5c20b5e2d93f |
 
-下一步在现有 [DriverRuntime](../../src/driver/runtime/DriverRuntime.cpp) / [DriverMacroStep](../../src/driver/stages/DriverMacroStep.h) 执行边界补齐最终接受与失败处理。当前普通宏步只执行一次 proposal/实际步，没有整步回滚事务；[现有 Host 测试](../../tests/host/driver/test_host_hydro_transaction.cpp) 也明确区分预检拒绝与不存在的普通宏步回滚。FluxRegister 和 ledger 已有局部快照能力，但完整场数组、控制器、时钟及诊断账本的共同恢复仍需由 DriverRuntime 直接拥有和验证，不另建 MPI 事务管理器。
+截至上述 Host Hydro 阶段验收时，完整 [DriverRuntime](../../src/driver/runtime/DriverRuntime.cpp) / [DriverMacroStep](../../src/driver/stages/DriverMacroStep.h) 接受与恢复尚未完成。普通宏步只执行一次 proposal/实际步，没有整步回滚事务；[现有 Host 测试](../../tests/host/driver/test_host_hydro_transaction.cpp) 区分预检拒绝与普通宏步语义。下节记录随后由 DriverRuntime 直接持有完整场数组、控制器、flux 与 ledger 快照的静态分布式 Host 实现。
 
-先用同一五叶案例验证 final Current/ghost/EOS 接受、全 rank 提交确认以及失败后的状态与时间不推进；恢复前必须覆盖所有已写候选和账本，不能只恢复通量。真实能量账本消费者及其阶段生命周期单独落实，然后推进容量预留/字段迁移和 CUDA staging。原生 Hydro 阶段通过不等于这些项目已经完成。
+该后继增量使用同一五叶案例验证 final Current/ghost/EOS 接受、全 rank 提交确认及失败恢复，具体范围和证据见下节。真实能量账本消费者、容量预留/字段迁移和 CUDA staging 仍分别验收，原生 Hydro 阶段通过不代替这些工作。
+
+## B2b 第三项：原 Runtime 的静态 Host 宏步接受与恢复
+
+2026-11-05，本轮在既有 DriverRuntime / DriverMacroStep 内增加恢复所有权，不建立 MPI 管理器、第二个内存池或新的时间推进器。上一节关于“普通宏步没有整步回滚”的描述是本轮开始前的状态；普通单进程/固定根网格路径仍保持原执行语义，新增事务只服务具有全局细叶元数据的分布式 Host Hydro 路径。应用 MPI-AMR 预检继续关闭。
+
+实施顺序：
+
+1. 由已提交的全局拓扑元数据决定是否进入分布式细叶路径；只有粗块的 rank 也必须参与。原宏步在提议 dt 之前，检查实际 controller/solver 归属与固定尺寸槽轮换能力，再保存本地活动块三槽完整字段、组分、ENUC、修复记录和原分配地址。原 flux/ledger 快照与 BC 上下文、控制器历史由 Runtime 同时持有；准备失败先全体汇合。
+2. 保留原 calculate_next_dt / sync_dt、Euler/RK2/RK3 阶段表、patch 求解、权重、槽轮换和 reflux 算术。进入通信前的配置、参数检查、修复工作区分配及 ghost 准备也通过既有阶段完成入口汇合。物理时间、dt、步数、epoch、组分布局和调度身份须跨 rank 一致。
+3. 原宏步返回后，显式完成 t+dt 上实际 Current 的物理边界、全部 ghost 及 ledger 发布，再调用原 validate_eos 和原 NumericsConfig 门槛。不能把最后一个 RK 阶段的 ghost 当成最终 Current。全体确认 Current/reflux/边界身份及存储布局后，才释放备份并确认提交；原 controller.advance 仍在接受返回之后执行。
+4. 失败先等待原同步阶段/通信退出，按原分配地址恢复槽映射，再复制回三槽原始位模式、修复记录、flux、ledger、BC 和 controller；burn advice 同时恢复。恢复不分配内存。所有 rank 恢复后才允许返回失败或重新执行。调度令牌/版本保留已消耗的全局最大值，不能倒退后重用；物理时间和步数则恢复。
+5. 同一五叶原生案例直接调用上述生产 Runtime、宏步和 advance_hydro。成功案例覆盖三种 RK 方法、常量/周期平滑场及三步演化；以原单线程串行执行作逐位参考。失败覆盖阶段、最终 EOS/Current、时间/身份、准备分配、原工作区分配、控制器归属及未接受状态的重网格/输出访问，并在同一 owner 上重试。
+
+资源与支持边界：
+
+- 备份量是本 rank 活动块三槽载荷，加现有 flux arena 和 ledger/控制器快照；不分配远端 FluidState，也不改变池容量/分配机制。现有夹具仍每 rank 16 个池槽，不作为全局 max_blocks 或迁移峰值容量已经验收的证据。
+- 当前限定静态 Cartesian、Host、无燃烧/扩散/重力源项、无用户边界及可变边界通量观测器。借用 source journal、EnergyReceipt、CUDA 和动态迁移各自仍需生命周期验收。运行时明确拒绝不在该范围内的组合。
+- 只有声明原固定尺寸三槽轮换契约的实际 solver 可进入。恢复期间不得更换拓扑、存储或后端；原 Runtime 的 regrid、backend install 和 Host 输出 materialization 入口对此拒绝。违反底层固定存储契约、MPI 通信或进程故障不属于可恢复数值拒绝。
+- 本轮没有自动减 dt 重试策略、性能优化、分布式输出或 restart 协议；故障后的显式重试只证明恢复后的原 owner 可再次执行。
+
+### B2b Host 宏步接受与恢复验收记录
+
+证据位于 /home/ubuntu/projects/ARCH-mpi-evidence-macro-step-20261105。source.json 冻结基于 8dbf4698 dirty 工作树的 13 个代码/测试/构建文件；文档在验收后补齐。生产二进制仍携带该预提交身份，以文件 SHA-256 绑定最终提交，不标记成提交后重建。候选 MPI ON/OFF 及独立串行基线哈希见 production-source.json。
+
+- Release MPI ON/OFF 完整应用构建成功，28/18 项 CTest 全部通过；Debug 重建受影响目标，26/16 项通过，共 88 项、无跳过。Debug ON 的一项启动预检使用已有应用，其余 87 项对应本轮重建目标或 Release 应用；不宣称完整 Debug 应用重建。
+- 宏步夹具覆盖三种 RK、常量/平滑场各三步演化，三槽全部字段、组分、ENUC、ghost 与原单线程参考逐位一致；七项守恒量保持原 2e-11 + 2e-12*abs(initial) 门槛。22 类单 rank 故障逐项检查正确拒绝原因、原分配地址/字段/账本/控制器恢复，并在同一 Runtime 上成功重试。
+- MPI OMP=1/2 检查实际 team size；另完成 20 次无绑核的双 rank、双线程重复验证。调度时钟单测验证只保留高水位；单 rank 额外消耗令牌的故障后仍能重新一致执行。
+- 未改动的生产脚本完成 55 组对独立冻结串行基线的逐位比较和 10 项预期拒绝。629 项工具测试无跳过通过；架构、文档、actionlint、CI MPI ON/OFF inventory/结果完整性及 diff 检查通过。
+- 初轮最终 Current ghost 未完成，随后在原宏步接受边界补齐实际 t+dt 边界/ghost；故障注入又发现 RepairBudget 默认构造已分配，若仅将 resize 放入集合准备仍会错序。现将实际构造置于原集合准备阶段，并严格检查本 rank 的 bad_alloc 原因。首次失败、诊断与修复前源码记录保留，未改判为通过。开发中的编译/命名空间和旧文本格式断言失败也保留。
+- 原始生产证据 2,340 个文件逐一归档回读核对 SHA-256，并实际重开 HDF5，之后仅清理验证完成的本轮 RAM 暂存。四配置 native 构建单任务运行，开始前检查 16 GiB 磁盘下限加 512 MiB 预留。
+- arithmetic-preservation.json 核对原 Hydro 接受/修复晋升算术；积分器、patch、通量/reflux 数学叶未修改。物理定义、公式、容差和既定验收阈值不变。本结果限规定五叶静态 Host 案例，不构成动态 AMR、GPU 或性能验收。
+
+| 原始证据归档 | 字节数 | 文件数 | SHA-256 |
+| --- | ---: | ---: | --- |
+| production-fixed_grid.tar.gz | 38087448 | 1549 | 5f0f91573bc8e007d0a43dfa700984a8da7ac2119e7049997033df2109e5b291 |
+| production-multidim.tar.gz | 34190550 | 791 | 857c015f0679cf63f98f8ebd7b746ac6dd4605dc2a939c380bf07dd40f0fbacc |
+
+下一增量进入 C：原池容量/迁入预留、一个细叶往返迁移以及原拓扑事务的一致提交。真实源项/能量账本与 CUDA Host staging 分别推进，应用入口仍待 A–C 的实际能力和失败路径闭合后开放。
 
 ## 所有权、迁移与提交的具体设计
 
@@ -265,6 +303,8 @@ owner 变更即使不改变叶 key 集合，也必须触发新的拓扑发布；
 全局 max_blocks 的已声明资源边界继续有效。分别观测活动叶、实际分配槽、各 rank 容量和字节峰值，不能把三者混为一谈。
 
 初版先在现有 MemoryPool 内提供“检查需求并批量预留、成功转交、失败释放”的能力，由原 PreparedRegrid 持有未发布预留。保留旧 accepted 源块直到迁移成功且全体可提交。上例右根细化时旧父块与四个子块共存，右 rank 至少需要五个块槽；全局叶数五不能用来证明五个实际槽就足够。迁移时发送方旧副本与接收方新副本也会同时占用槽。
+
+下一增量先使用现有固定容量，不提前实现扩容。当前 MemoryPool 只有单槽 AllocateBlock/FreeBlock 和按 free_list 计算的占用数；PreparedRegrid 已持有 allocated_、retire_ 及分配失败清理。因此先在原池暴露容量/空闲槽观测，将一次变换所需新槽在写入字段前成组预留，交给原 PreparedRegrid 管理；明确区分活动叶数、已占用槽和未发布预留，不能把预留误报为活动叶。原 PoolBlockAllocationGuard 继续覆盖“槽已取出、尚未记入 owner”的异常窗口。资源判定和候选 ledger/交换计划准备在 DriverRegrid 的原提交边界汇合，最后 PublishNoexcept 只切换预备状态。首个直接消费者就是五叶案例的一块细叶往返；局部不足、部分分配失败和原地址/handle 失效检查随同落地。
 
 若真实案例证明固定容量分摊阻碍迁移，优先在原池中实现按需分段存储/容量调整，并由原拓扑事务调整未使用容量配额，不再增加 MPI 专用池。需要先测量并比较两种具体代价：连续容器扩容会使 Block/view 地址失效，要求静默边界统一重绑定；分段存储可稳定槽地址，但改变遍历局部性和容量管理。选型依据必须包含分配次数、RSS、迁移峰值、旧 view 检测与现有单进程性能，不为尚未出现的需求提前实现两套路径。
 
@@ -305,7 +345,7 @@ owner 变更即使不改变叶 key 集合，也必须触发新的拓扑发布；
 | 分支 / PR | 当前职责与推进方式 |
 | --- | --- |
 | MPI/execution-preflight / #25 | 保留已验收的固定网格候选及其 CI，供现有集成审阅。必要修复仍在此分支提交；不合并 main，除非得到明确合并指令。 |
-| MPI/scaling-16 / #26 | 继续承载扩大实验、当前设计及接下来的最小案例增量。它已经包含 #25；本轮在完整 ghost 交换之后推进 B2b 的原生 Host Hydro 阶段，沿用 #26 并同步更新标题/说明。 |
+| MPI/scaling-16 / #26 | 继续承载扩大实验、当前设计及接下来的最小案例增量。它已经包含 #25；本轮推进 B2b 的静态 Host 宏步接受与恢复，下一增量落实原池容量预留与细叶迁移；沿用 #26 并同步更新标题/说明。 |
 | codex/mpi-fixed-grid-validated-20261102 / #24 | 已被上述历史包含。2026-11-03 核对时 #24 已关闭，朋友仓库旧分支已移除；个人仓库旧引用仅作历史快照，不再推进。 |
 
 所有新提交仍同步推送双方仓库。同一修改只在一条分支实现；必要时通过正常合并带入后继分支，不对两个分支分别维护两份实现。#25 集成后，再以实际 main 状态整理 #26 的 base 和差异；不为更名增加额外并行开发线，不随意重写已审阅历史。

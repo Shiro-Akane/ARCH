@@ -1,7 +1,7 @@
 /**
  * @file test_distributed_hydro_stage.cpp
  * @brief Original Host Hydro lanes on a prescribed mixed-level MPI mesh.
- * No application AMR, migration, source journal or whole-step rollback claim.
+ * Includes the original Runtime macro recovery; application AMR remains closed.
  */
 #include "fixtures/amr/partitioned_topology_fixture.h"
 #include "numerics/flux/FluxHLLC.h"
@@ -10,6 +10,9 @@
 #include "numerics/integrator/TimeIntegratorRK2.h"
 #include "numerics/integrator/TimeIntegratorRK3.h"
 #include "physics/eos/IdealGas.h"
+#include "driver/stages/DriverMacroStep.h"
+#include <cstdlib>
+#include <new>
 #include <bit>
 #include <iostream>
 #include <numbers>
@@ -19,6 +22,16 @@
 #if ARCH_MPI_ENABLED
 #include <mpi.h>
 #endif
+namespace allocation_fault { inline thread_local int fail_after=0; }
+void* operator new(std::size_t bytes) {
+    if(allocation_fault::fail_after>0&&--allocation_fault::fail_after==0) {
+        throw std::bad_alloc();
+    }
+    if(void* p=std::malloc(bytes?bytes:1))return p;
+    throw std::bad_alloc();
+}
+void operator delete(void* p) noexcept {std::free(p);}
+void operator delete(void* p,std::size_t) noexcept {std::free(p);}
 namespace {
 using Fixture = amr::test::PartitionedTopologyFixture;
 using namespace arch;
@@ -162,6 +175,9 @@ struct FaultSolver final : Numerics::IHydroSolver {
     mutable int calls = 0;
     FaultSolver(const Numerics::IHydroSolver& solver, int mode, int id)
         : original(solver), fault(mode), victim(id) {}
+    Numerics::HostHydroStorageContract host_storage_contract() const noexcept override {
+        return original.host_storage_contract();
+    }
     void evaluate_patch(amr::AMRControl* control, int id, const FluidState& state, const Grid& grid,
                         double dt, std::vector<FluidVector>& du, std::vector<double>& dx,
                         const Physical::Gravity::IGravityPolicy* gravity,
@@ -252,6 +268,228 @@ void successful_cases() {
                             "periodic Hydro conservation failed");
             }
         }
+}
+struct EndpointEos {
+    const IdealGas& original;
+    bool reject;
+    double get_temperature(double rho,double e,const double* x) const {
+        return reject?-1.:original.get_temperature(rho,e,x);
+    }
+    double get_pressure(const FluidVector& u,const double* x) const {return original.get_pressure(u,x);}
+    double get_sound_speed(const FluidVector& u,double p,const double* x) const {
+        return original.get_sound_speed(u,p,x);
+    }
+};
+struct RuntimeRun {
+    Fixture& f;
+    SpeciesManager species;
+    IdealGas eos;
+    BCHandler bc;
+    SimulationController controller;
+    driver::DriverRuntime runtime;
+    driver::DriverStageWorkspace workspace;
+    Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> solver;
+    double burn_advice=123.;
+    const SpeciesManager& make_species() {
+        species.add_species("X",1.,1.,1.4,1.);
+        species.add_species("Y",2.,1.,1.4,1.);
+        return species;
+    }
+    static SimConfig& settings(Fixture& f) {
+        f.config.io.tmax=1.;f.config.numerics.dt_min=1.e-20;
+        f.config.numerics.dt_max=0.;f.config.numerics.tstep_change_factor=2.;
+        return f.config;
+    }
+    explicit RuntimeRun(Fixture& fixture)
+        :f(fixture),eos(make_species()),bc(f.config),controller(settings(f),RunState{}),
+         runtime(f.control,bc,f.config,species,controller),solver(eos) {
+        bc.bind(eos,species);runtime.initialize_topology();
+        f.handles=runtime.handles();
+    }
+    double step(int method,int fault=0) {
+        SimulationController foreign_controller=controller;
+        auto& proposal_controller=rank==1&&fault==22?foreign_controller:controller;
+        dispatch::ResolvedExecutionPlan plan;
+        plan.time_integrator=method==0?dispatch::TimeIntegratorId::Euler:
+            method==1?dispatch::TimeIntegratorId::Rk2:dispatch::TimeIntegratorId::Rk3;
+        const driver::IntegratorSolve integrator=method==0?&SolverEuler::solve<BCHandler>:
+            method==1?&SolverRK2::solve<BCHandler>:&SolverRK3::solve<BCHandler>;
+        FaultSolver faulty(solver,fault==1?1:4,f.control.tree->GetActiveBlocks().front());
+        const Numerics::IHydroSolver* selected=(fault==1||fault==2)?static_cast<const Numerics::IHydroSolver*>(&faulty):&solver;
+        const double cap=rank==1&&fault==7?2.e-4:rank==1&&fault==8?-1.:1.e-4;
+        if(rank==1&&fault==14)f.config.physics.burn.use_burn=true;
+        if(rank==1&&fault>=15&&fault<=17)
+            allocation_fault::fail_after=fault==15?1:fault==16?32:80;
+        const double dt=driver::execute_driver_macro_attempts(runtime,proposal_controller,burn_advice,
+            cap,selected,EndpointEos{eos,rank==1&&fault==12},
+            [&](double actual_dt,std::uint64_t attempt) {
+                require(attempt==1,"macro inserted retry policy");
+                auto context=runtime.stage_context();
+                scheduler::complete_hydro_local_phase(context,[&] {
+                    context.step_start_time=controller.t_current;context.step_dt=actual_dt;
+                    context.configure_boundary_context=[&](double time,boundary::BoundaryPurpose purpose) {
+                        bc.configure_stage(time,purpose);
+                    };
+                    bc.configure_stage(controller.t_current,boundary::BoundaryPurpose::Hydro);
+                    if(rank==1&&fault==21)
+                        context.hydro_acceptance=[](const scheduler::StageDescriptor&){};
+                    if(rank==1&&fault==13)throw std::runtime_error("injected macro preparation failure");
+                });
+                scheduler::ScopedStageBinding binding(context,runtime.handles());
+                driver::execute_driver_macro_step(runtime,context,selected,false,
+                    [](driver::BurnHalf,double,state::CompletionToken token){return token;},
+                    [](double){throw std::runtime_error("unexpected diffusion");},
+                    [&](double value) {
+                        if(rank==1&&fault==20)allocation_fault::fail_after=1;
+                        driver::advance_hydro(runtime,workspace,context,
+                            rank==1&&fault==19?nullptr:&plan,value,integrator,nullptr,selected);
+                    },
+                    [](driver::CpuStage,auto&& work){work();});
+                if(rank!=1)return;
+                // Each fault occurs after actual RK rotation, reflux and repair promotion.
+                if(fault==3) {
+                    controller.repairs.reset(2);controller.repairs.values[0]=7.;
+                    throw std::runtime_error("injected final macro rejection");
+                }
+                auto& b=f.control.pool->GetBlock(f.control.tree->GetActiveBlocks().front());
+                if(fault==4)b.fluid_state.rho[b.grid.GetIndex(b.grid.Is(),b.grid.Js(),0)]=-1.;
+                if(fault==5)f.control.flux_register.Clear();
+                if(fault==6)b.fluid_state.X(0,b.grid.GetIndex(b.grid.Is(),b.grid.Js(),0))=-.5;
+                if(fault==9) {
+                    controller.t_current+=actual_dt;
+                    controller.step_count++;
+                }
+                if(fault==10)(void)runtime.perform_regrid(controller.step_count,controller.t_current);
+                if(fault==11)runtime.materialize_current_for_host();
+                if(fault==18) {
+                    (void)context.clock.next_publication();
+                    throw std::runtime_error("injected rejection after consuming a scheduler identity");
+                }
+            });
+        if(!runtime.distributed_hydro_topology()) {
+            bc.configure_stage(controller.t_current+dt,boundary::BoundaryPurpose::Hydro);
+            runtime.ensure_fluid_ghosts();
+        }
+        controller.advance(dt);
+        return dt;
+    }
+};
+struct MacroFieldWitness {
+    using Field=std::vector<double> FluidState::*;
+    static constexpr std::array<Field,7> fields{&FluidState::rho,&FluidState::mom_u,
+        &FluidState::mom_v,&FluidState::mom_w,&FluidState::eng,&FluidState::enuc_rate,&FluidState::mass_fractions};
+    int id;
+    std::array<FluidState,3> saved;
+    std::array<std::array<const double*,7>,3> addresses{};
+    static std::array<FluidState*,3> slots(amr::Block& b) {return {&b.fluid_state,&b.state_next,&b.state_scratch};}
+    MacroFieldWitness(amr::Block& b,int id):id(id),saved{b.fluid_state,b.state_next,b.state_scratch} {
+        const auto a=slots(b);
+        for(int s=0;s<3;++s)for(int f=0;f<7;++f)addresses[s][f]=(a[s]->*fields[f]).data();
+    }
+    static bool vector_bits(const std::vector<double>& a,const std::vector<double>& b) {
+        return a.size()==b.size()&&std::equal(a.begin(),a.end(),b.begin(),bits);
+    }
+    static bool repair_equal(const state::RepairBudget& a,const state::RepairBudget& b) {
+        return vector_bits(a.values,b.values)&&a.block_uid==b.block_uid&&a.stage==b.stage
+            &&bits(a.time,b.time)&&bits(a.position[0],b.position[0])
+            &&bits(a.position[1],b.position[1])&&bits(a.position[2],b.position[2]);
+    }
+    void check(amr::AMRControl& control) const {
+        const auto a=slots(control.pool->GetBlock(id));
+        for(int s=0;s<3;++s) {
+            for(int f=0;f<7;++f)
+                require((a[s]->*fields[f]).data()==addresses[s][f]
+                    &&vector_bits(a[s]->*fields[f],saved[s].*fields[f]),"macro failed to restore field/address");
+            require(repair_equal(a[s]->stage_repairs,saved[s].stage_repairs),"macro stage receipt changed");
+            require(a[s]->diffusion_boundary==saved[s].diffusion_boundary
+                &&a[s]->boundary_flux_capture==saved[s].boundary_flux_capture,"macro slot alias changed");
+        }
+    }
+};
+void runtime_macro_cases() {
+    for(int method=0;method<3;++method)for(bool wave:{false,true}) {
+        Fixture actual(2,rank,ranks,true),reference(2,0,1,true);
+        seed(actual,wave);seed(reference,wave);
+        RuntimeRun a(actual);Run b(reference);
+        const auto initial=totals(reference);
+        for(int step=0;step<3;++step) {
+            {
+                SerialReferenceThreads serial;
+                scheduler::ScopedStageBinding binding(b.context,reference.handles);
+                b.ghosts();b.step(method);b.ghosts();
+            }
+            a.step(method);
+            compare(actual,reference);
+            require(a.controller.step_count==step+1&&bits(a.controller.t_current,b.context.step_start_time),
+                "macro accepted time/step mismatch");
+            auto c=a.runtime.stage_context();
+            const auto version=c.ledger.inspect({a.runtime.handles().front(),state::StateSlot::Current}).interior.version;
+            for(auto h:a.runtime.handles())
+                c.ledger.require_readable({h,state::StateSlot::Current},{state::ExecutionSide::Host,version,true,true});
+            auto sum=totals(actual);
+#if ARCH_MPI_ENABLED
+            if(ranks>1) {auto local=sum;MPI_Allreduce(local.data(),sum.data(),7,MPI_LONG_DOUBLE,MPI_SUM,MPI_COMM_WORLD);}
+#endif
+            for(int f=0;f<7;++f)require(std::abs(sum[f]-initial[f])<=2.e-11L+2.e-12L*std::abs(initial[f]),
+                "macro conservation failed");
+        }
+    }
+    if(ranks==1)return;
+    for(int fault=1;fault<=22;++fault) {
+        Fixture actual(2,rank,ranks,true),reference(2,0,1,true);
+        seed(actual,true);seed(reference,true);
+        RuntimeRun a(actual);Run b(reference);
+        std::vector<MacroFieldWitness> fields;
+        for(int id:actual.control.tree->GetActiveBlocks())fields.emplace_back(actual.control.pool->GetBlock(id),id);
+        auto c=a.runtime.stage_context();
+        const auto ledger=c.ledger.snapshot_metadata(state::ExecutionSide::Host);
+        const auto flux=actual.control.flux_register.snapshot_host();
+        const auto bc=a.bc.snapshot_stage_context();
+        const auto ctrl=a.controller;
+        const auto clock=c.clock.last_token();
+        const double advice=a.burn_advice;
+        bool rejected=false;
+        try {a.step(2,fault);}catch(const std::exception& error) {
+            rejected=true;
+            std::cout<<"macro rejection rank="<<rank<<" fault="<<fault<<" reason="<<error.what()<<std::endl;
+            if(rank==1) {
+                constexpr std::array<const char*,22> reasons{
+                    "injected local solver rejection","injected local solver rejection",
+                    "injected final macro rejection","final EOS rejected","Current/reflux incomplete",
+                    "final EOS rejected","interval/identity mismatch","dt too small",
+                    "changed physical time","Cannot regrid","Cannot expose","final EOS rejected",
+                    "injected macro preparation failure","requires static Cartesian",
+                    "std::bad_alloc","std::bad_alloc","std::bad_alloc","consuming a scheduler identity",
+                    "requires its selected plan","std::bad_alloc","acceptance already has another owner",
+                    "controller owner mismatch"};
+                require(std::string(error.what()).find(reasons[fault-1])!=std::string::npos,
+                    "macro rejected for the wrong reason");
+            }
+        }
+        allocation_fault::fail_after=0;
+        actual.config.physics.burn.use_burn=false;
+        require(rejected,"macro accepted injected failure");
+        for(const auto& saved:fields)saved.check(actual.control);
+        require(c.ledger.metadata_snapshot_matches(ledger),"macro ledger not restored");
+        require(actual.control.flux_register.host_snapshot_matches(flux),"macro flux not restored");
+        require(a.bc.stage_context_matches(bc),"macro boundary clock not restored");
+        require(bits(a.controller.t_current,ctrl.t_current)&&a.controller.step_count==ctrl.step_count
+            &&bits(a.controller.dt_old,ctrl.dt_old)&&bits(a.burn_advice,advice)
+            &&a.controller.plt_file_index==ctrl.plt_file_index&&a.controller.chk_file_index==ctrl.chk_file_index
+            &&bits(a.controller.next_plt_time,ctrl.next_plt_time)&&bits(a.controller.next_chk_time,ctrl.next_chk_time)
+            &&a.controller.suppress_step_io_once==ctrl.suppress_step_io_once
+            &&MacroFieldWitness::repair_equal(a.controller.repairs,ctrl.repairs),"macro controller/receipt not restored");
+        require(c.clock.last_token()>=clock,"macro reused scheduler identity");
+        {
+            SerialReferenceThreads serial;
+            scheduler::ScopedStageBinding binding(b.context,reference.handles);
+            b.ghosts();b.step(2);b.ghosts();
+        }
+        a.step(2);
+        compare(actual,reference);
+        require(a.controller.step_count==1&&bits(a.controller.t_current,1.e-4),"retry did not accept once");
+    }
+    if(rank==0)std::cout<<"Runtime macros: six three-step cases; 22 collective rejections with restoration and retry passed\n";
 }
 void rejected_cases() {
     if (ranks == 1)
@@ -414,6 +652,7 @@ int main(int argc, char** argv) {
 #endif
         require(ranks == 1 || ranks == 2, "test requires one or two ranks");
         successful_cases();
+        runtime_macro_cases();
         rejected_cases();
         receipt_and_boundary_rejections();
         if (rank == 0)

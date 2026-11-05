@@ -490,12 +490,14 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
     double dt, IntegratorSolve integrator_solve,
     const Physical::Gravity::IGravityPolicy* gravity, const Numerics::IHydroSolver* hydro)
 {
-    if(!resolved_plan||!hydro||(!runtime.backend()&&!integrator_solve))
-        throw std::logic_error("Hydro requires its selected plan and executable solver");
-    if(!std::isfinite(dt)||dt<=0.||dt!=stage_context.step_dt)
-        throw std::logic_error("Hydro step size must be finite, positive and equal frozen context.step_dt");
-    if(stage_context.hydro_acceptance)
-        throw std::logic_error("Hydro acceptance already has another owner");
+    scheduler::complete_hydro_local_phase(stage_context,[&] {
+        if(!resolved_plan||!hydro||(!runtime.backend()&&!integrator_solve))
+            throw std::logic_error("Hydro requires its selected plan and executable solver");
+        if(!std::isfinite(dt)||dt<=0.||dt!=stage_context.step_dt)
+            throw std::logic_error("Hydro step size must be finite, positive and equal frozen context.step_dt");
+        if(stage_context.hydro_acceptance)
+            throw std::logic_error("Hydro acceptance already has another owner");
+    });
     auto& amr_ctrl = runtime.control();
     auto& bc_handler = runtime.boundaries();
     const auto& config = runtime.configuration();
@@ -503,30 +505,38 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
     const auto& stage_handles = runtime.handles();
     auto* compute_backend = runtime.backend();
     const auto& num_cfg = config.numerics;
-    state::RepairBudget pending(runtime.species().count());
-    stage_context.hydro_acceptance = [&](const scheduler::StageDescriptor& descriptor) {
-        // Only the explicitly begun transaction composes atomic source receipts.
-        // Production retains invalidate-before-collection, including collection failures.
-        if(stage_context.hydro_preparation) {
-            stage_context.hydro_preparation->invalidate();
-        }
-        auto stage = collect_stage_repairs(runtime, descriptor.output_slot,
-            compute_backend ? &compute_backend->stage_repairs : nullptr);
-        if (stage.values[0] > 0.0) {
-            stage.stage=descriptor.stage; stage.time=stage_context.step_start_time;
-        }
-        double weight = 1.0;
-        if (resolved_plan->time_integrator == dispatch::TimeIntegratorId::Rk2 && descriptor.stage == 1) weight = 0.5;
-        if (resolved_plan->time_integrator == dispatch::TimeIntegratorId::Rk3)
-            weight = descriptor.stage == 1 ? 1.0/6.0 : descriptor.stage == 2 ? 2.0/3.0 : 1.0;
-        pending.combine(stage, weight);
-
-    };
+    // RepairBudget's default constructor also allocates. Construct the complete
+    // real budget inside the agreed phase, not merely its later resize/reset.
+    std::optional<state::RepairBudget> prepared_pending;
+    scheduler::complete_hydro_local_phase(stage_context,[&] {
+        prepared_pending.emplace(runtime.species().count());
+    });
+    auto& pending=*prepared_pending;
     struct RestoreAcceptance {
         scheduler::StageExecutionContext& context;
         std::function<void(const scheduler::StageDescriptor&)> previous;
         ~RestoreAcceptance() noexcept { context.hydro_acceptance.swap(previous); }
     } restore{stage_context,{}};
+    scheduler::complete_hydro_local_phase(stage_context,[&] {
+        stage_context.hydro_acceptance = [&](const scheduler::StageDescriptor& descriptor) {
+            // Only the explicitly begun transaction composes atomic source receipts.
+            // Production retains invalidate-before-collection, including collection failures.
+            if(stage_context.hydro_preparation) {
+                stage_context.hydro_preparation->invalidate();
+            }
+            auto stage = collect_stage_repairs(runtime, descriptor.output_slot,
+                compute_backend ? &compute_backend->stage_repairs : nullptr);
+            if (stage.values[0] > 0.0) {
+                stage.stage=descriptor.stage; stage.time=stage_context.step_start_time;
+            }
+            double weight = 1.0;
+            if (resolved_plan->time_integrator == dispatch::TimeIntegratorId::Rk2 && descriptor.stage == 1) weight = 0.5;
+            if (resolved_plan->time_integrator == dispatch::TimeIntegratorId::Rk3)
+                weight = descriptor.stage == 1 ? 1.0/6.0 : descriptor.stage == 2 ? 2.0/3.0 : 1.0;
+            pending.combine(stage, weight);
+
+        };
+    });
     if (compute_backend) {
         runtime.ensure_fluid_ghosts(StateSlot::Current);
         auto& currents = workspace.hydro_currents;

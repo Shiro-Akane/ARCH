@@ -280,6 +280,14 @@ public:
         return describe_blocks(active_handles_, owners_, pool_lowering_);
     }
 
+    /** Global metadata decides the same lane even on a rank with only coarse leaves. */
+    bool has_refined_blocks() const {
+        require_adopted();
+        for (const auto& [identity, owner] : owners_)
+            if (identity.level > 0) return true;
+        return false;
+    }
+
     int owner_for(LogicalBlockIdentity identity) const
     {
         require_adopted();

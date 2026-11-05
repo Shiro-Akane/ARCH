@@ -247,6 +247,13 @@ public:
         return {last_token_, state::CompletionState::Complete};
     }
 
+    /** Retain issued identities after collective recovery; never reset this clock. */
+    void retain_high_watermarks(std::uint64_t token, std::uint64_t version) noexcept
+    {
+        if (token > last_token_) last_token_ = token;
+        if (version > last_version_) last_version_ = version;
+    }
+
     constexpr std::uint64_t last_token() const noexcept { return last_token_; }
     constexpr std::uint64_t last_version() const noexcept
     {

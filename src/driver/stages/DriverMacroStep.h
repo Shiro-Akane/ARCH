@@ -11,7 +11,7 @@
  *    callables and CPU measurement intervals; no time tableau is introduced.
  * 4. Complete real Current ghosts/EOS at Hydro(t_n+dt), check exact ledger and
  *    BC identity, then publish both boundary budgets and repair/source receipts.
- * 5. On rejection the original Runtime/boundary owners unwind the failed
+ * 5. On distributed Host rejection the original Runtime/boundary owners restore the failed
  *    attempt; no completed I/O is reused by a later attempt.
  */
 #pragma once
@@ -36,15 +36,73 @@ namespace arch::driver {
  * The original calculate_next_dt/sync_dt semantics are unchanged: one proposal,
  * one aligned step, then the actual split callables.
  */
-template<class Attempt>
+template<class Eos,class Attempt>
 double execute_driver_macro_attempts(DriverRuntime& runtime,SimulationController& controller,
-    double& burn_advice,double accepted_dt_cap,Attempt&& execute)
+    double& burn_advice,double accepted_dt_cap,const Numerics::IHydroSolver* hydro,
+    const Eos& eos,Attempt&& execute)
 {
-    const double proposal=controller.calculate_next_dt(accepted_dt_cap,burn_advice);
-    burn_advice=1e99;
-    const double actual_dt=controller.sync_dt(proposal);
-    std::forward<Attempt>(execute)(actual_dt,1u);
-    return actual_dt;
+    if (!runtime.distributed_hydro_topology()) {
+        const double proposal=controller.calculate_next_dt(accepted_dt_cap,burn_advice);
+        burn_advice=1e99;
+        const double actual_dt=controller.sync_dt(proposal);
+        std::forward<Attempt>(execute)(actual_dt,1u);
+        return actual_dt;
+    }
+    // The existing Runtime owns field/metadata recovery, before dt_old changes.
+    std::optional<StageExecutionContext> prepared_context;
+    std::exception_ptr preparation_failure;
+    try {prepared_context.emplace(runtime.stage_context());}
+    catch(...) {preparation_failure=std::current_exception();}
+    runtime.control().CompleteDistributedHydroPhase(preparation_failure);
+    runtime.begin_distributed_hydro_attempt(hydro,controller);
+    const double saved_burn_advice=burn_advice;
+    auto& context=*prepared_context;
+    try {
+        double actual_dt=0.;
+        scheduler::complete_hydro_local_phase(context,[&] {
+            const double proposal=controller.calculate_next_dt(accepted_dt_cap,burn_advice);
+            burn_advice=1e99;
+            actual_dt=controller.sync_dt(proposal);
+        });
+        runtime.agree_distributed_hydro_interval(actual_dt);
+        // The actual lane coordinates each local phase before its next collective.
+        // Only the complete lane's result is agreed here; no arbitrary MPI callback.
+        scheduler::complete_hydro_local_phase(context,[&] {
+            std::forward<Attempt>(execute)(actual_dt,1u);
+        });
+        scheduler::complete_hydro_local_phase(context,[&] {
+            runtime.boundaries().configure_stage(controller.t_current+actual_dt,
+                boundary::BoundaryPurpose::Hydro);
+        });
+        runtime.ensure_fluid_ghosts();
+        scheduler::complete_hydro_local_phase(context,[&] {
+            const auto& limits=runtime.configuration().numerics;
+            std::vector<double> fractions(runtime.species().count());
+            for (int id:runtime.control().tree->GetActiveBlocks()) {
+                const auto& block=runtime.control().pool->GetBlock(id);
+                const auto& grid=block.grid;
+                const auto& state=block.fluid_state;
+                for(int k=grid.Ks();k<grid.Ke();++k)
+                    for(int j=grid.Js();j<grid.Je();++j)
+                        for(int i=grid.Is();i<grid.Ie();++i) {
+                            const int cell=grid.GetIndex(i,j,k);
+                            state.get_species_to_buffer(cell,fractions.data());
+                            if(state::validate_eos(state.get(cell),fractions.data(),
+                                state.GetNumSpecies(),{limits.sml_rho,limits.min_eint,limits.max_eint},
+                                eos)!=state::Status::valid)
+                                throw std::runtime_error("Distributed Hydro final EOS rejected");
+                        }
+            }
+        });
+        runtime.commit_distributed_hydro_attempt(actual_dt);
+        return actual_dt;
+    } catch (...) {
+        runtime.discard_distributed_hydro_attempt();
+        burn_advice=saved_burn_advice;
+        // No next attempt/output may observe a peer that has not restored yet.
+        runtime.complete_distributed_hydro_recovery();
+        throw;
+    }
 }
 
 /** Execute the unique Driver five-segment sequence.

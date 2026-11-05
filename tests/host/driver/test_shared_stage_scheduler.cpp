@@ -1943,6 +1943,15 @@ void test_persistent_clock_and_overflow()
                && second.completion.value == 3,
            "publication clocks stay monotonic");
 
+    clock.retain_high_watermarks(10, 7);
+    clock.retain_high_watermarks(4, 2);
+    const auto retry = clock.next_publication();
+    expect(retry.completion.value == 11 && retry.version == StateVersion{8},
+           "collective recovery skips issued identities and cannot lower either watermark");
+    clock.retain_high_watermarks(3, 12);
+    expect(clock.next_completion().value == 12 && clock.last_version() == 12,
+           "independent version watermark does not lower the completion watermark");
+
     MonotonicSchedulerClock token_overflow(
         std::numeric_limits<std::uint64_t>::max(), 1);
     expect_throws<std::overflow_error>(
