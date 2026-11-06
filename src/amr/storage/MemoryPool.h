@@ -14,8 +14,9 @@
 
 #pragma once
 
-#include <iostream>
-#include <stack>
+#include <cstddef>
+#include <exception>
+#include <utility>
 #include <stdexcept>
 #include <vector>
 
@@ -31,8 +32,68 @@ private:
     std::vector<Block> pool;
     std::vector<int> free_list; // Stack of free indices
     int max_blocks;
+    int reserved_blocks = 0;
+
+    void activate_block(int id) {
+        pool[id].Reset();
+        pool[id].id = id;
+        pool[id].active = true;
+    }
 
 public:
+    /**
+     * Owns one batch from reservation through candidate construction. Until
+     * CommitNoexcept(), destruction returns both constructed and unused slots.
+     * The pool must outlive this owner; callers must not FreeBlock owned slots.
+     * Storage never moves, so reserving does not invalidate existing views.
+     */
+    class Reservation {
+    public:
+        Reservation(const Reservation&) = delete;
+        Reservation& operator=(const Reservation&) = delete;
+        Reservation& operator=(Reservation&&) = delete;
+        Reservation(Reservation&& other) noexcept
+            : owner_(std::exchange(other.owner_, nullptr)),
+              ids_(std::move(other.ids_)), used_(other.used_) {}
+        ~Reservation() {
+            if (!owner_) return;
+            // Reverse acquisition restores the original free-list order.
+            for (auto it = ids_.rbegin(); it != ids_.rend(); ++it) {
+                owner_->pool[*it].active = false;
+                owner_->free_list.push_back(*it);
+            }
+            owner_->reserved_blocks -= static_cast<int>(remaining());
+        }
+
+        int AllocateBlock() {
+            if (!owner_ || remaining() == 0)
+                throw std::logic_error("AMR block reservation is exhausted or committed");
+            const int id = ids_[used_];
+            owner_->activate_block(id);
+            ++used_;
+            --owner_->reserved_blocks;
+            return id;
+        }
+
+        std::size_t remaining() const noexcept {
+            return owner_ ? ids_.size() - used_ : 0;
+        }
+
+        // Publication transfers all constructed blocks to the existing tree.
+        void CommitNoexcept() noexcept {
+            if (!owner_ || remaining() != 0) std::terminate();
+            owner_ = nullptr;
+        }
+
+    private:
+        friend class MemoryPool;
+        Reservation(MemoryPool& owner, std::vector<int> ids) noexcept
+            : owner_(&owner), ids_(std::move(ids)) {}
+        MemoryPool* owner_;
+        std::vector<int> ids_;
+        std::size_t used_ = 0;
+    };
+
     MemoryPool(int max_capacity, int dim) : max_blocks(max_capacity) {
         pool.resize(max_capacity);
         free_list.reserve(max_capacity);
@@ -51,6 +112,21 @@ public:
         }
     }
 
+    MemoryPool(const MemoryPool&) = delete;
+    MemoryPool& operator=(const MemoryPool&) = delete;
+    MemoryPool(MemoryPool&&) = delete;
+    MemoryPool& operator=(MemoryPool&&) = delete;
+
+    Reservation ReserveBlocks(std::size_t count) {
+        if (count > free_list.size())
+            throw std::runtime_error("AMR MemoryPool exhausted! Increase MaxBlocks.");
+        // Allocate bookkeeping before withdrawing any slots.
+        std::vector<int> ids(free_list.rbegin(), free_list.rbegin() + count);
+        free_list.resize(free_list.size() - count);
+        reserved_blocks += static_cast<int>(count);
+        return Reservation(*this, std::move(ids));
+    }
+
     /**
      * @brief Allocates a block from the free list.
      * @return Index of the allocated block.
@@ -60,12 +136,8 @@ public:
             throw std::runtime_error("AMR MemoryPool exhausted! Increase MaxBlocks.");
         }
         int id = free_list.back();
+        activate_block(id);
         free_list.pop_back();
-
-        // Reset block state (O(1) without reallocating vectors)
-        pool[id].Reset();
-        pool[id].id = id;
-        pool[id].active = true;
         return id;
     }
 
@@ -92,8 +164,15 @@ public:
         return pool[id];
     }
 
-    int GetNumActiveBlocks() const {
-        return max_blocks - free_list.size();
+    int GetCapacity() const noexcept { return max_blocks; }
+    int GetNumAvailableBlocks() const noexcept {
+        return static_cast<int>(free_list.size());
+    }
+    int GetNumReservedBlocks() const noexcept { return reserved_blocks; }
+
+    // Includes unpublished constructed candidates, not just topology leaves.
+    int GetNumActiveBlocks() const noexcept {
+        return max_blocks - GetNumAvailableBlocks() - reserved_blocks;
     }
 };
 

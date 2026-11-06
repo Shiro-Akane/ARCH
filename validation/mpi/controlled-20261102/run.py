@@ -7,7 +7,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser()
 parser.add_argument("--evidence", type=Path, required=True)
 parser.add_argument("--work", type=Path, required=True, help="Server tmpfs staging directory")
-parser.add_argument("--suite", choices=["cpu", "cross", "profile", "smoke", "paired-cpu", "paired-cross"], required=True)
+parser.add_argument("--suite", choices=["cpu", "cross", "profile", "smoke", "paired-cpu", "paired-cross", "scale-up"], required=True)
 parser.add_argument("--repeats", type=int, default=5)
 parser.add_argument("--ssh-config", type=Path, help="JSON argv for already-authorized server SSH")
 parser.add_argument("--candidate", default="ARCH")
@@ -187,6 +187,19 @@ if args.suite == "cpu":
                     run(f"{kind}-{dimension}-r{repeat}-p{ranks}", shape, steps, ranks,
                         phase="warmup" if repeat == 0 else "measured", repeat=repeat,
                         reference=references[(shape, steps)])
+elif args.suite == "scale-up":
+    # Four times the cells of the previous strong-scaling grids; fixed work
+    # per rank-count comparison. Keep five timed repeats and one warmup.
+    workloads = [("2d", (32, 16, 0), 128), ("3d", (16, 4, 2), 48)]
+    for dimension, shape, steps in workloads:
+        reference = run("baseline-" + dimension, shape, steps, 0,
+                        phase="baseline", variant="ARCH-baseline")
+        for repeat in range(args.repeats + 1):
+            order = (1, 2, 4, 8, 16) if repeat % 2 == 0 else (16, 8, 4, 2, 1)
+            for ranks in order:
+                run(f"{dimension}-r{repeat}-p{ranks}", shape, steps, ranks,
+                    phase="warmup" if repeat == 0 else "measured", repeat=repeat,
+                    reference=reference)
 elif args.suite == "cross":
     smoke_reference = run("preflight-baseline", (4, 2, 0), 4, 0,
                           phase="baseline", variant="ARCH-baseline")

@@ -569,7 +569,8 @@ set_tests_properties(mpi_execution_preflight PROPERTIES TIMEOUT 300 LABELS mpi)
 
 # Exercise the existing Host owners under real 1/2/4-rank communication.
 if(ARCH_ENABLE_MPI)
-    add_executable(arch_mpi_fixed_grid tests/host/amr/test_mpi_fixed_grid.cpp)
+    add_executable(arch_mpi_fixed_grid tests/host/amr/test_mpi_fixed_grid.cpp
+        src/driver/runtime/TopologyIdentityRegistry.cpp)
     arch_configure_host_test(arch_mpi_fixed_grid)
     foreach(ranks IN ITEMS 1 2 4)
         add_test(NAME mpi_fixed_grid_${ranks}
@@ -577,5 +578,102 @@ if(ARCH_ENABLE_MPI)
                 ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_mpi_fixed_grid> ${MPIEXEC_POSTFLAGS})
         set_tests_properties(mpi_fixed_grid_${ranks} PROPERTIES
             TIMEOUT 45 PROCESSORS ${ranks} ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
+    endforeach()
+endif()
+
+
+# Identity/ownership uses the same metadata collector as production startup.
+add_executable(arch_topology_ownership
+    tests/host/amr/test_topology_ownership.cpp
+    src/driver/runtime/TopologyIdentityRegistry.cpp)
+arch_configure_host_test(arch_topology_ownership)
+target_link_libraries(arch_topology_ownership PRIVATE arch_build_contract)
+add_test(NAME topology_ownership COMMAND arch_topology_ownership)
+set_tests_properties(topology_ownership PROPERTIES TIMEOUT 45 LABELS mpi)
+if(ARCH_ENABLE_MPI)
+    add_test(NAME mpi_topology_ownership_2
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_topology_ownership> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(mpi_topology_ownership_2 PROPERTIES
+        TIMEOUT 45 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
+endif()
+
+# The same native topology and recipe owners cover mixed-level remote neighbors.
+add_executable(arch_topology_neighbors tests/host/amr/test_topology_neighbors.cpp
+    src/driver/runtime/TopologyIdentityRegistry.cpp)
+arch_configure_host_test(arch_topology_neighbors "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_topology_neighbors PRIVATE arch_build_contract)
+add_test(NAME topology_neighbors COMMAND arch_topology_neighbors)
+set_tests_properties(topology_neighbors PROPERTIES TIMEOUT 45 LABELS mpi)
+if(ARCH_ENABLE_MPI)
+    add_test(NAME mpi_topology_neighbors_2
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_topology_neighbors> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(mpi_topology_neighbors_2 PROPERTIES
+        TIMEOUT 45 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
+endif()
+
+# Actual coarse/fine payloads use the same Host cell recipes on the source owner.
+add_executable(arch_coarse_fine_exchange tests/host/amr/test_coarse_fine_exchange.cpp
+    src/driver/runtime/TopologyIdentityRegistry.cpp)
+arch_configure_host_test(arch_coarse_fine_exchange "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_coarse_fine_exchange PRIVATE arch_build_contract)
+add_test(NAME coarse_fine_exchange COMMAND arch_coarse_fine_exchange)
+set_tests_properties(coarse_fine_exchange PROPERTIES TIMEOUT 60 LABELS mpi)
+if(ARCH_ENABLE_MPI)
+    add_test(NAME mpi_coarse_fine_exchange_2
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_coarse_fine_exchange> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(mpi_coarse_fine_exchange_2 PROPERTIES
+        TIMEOUT 60 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
+endif()
+
+# Source-owned stage values publish to the original coarse-owner flux arena.
+add_executable(arch_flux_reflux_exchange tests/host/amr/test_flux_reflux_exchange.cpp
+    src/driver/runtime/TopologyIdentityRegistry.cpp)
+arch_configure_host_test(arch_flux_reflux_exchange "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_flux_reflux_exchange PRIVATE arch_build_contract)
+add_test(NAME flux_reflux_exchange COMMAND arch_flux_reflux_exchange)
+set_tests_properties(flux_reflux_exchange PROPERTIES TIMEOUT 180 LABELS mpi)
+if(ARCH_ENABLE_MPI)
+    add_test(NAME mpi_flux_reflux_exchange_2
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_flux_reflux_exchange> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(mpi_flux_reflux_exchange_2 PROPERTIES
+        TIMEOUT 180 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
+endif()
+
+# Complete distributed face/corner ordering uses the existing exchange recipes.
+add_executable(arch_distributed_exchange tests/host/amr/test_distributed_exchange.cpp
+    src/driver/runtime/TopologyIdentityRegistry.cpp)
+arch_configure_host_test(arch_distributed_exchange "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_distributed_exchange PRIVATE arch_build_contract)
+add_test(NAME distributed_exchange COMMAND arch_distributed_exchange)
+set_tests_properties(distributed_exchange PROPERTIES TIMEOUT 300 LABELS mpi)
+if(ARCH_ENABLE_MPI)
+    add_test(NAME mpi_distributed_exchange_2
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_distributed_exchange> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(mpi_distributed_exchange_2 PROPERTIES
+        TIMEOUT 300 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=1" LABELS mpi)
+endif()
+
+# Original Host integrators consume the explicit distributed stage boundary.
+add_executable(arch_distributed_hydro_stage tests/host/amr/test_distributed_hydro_stage.cpp)
+arch_configure_host_test(arch_distributed_hydro_stage "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_distributed_hydro_stage PRIVATE arch_driver_runtime arch_diffusion_math)
+add_test(NAME distributed_hydro_stage COMMAND arch_distributed_hydro_stage 1)
+set_tests_properties(distributed_hydro_stage PROPERTIES TIMEOUT 300 LABELS mpi ENVIRONMENT "OMP_NUM_THREADS=1;OMP_DYNAMIC=FALSE")
+if(ARCH_ENABLE_MPI)
+    set(hydro_stage_threads 1)
+    if(ARCH_ENABLE_OPENMP)
+        list(APPEND hydro_stage_threads 2)
+    endif()
+    foreach(threads IN LISTS hydro_stage_threads)
+        add_test(NAME mpi_distributed_hydro_stage_2_omp${threads}
+            COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+                ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_distributed_hydro_stage> ${MPIEXEC_POSTFLAGS} ${threads})
+        set_tests_properties(mpi_distributed_hydro_stage_2_omp${threads} PROPERTIES
+            TIMEOUT 300 PROCESSORS 2 ENVIRONMENT "OMP_NUM_THREADS=${threads};OMP_DYNAMIC=FALSE" LABELS mpi)
     endforeach()
 endif()

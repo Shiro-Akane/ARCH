@@ -1943,6 +1943,15 @@ void test_persistent_clock_and_overflow()
                && second.completion.value == 3,
            "publication clocks stay monotonic");
 
+    clock.retain_high_watermarks(10, 7);
+    clock.retain_high_watermarks(4, 2);
+    const auto retry = clock.next_publication();
+    expect(retry.completion.value == 11 && retry.version == StateVersion{8},
+           "collective recovery skips issued identities and cannot lower either watermark");
+    clock.retain_high_watermarks(3, 12);
+    expect(clock.next_completion().value == 12 && clock.last_version() == 12,
+           "independent version watermark does not lower the completion watermark");
+
     MonotonicSchedulerClock token_overflow(
         std::numeric_limits<std::uint64_t>::max(), 1);
     expect_throws<std::overflow_error>(
@@ -2145,13 +2154,13 @@ void test_production_lane_fingerprints_and_authority_absence()
         const auto domain = lane->find("require_hydro_geometry_domain(");
         const auto clear = lane->find("amr_ctrl.flux_register.Clear()");
         expect(domain != std::string::npos && clear != std::string::npos && domain < clear
-                   && lane->find("require_hydro_geometry_domain(amr_ctrl,boundary_condition,hydro)")
+                   && lane->find("require_hydro_geometry_domain(amr_ctrl, boundary_condition, hydro)")
                         != std::string::npos,
                "actual solver and domain preflight precede register mutation");
         expect(source_occurrences(*lane, "execute_stage(") == 0
                    && source_occurrences(*lane, "rotate_slots(") == 0,
                "each Hydro adapter delegates scheduler ordering");
-        expect(source_occurrences(*lane, "amr_ctrl.ApplyReflux(dt,&amr::Block::fluid_state)") == 1,
+        expect(source_occurrences(*lane, "amr_ctrl.ApplyReflux(dt, &amr::Block::fluid_state)") == 1,
                "each Hydro physical adapter supplies one reflux callback");
         expect(source_occurrences(*lane, "require_hydro_geometry_domain(") == 1
                    && source_occurrences(*lane, "TimeIntegration::synchronize_domain_boundary(") == 1
@@ -2193,14 +2202,14 @@ void test_production_lane_fingerprints_and_authority_absence()
     expect(sync_begin!=std::string::npos&&sync_end!=std::string::npos,
            "one actual-domain boundary helper remains discoverable");
     const auto sync=boundary_helper.substr(sync_begin,sync_end-sync_begin);
-    const auto physical_boundary = sync.find("apply_domain_boundary(control,boundary,member)");
+    const auto physical_boundary = sync.find("apply_domain_boundary(control, boundary, member)");
     const auto exchange = sync.find("ghost_exchange.ExecuteExchange(");
     expect(source_occurrences(boundary_helper,"inline void synchronize_domain_boundary(")==1
                && physical_boundary!=std::string::npos && exchange!=std::string::npos
                && physical_boundary<exchange
-               && source_occurrences(sync,"apply_domain_boundary(control,boundary,member)")==1
+               && source_occurrences(sync,"apply_domain_boundary(control, boundary, member)")==1
                && source_occurrences(sync,"ghost_exchange.ExecuteExchange(")==1
-               && sync.find("member,handles)")!=std::string::npos
+               && sync.find("member, handles)")!=std::string::npos
                && sync.find("publish_ghost(")==std::string::npos,
            "shared boundary owner completes actual physical/exchange data while scheduler owns GhostValid");
 
@@ -2299,7 +2308,25 @@ void test_production_lane_fingerprints_and_authority_absence()
                && completed_device.find("ExecutionSide::Device, payload.topology_witness.version,")!=std::string::npos
                && completed_device.find("payload.topology_witness.completion);")!=std::string::npos,
            "completed Device migration publishes its actual batch witness and original state identities");
-    expect(driver.find("handle.uid.value") == std::string::npos,
+    // Logical UIDs now travel in the native ownership packet. Restrict this
+    // invariant to registration witnesses instead of banning wire identities
+    // everywhere in DriverRegrid.
+    const auto ownership_begin=driver_regrid.find("void DriverRuntime::migrate_host_leaf(");
+    const auto ownership_registration=driver_regrid.find(
+        "const auto witness=scheduler_clock.next_publication();",ownership_begin);
+    const auto ownership_ready=driver_regrid.find("transaction->mark_ready();",ownership_registration);
+    expect(ownership_begin!=std::string::npos && ownership_registration!=std::string::npos
+               && ownership_ready!=std::string::npos,
+           "ownership registration has a real scheduler publication boundary");
+    const auto ownership_ledger=driver_regrid.substr(
+        ownership_registration,ownership_ready-ownership_registration);
+    expect(driver_runtime.find("handle.uid.value") == std::string::npos
+               && host_ledger.find("handle.uid.value") == std::string::npos
+               && completed_device.find("handle.uid.value") == std::string::npos
+               && ownership_ledger.find("handle.uid.value") == std::string::npos
+               && source_occurrences(ownership_ledger,"scheduler_clock.next_publication()")==1
+               && source_occurrences(ownership_ledger,"register_block(handle,witness.version,witness.completion)")==1
+               && source_occurrences(ownership_ledger,"witness.version,witness.completion);")==2,
            "registration batch witnesses never depend on handle identity");
     expect(driver.find("scheduler_clock =") == std::string::npos,
            "Driver never resets persistent scheduler clock");

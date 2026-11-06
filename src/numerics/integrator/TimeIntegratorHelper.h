@@ -38,6 +38,7 @@
 #include "amr/AMRControl.h"
 #include "data/FluidState.h"
 #include "driver/runtime/StateResidency.h"
+#include "driver/schedule/StageScheduler.h"
 #include "grid/Grid.h"
 #include "numerics/curvilinear/GridMetrics.h"
 #include "numerics/flux/InvariantDomainFlux.h"
@@ -89,9 +90,23 @@ namespace TimeIntegration
     inline void synchronize_domain_boundary(amr::AMRControl& control,BCPolicy& boundary,
         FluidState amr::Block::* member,std::span<const amr::BlockHandle> handles)
     {
-        apply_domain_boundary(control,boundary,member);
-        control.ghost_exchange.ExecuteExchange(control.pool,control.tree,
-            control.tree->GetRootGridDim(),member,handles);
+        const bool distributed = arch::scheduler::distributed_hydro_bound();
+        std::exception_ptr failure;
+        try {
+            apply_domain_boundary(control, boundary, member);
+        } catch (...) {
+            failure = std::current_exception();
+        }
+        if (distributed)
+            control.CompleteDistributedHydroPhase(failure);
+        else if (failure)
+            std::rethrow_exception(failure);
+        if (distributed)
+            control.ghost_exchange.ExecuteDistributedExchange(
+                control.pool, control.tree, control.tree->GetRootGridDim(), member, handles);
+        else
+            control.ghost_exchange.ExecuteExchange(control.pool, control.tree,
+                                                   control.tree->GetRootGridDim(), member, handles);
     }
 
     /** Describe a rejected composition without changing its values or tolerance.

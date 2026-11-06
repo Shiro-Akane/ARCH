@@ -38,6 +38,27 @@ struct BlockHandle {
     friend constexpr auto operator<=>(const BlockHandle&, const BlockHandle&) = default;
 };
 
+struct LogicalBlockKey {
+    int dimension = 0;
+    int level = 0;
+    std::uint32_t logical_x1 = 0;
+    std::uint32_t logical_x2 = 0;
+    std::uint32_t logical_x3 = 0;
+    friend constexpr auto operator<=>(const LogicalBlockKey&, const LogicalBlockKey&) = default;
+};
+
+/** A leaf or neighbor descriptor; only the owning rank binds local storage.
+ * Handles are absent during local tree construction, then supplied by the
+ * identity registry at the publication boundary. No field pointers are kept.
+ */
+struct BlockTopology {
+    LogicalBlockKey logical{};
+    BlockHandle handle{};
+    int owner_rank = -1;
+    int pool_index = -1;
+    friend constexpr bool operator==(const BlockTopology&, const BlockTopology&) = default;
+};
+
 struct RootLogicalKey {
     std::int64_t root_i = 0;
     std::int64_t root_j = 0;

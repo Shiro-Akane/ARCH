@@ -11,8 +11,11 @@
 #include "driver/runtime/TopologyIdentityRegistry.h"
 
 #include <algorithm>
+#include <bit>
+#include <limits>
 #include <iostream>
 #include <memory>
+#include <new>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -233,6 +236,251 @@ std::shared_ptr<amr::AmrTree> make_regrid_tree(
         root.grid.Is() + amr::BLOCK_NX / 2,
         root.grid.Js(), root.grid.Ks())] = 9.0;
     return tree;
+}
+
+
+// Reservation ownership is unique and cannot be rebound over a live batch.
+static_assert(!std::is_copy_constructible_v<amr::MemoryPool::Reservation>);
+static_assert(std::is_nothrow_move_constructible_v<amr::MemoryPool::Reservation>);
+static_assert(!std::is_move_assignable_v<amr::MemoryPool::Reservation>);
+
+void test_pool_reservation()
+{
+    amr::MemoryPool pool(5, 1);
+    const int old = pool.AllocateBlock();
+    auto* address = pool.GetBlock(old).fluid_state.rho.data();
+    pool.GetBlock(old).fluid_state.rho.front() = 7.0;
+    auto counts = [&](int active, int available, int reserved) {
+        expect(pool.GetNumActiveBlocks() == active
+                   && pool.GetNumAvailableBlocks() == available
+                   && pool.GetNumReservedBlocks() == reserved
+                   && active + available + reserved == pool.GetCapacity(),
+               "pool capacity accounting drifted");
+        expect(pool.GetBlock(old).fluid_state.rho.data() == address
+                   && pool.GetBlock(old).fluid_state.rho.front() == 7.0,
+               "reservation invalidated an existing field/view");
+    };
+    for (const std::size_t count : {std::size_t(5),
+                                   std::numeric_limits<std::size_t>::max()}) {
+        bool rejected = false;
+        try { auto batch = pool.ReserveBlocks(count); }
+        catch (const std::runtime_error&) { rejected = true; }
+        expect(rejected, "oversized reservation accepted");
+        counts(1, 4, 0);
+    }
+    { auto empty = pool.ReserveBlocks(0); empty.CommitNoexcept(); }
+    {
+        auto batch = pool.ReserveBlocks(3);
+        counts(1, 1, 3);
+        const int outside = pool.AllocateBlock();
+        expect(outside == 4, "ordinary allocation stole a reserved slot");
+        expect(batch.AllocateBlock() == 1, "reservation allocation order changed");
+        counts(3, 0, 2);
+        auto moved = std::move(batch);
+        expect_rejected([&] { batch.AllocateBlock(); }, "moved batch remained usable");
+        expect(moved.AllocateBlock() == 2, "moved batch lost its next slot");
+        counts(4, 0, 1);
+        pool.FreeBlock(outside);
+        // Abandon both constructed blocks and the unused slot.
+    }
+    counts(1, 4, 0);
+    {
+        auto retry = pool.ReserveBlocks(4);
+        for (int expected = 1; expected < 5; ++expected)
+            expect(retry.AllocateBlock() == expected, "abort changed free-list order");
+        expect_rejected([&] { retry.AllocateBlock(); }, "exhausted batch accepted");
+        counts(5, 0, 0);
+        retry.CommitNoexcept();
+        expect_rejected([&] { retry.AllocateBlock(); }, "committed batch remained usable");
+    }
+    counts(5, 0, 0);
+    for (int id = 1; id < 5; ++id) pool.FreeBlock(id);
+    counts(1, 4, 0);
+}
+
+struct RegridStorageSnapshot {
+    std::vector<int> ids, flags;
+    std::vector<const double*> pointers;
+    std::vector<std::uint64_t> words;
+    explicit RegridStorageSnapshot(const amr::AmrTree& tree,
+                                   const amr::MemoryPool& pool)
+        : ids(tree.GetActiveBlocks())
+    {
+        for (int id : ids) {
+            const auto& block = pool.GetBlock(id);
+            flags.push_back(block.refine_flag);
+            for (auto slot : {&amr::Block::fluid_state, &amr::Block::state_next,
+                              &amr::Block::state_scratch}) {
+                const auto& state = block.*slot;
+                for (const auto* field : {&state.rho, &state.mom_u, &state.mom_v,
+                         &state.mom_w, &state.eng, &state.enuc_rate, &state.mass_fractions}) {
+                    pointers.push_back(field->data());
+                    words.push_back(field->size());
+                    for (double value : *field)
+                        words.push_back(std::bit_cast<std::uint64_t>(value));
+                }
+            }
+        }
+    }
+    void require_unchanged(const amr::AmrTree& tree, const amr::MemoryPool& pool) const {
+        const RegridStorageSnapshot actual(tree, pool);
+        expect(ids == actual.ids && flags == actual.flags
+                   && pointers == actual.pointers && words == actual.words,
+               "failed preparation changed old topology, flags, native fields or addresses");
+    }
+};
+
+void test_regrid_batch_capacity()
+{
+    // Two parents need all eight candidates simultaneously, not four reusable
+    // slots. Old parents remain live until publication.
+    for (int roots : {1, 2}) {
+        auto config = regrid_config(0.01, 2);
+        config.grid.nblockx1 = roots;
+        config.grid.amr_max_blocks = roots * 5 - 1;
+        std::shared_ptr<amr::MemoryPool> pool;
+        auto tree = make_regrid_tree(config, pool);
+        auto mark = [&] {
+            for (int id : tree->GetActiveBlocks()) pool->GetBlock(id).refine_flag = 1;
+        };
+        const RegridStorageSnapshot old(*tree, *pool);
+        int callbacks = 0;
+        bool rejected = false;
+        try {
+            auto candidate = tree->PrepareRegrid(config, {},
+                [&](const auto&, int) { ++callbacks; }, mark);
+        } catch (const std::runtime_error&) { rejected = true; }
+        expect(rejected && callbacks == 0, "short pool failed after constructing a candidate");
+        expect(pool->GetNumActiveBlocks() == roots
+                   && pool->GetNumReservedBlocks() == 0
+                   && pool->GetNumAvailableBlocks() == roots * 4 - 1,
+               "capacity rejection leaked a slot");
+        old.require_unchanged(*tree, *pool);
+    }
+
+    auto config = regrid_config(0.01, 2);
+    config.grid.nblockx1 = 2;
+    config.grid.amr_max_blocks = 10;
+    std::shared_ptr<amr::MemoryPool> pool;
+    auto tree = make_regrid_tree(config, pool);
+    auto mark = [&] {
+        for (int id : tree->GetActiveBlocks()) pool->GetBlock(id).refine_flag = 1;
+    };
+    const RegridStorageSnapshot old(*tree, *pool);
+    for (int failure = 1; failure <= 8; ++failure) {
+        int calls = 0;
+        bool rejected = false;
+        try {
+            auto candidate = tree->PrepareRegrid(config, {},
+                [&](const auto&, int id) {
+                    expect(id == 1 + ++calls, "candidate allocation order changed");
+                    expect(pool->GetNumActiveBlocks() == 2 + calls
+                               && pool->GetNumReservedBlocks() == 8 - calls
+                               && pool->GetNumAvailableBlocks() == 0,
+                           "candidate does not own its full temporary capacity");
+                    if (calls == failure) throw std::bad_alloc();
+                }, mark);
+        } catch (const std::bad_alloc&) { rejected = true; }
+        expect(rejected && calls == failure, "staged fault was not exercised");
+        old.require_unchanged(*tree, *pool);
+        expect(pool->GetNumActiveBlocks() == 2
+                   && pool->GetNumReservedBlocks() == 0
+                   && pool->GetNumAvailableBlocks() == 8,
+               "partial candidate failure leaked reserved/constructed slots");
+    }
+    {
+        auto receive_capacity = pool->ReserveBlocks(1);
+        bool rejected = false;
+        try { auto candidate = tree->PrepareRegrid(config, {}, {}, mark); }
+        catch (const std::runtime_error&) { rejected = true; }
+        expect(rejected && receive_capacity.remaining() == 1,
+               "regrid ignored another live reservation");
+        old.require_unchanged(*tree, *pool);
+    }
+    {
+        auto candidate = tree->PrepareRegrid(config, {}, {}, mark);
+        expect(candidate.proposed_active_blocks().size() == 8
+                   && pool->GetNumActiveBlocks() == 10,
+               "exact peak capacity was rejected");
+        auto moved = std::move(candidate);
+        moved.AbortNoexcept();
+    }
+    old.require_unchanged(*tree, *pool);
+
+    // Restriction also needs one temporary parent while all four children live.
+    config.grid.nblockx1 = 1;
+    config.grid.amr_max_blocks = 5;
+    tree = make_regrid_tree(config, pool);
+    expect(tree->Regrid(config), "failed to create the coarsening fixture");
+    expect(pool->GetNumActiveBlocks() == 4 && pool->GetNumAvailableBlocks() == 1,
+           "publication did not release the old parent");
+    const RegridStorageSnapshot children(*tree, *pool);
+    auto coarsen = [&] {
+        for (int id : tree->GetActiveBlocks()) pool->GetBlock(id).refine_flag = -1;
+    };
+    config.amr.refine_on_jeans = true;
+    int gates = 0;
+    auto gate = [&](const auto&, auto) { ++gates; return true; };
+    {
+        auto held = pool->ReserveBlocks(1);
+        bool rejected = false;
+        try { auto candidate = tree->PrepareRegrid(config, {}, {}, coarsen, false, gate); }
+        catch (const std::runtime_error&) { rejected = true; }
+        expect(rejected && gates == 1, "coarsen capacity/gate ordering changed");
+        children.require_unchanged(*tree, *pool);
+    }
+    gates = 0;
+    {
+        auto candidate = tree->PrepareRegrid(config, {}, {}, coarsen, false, gate);
+        expect(gates == 1 && candidate.proposed_active_blocks().size() == 1
+                   && pool->GetNumActiveBlocks() == 5 && pool->GetNumReservedBlocks() == 0,
+               "restriction reservation repeated the physical selection gate");
+    }
+    children.require_unchanged(*tree, *pool);
+    expect(pool->GetNumActiveBlocks() == 4 && pool->GetNumAvailableBlocks() == 1,
+           "restriction abort leaked its parent slot");
+
+    // Swap which root is refined. Refinement and restriction must keep their
+    // original order even though capacity is now reserved for both up front.
+    config = regrid_config(0.01, 2);
+    config.grid.nblockx1 = 2;
+    config.grid.amr_max_blocks = 10;
+    tree = make_regrid_tree(config, pool);
+    expect(tree->Regrid(config) && tree->GetActiveBlocks().size() == 5,
+           "mixed relation fixture did not create five leaves");
+    const RegridStorageSnapshot mixed(*tree, *pool);
+    std::vector<std::array<int, 3>> expected_geometry;
+    for (int id : tree->GetActiveBlocks()) {
+        const auto& block = pool->GetBlock(id);
+        if (block.level == 0) {
+            for (int child = 0; child < 4; ++child)
+                expected_geometry.push_back({1, 2 + (child & 1), (child >> 1)});
+        } else if (block.logical_x1 == 0 && block.logical_x2 == 0) {
+            expected_geometry.push_back({0, 0, 0});
+        }
+    }
+    std::vector<int> allocations;
+    {
+        auto candidate = tree->PrepareRegrid(config, {},
+            [&](const auto&, int id) { allocations.push_back(id); },
+            [&] {
+                for (int id : tree->GetActiveBlocks()) {
+                    auto& block = pool->GetBlock(id);
+                    block.refine_flag = block.level == 0 ? 1 : -1;
+                }
+            });
+        expect(allocations.size() == 5 && candidate.proposed_active_blocks().size() == 5,
+               "mixed relation selection changed");
+        for (std::size_t index = 0; index < allocations.size(); ++index) {
+            const auto& block = pool->GetBlock(allocations[index]);
+            expect((std::array<int, 3>{block.level, static_cast<int>(block.logical_x1),
+                        static_cast<int>(block.logical_x2)}) == expected_geometry[index],
+                   "batch reservation reordered refinement/restriction construction");
+        }
+    }
+    mixed.require_unchanged(*tree, *pool);
+    expect(pool->GetNumActiveBlocks() == 5 && pool->GetNumAvailableBlocks() == 5,
+           "mixed relation abort leaked capacity");
 }
 
 void test_dimension_plan_cardinality()
@@ -706,6 +954,8 @@ int main()
         test_finalize_failure_requires_abort();
         test_move_poison_and_reentrancy();
         test_scope_validation();
+        test_pool_reservation();
+        test_regrid_batch_capacity();
         test_dimension_plan_cardinality();
         test_device_migration_metadata_rollback();
         test_prepared_regrid_commit_and_abort();

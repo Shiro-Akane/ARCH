@@ -25,6 +25,7 @@
 
 #include "amr/transfer/ConservativeRestriction.h"
 #include "amr/topology/Morton.h"
+#include "amr/topology/BlockHandle.h"
 #include "amr/transfer/RegridTransferMath.h"
 
 #include "data/FluidState.h"
@@ -66,7 +67,7 @@ struct Block {
     struct FaceNeighbors {
         int count = 0;
         int level_diff = 0; // -1: coarse, 0: same, 1: fine
-        int ids[4] = {-1, -1, -1, -1};
+        BlockTopology blocks[4]{};
     };
     FaceNeighbors face_neighbors[6];
 
@@ -90,7 +91,8 @@ struct Block {
         for (int i = 0; i < 6; ++i) {
             face_neighbors[i].count = 0;
             face_neighbors[i].level_diff = 0;
-            for (int j = 0; j < 4; ++j) face_neighbors[i].ids[j] = -1;
+            for (auto& neighbor : face_neighbors[i].blocks)
+                neighbor = {};
         }
         active = true;
         refine_flag = 0;
@@ -138,9 +140,11 @@ private:
      * exact order; return only scalar metadata. InitGeometry and identity
      * verification reuse this owner; no second rounded coordinate formula.
      */
-    OrdinaryLogicalGeometry ordinary_logical_geometry(const Grid& root_grid,
-        double root_dx1,double root_dx2,double root_dx3) const
-    {
+    static OrdinaryLogicalGeometry ordinary_logical_geometry(const Grid& root_grid, double root_dx1,
+                                                             double root_dx2, double root_dx3,
+                                                             int level, std::uint32_t logical_x1,
+                                                             std::uint32_t logical_x2,
+                                                             std::uint32_t logical_x3) {
         if(level<0||level>kMaxRefinementLevel)
             throw std::invalid_argument("Logical Block level is not representable");
         // Calculate cell sizes at this level
@@ -172,16 +176,25 @@ public:
                       double root_dx1, double root_dx2, double root_dx3)
     {
 
-        const auto metadata=ordinary_logical_geometry(root_grid,root_dx1,root_dx2,root_dx3);
+        grid =
+            MakeLogicalGrid(root_grid, {root_grid.dim, level, logical_x1, logical_x2, logical_x3},
+                            root_dx1, root_dx2, root_dx3);
+    }
+
+    /** Same native Grid construction for a topology endpoint; owns no fluid storage. */
+    static Grid MakeLogicalGrid(const Grid& root_grid, const LogicalBlockKey& key, double root_dx1,
+                                double root_dx2, double root_dx3) {
+        const auto metadata =
+            ordinary_logical_geometry(root_grid, root_dx1, root_dx2, root_dx3, key.level,
+                                      key.logical_x1, key.logical_x2, key.logical_x3);
         // Initialize local grid topology wrapper
-        grid = Grid(MAX_NG,
-                    metadata.x1_min, metadata.x1_max,
-                    metadata.x2_min, metadata.x2_max,
-                    metadata.x3_min, metadata.x3_max,
-                    root_grid.nblockx1, root_grid.nblockx2, root_grid.nblockx3);
+        Grid grid = Grid(MAX_NG, metadata.x1_min, metadata.x1_max, metadata.x2_min, metadata.x2_max,
+                         metadata.x3_min, metadata.x3_max, root_grid.nblockx1, root_grid.nblockx2,
+                         root_grid.nblockx3);
         grid.geometry = root_grid.geometry;
         grid.dim = root_grid.dim;
         grid.InitializeTopology();
+        return grid;
     }
     /** Require exact root/logical/local geometry identity, without BC authority.
      * Workflow: validate chart and checked integer topology -> generate the
@@ -228,11 +241,12 @@ public:
             ?(root.x2_max-root.x2_min)/(root.nblockx2*BLOCK_NY):0.;
         const double root_dx3=root.nblockx3>0
             ?(root.x3_max-root.x3_min)/(root.nblockx3*BLOCK_NZ):0.;
-        const auto metadata=ordinary_logical_geometry(root,root_dx1,root_dx2,root_dx3);
+        const auto metadata = ordinary_logical_geometry(root, root_dx1, root_dx2, root_dx3, level,
+                                                        logical_x1, logical_x2, logical_x3);
 
-            if(!same(grid.x1_min,metadata.x1_min)||!same(grid.x1_max,metadata.x1_max)
-                ||!same(grid.x2_min,metadata.x2_min)||!same(grid.x2_max,metadata.x2_max))
-                throw std::invalid_argument("Logical ordinary Block endpoints changed");
+        if (!same(grid.x1_min, metadata.x1_min) || !same(grid.x1_max, metadata.x1_max) ||
+            !same(grid.x2_min, metadata.x2_min) || !same(grid.x2_max, metadata.x2_max))
+            throw std::invalid_argument("Logical ordinary Block endpoints changed");
         
         // Keep the inactive x3 constructor arithmetic unchanged.
         if(!same(grid.x3_min,metadata.x3_min)||!same(grid.x3_max,metadata.x3_max)

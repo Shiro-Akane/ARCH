@@ -43,6 +43,7 @@ struct FluidState;
 struct Grid;
 struct SpeciesManager;
 namespace amr { struct AMRControl; }
+namespace Numerics { class IHydroSolver; }
 namespace arch::driver {
 struct RegridMeasurement {
     int step;
@@ -69,6 +70,13 @@ public:
 
     void initialize_topology();
     bool perform_regrid(int step, double time, bool jeans_repair_only = false);
+    /** Collective owner-only Host transfer at a quiescent accepted boundary.
+     * Observers see completed local phases and may reject before publication.
+     * This narrow native consumer does not enable application MPI-AMR.
+     */
+    enum class LeafTransferPhase { Reserved, FieldReceived, TopologyActivated, ReadyToPublish };
+    void migrate_host_leaf(amr::AmrEndpoint source, int destination_rank,
+        const std::function<void(LeafTransferPhase)>& observer = {});
     void ensure_jeans_resolution(int step, double time);
     // Explicit diagnostic/enforcement request; never invoked for disabled JENS.
     std::vector<double> evaluate_current_jeans_resolution();
@@ -85,6 +93,14 @@ public:
     void upload_initial_state();
 
     scheduler::StageExecutionContext stage_context();
+    /** Native static mixed-level Host lane; application preflight remains separate. */
+    bool distributed_hydro_topology() const;
+    void begin_distributed_hydro_attempt(const Numerics::IHydroSolver*, const SimulationController&);
+    void agree_distributed_hydro_interval(double dt) const;
+    void commit_distributed_hydro_attempt(double dt);
+    void discard_distributed_hydro_attempt() noexcept;
+    void complete_distributed_hydro_recovery();
+
     const std::vector<amr::BlockHandle>& handles() const { return stage_handles; }
     backend::ComputeBackend* backend() const { return compute_backend.get(); }
     amr::AMRControl& control() const { return amr_ctrl; }
@@ -115,6 +131,8 @@ public:
         diffusion_activity_totals_=value;
     }
 private:
+    struct HostHydroAttempt;
+    std::unique_ptr<HostHydroAttempt> host_hydro_attempt_;
     bool diffusion_activity_enabled_=false;
     std::optional<backend::DiffusionActivityReceipt> diffusion_activity_half_;
     DiffusionActivityTotals diffusion_activity_totals_{};

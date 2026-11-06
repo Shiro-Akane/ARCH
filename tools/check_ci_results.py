@@ -63,9 +63,11 @@ DRIVER_CUDA_COVERAGE_ANCHORS = frozenset({
 })
 MPI_OFF_COVERAGE_ANCHORS = frozenset({
     "mpi_execution_preflight", "execution_preflight_contract", "runtime_probe_and_capabilities",
+    "topology_transaction", "topology_ownership", "topology_neighbors", "coarse_fine_exchange", "flux_reflux_exchange", "distributed_exchange", "distributed_hydro_stage",
 })
 MPI_COVERAGE_ANCHORS = MPI_OFF_COVERAGE_ANCHORS | {
     "mpi_fixed_grid_1", "mpi_fixed_grid_2", "mpi_fixed_grid_4",
+    "mpi_topology_ownership_2", "mpi_topology_neighbors_2", "mpi_coarse_fine_exchange_2", "mpi_flux_reflux_exchange_2", "mpi_distributed_exchange_2", "mpi_distributed_hydro_stage_2_omp1", "mpi_distributed_hydro_stage_2_omp2",
 }
 PROFILES = {"cpu": CPU_COVERAGE_ANCHORS, "driver-cuda": DRIVER_CUDA_COVERAGE_ANCHORS,
             "mpi": MPI_COVERAGE_ANCHORS, "mpi-off": MPI_OFF_COVERAGE_ANCHORS}
