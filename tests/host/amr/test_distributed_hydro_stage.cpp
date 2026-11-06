@@ -23,6 +23,21 @@
 #include <mpi.h>
 #endif
 namespace allocation_fault { inline thread_local int fail_after=0; }
+#if ARCH_MPI_ENABLED
+namespace ownership_wire_fault { inline int mode=0; }
+extern "C" int MPI_Send(const void* buffer,int count,MPI_Datatype type,int dest,int tag,MPI_Comm comm) {
+    if(tag!=49||ownership_wire_fault::mode==0)
+        return PMPI_Send(buffer,count,type,dest,tag,comm);
+    if(ownership_wire_fault::mode==4)
+        return PMPI_Send(buffer,count-1,type,dest,tag,comm);
+    auto* words=const_cast<std::uint64_t*>(static_cast<const std::uint64_t*>(buffer));
+    const int index=ownership_wire_fault::mode==1?0:ownership_wire_fault::mode==2?1:ownership_wire_fault::mode==5?14:21;
+    const auto original=words[index];words[index]^=1;
+    const int result=PMPI_Send(buffer,count,type,dest,tag,comm);
+    words[index]=original;return result;
+}
+#endif
+
 void* operator new(std::size_t bytes) {
     if(allocation_fault::fail_after>0&&--allocation_fault::fail_after==0) {
         throw std::bad_alloc();
@@ -406,6 +421,226 @@ struct MacroFieldWitness {
         }
     }
 };
+struct LeafTopologyWitness {
+    int id, index;
+    std::array<amr::Block::FaceNeighbors,6> faces;
+    std::array<bool,6> coarse_fine;
+    explicit LeafTopologyWitness(const amr::Block& b):id(b.id),index(b.active_index) {
+        std::copy_n(b.face_neighbors,6,faces.begin());
+        std::copy_n(b.grid.amr_coarse_fine_face,6,coarse_fine.begin());
+    }
+    void check(const amr::Block& b) const {
+        require(b.id==id&&b.active_index==index,"ownership rollback lost native index");
+        for(int face=0;face<6;++face) {
+            const auto& a=b.face_neighbors[face];const auto& old=faces[face];
+            require(a.count==old.count&&a.level_diff==old.level_diff
+                &&b.grid.amr_coarse_fine_face[face]==coarse_fine[face],"ownership rollback lost face metadata");
+            for(int n=0;n<4;++n)require(a.blocks[n]==old.blocks[n],"ownership rollback lost global adjacency");
+        }
+    }
+};
+amr::AmrEndpoint leaf_endpoint(const RuntimeRun& run,int owner) {
+    amr::AmrEndpoint source{{2,1,2,0,0},{}};
+    if(rank==owner) {
+        const auto& ids=run.f.control.tree->GetActiveBlocks();
+        for(std::size_t i=0;i<ids.size();++i) {
+            const auto& b=run.f.control.pool->GetBlock(ids[i]);
+            if(b.level==1&&b.logical_x1==2&&b.logical_x2==0)
+                source.handle=run.runtime.handles()[i];
+        }
+    }
+#if ARCH_MPI_ENABLED
+    std::array<std::uint64_t,2> wire{source.handle.uid.value,source.handle.epoch.value};
+    MPI_Bcast(wire.data(),2,MPI_UINT64_T,owner,MPI_COMM_WORLD);
+    source.handle={{wire[0]},{wire[1]}};
+#endif
+    return source;
+}
+void serial_reference_step(Run& run,int method) {
+    SerialReferenceThreads serial;
+    scheduler::ScopedStageBinding binding(run.context,run.f.handles);
+    run.ghosts();run.step(method);run.ghosts();
+}
+void compare_transferred(const Fixture& actual,const Fixture& reference) { compare(actual,reference); }
+void runtime_leaf_transfer_cases() {
+    using Phase=driver::DriverRuntime::LeafTransferPhase;
+    if(ranks==1) {
+        Fixture actual(2,0,1,true);seed(actual,true);RuntimeRun run(actual);
+        bool rejected=false;
+        try {run.runtime.migrate_host_leaf({{2,1,2,0,0},run.runtime.handles().front()},1);}
+        catch(const std::exception&) {rejected=true;}
+        require(rejected,"serial runtime accepted a distributed ownership transfer");
+        return;
+    }
+    // Receipt metadata is transported, not reset or silently regenerated.
+    {
+        Fixture actual(2,rank,ranks,true),reference(2,0,1,true);
+        seed(actual,true);seed(reference,true);RuntimeRun a(actual);Run b(reference);
+        {SerialReferenceThreads serial;scheduler::ScopedStageBinding binding(b.context,reference.handles);b.ghosts();}
+        const auto mark=[](Fixture& f) {
+            for(int id:f.control.tree->GetActiveBlocks()) {
+                auto& block=f.control.pool->GetBlock(id);int slot=0;
+                for(auto member:MacroFieldWitness::slots(block)) {
+                    auto& r=member->stage_repairs;r.reset(2);
+                    r.block_uid=700+block.logical_x1;r.stage=++slot;
+                    r.time=-0.;r.position[0]=.125;r.position[1]=.25;r.position[2]=-.5;
+                    for(std::size_t i=0;i<r.values.size();++i)r.values[i]=slot*32+i+.125;
+                    // Payload slots are intentionally distinct even before a numerical step.
+                    for(double& value:member->enuc_rate)value=slot==2?-0.:-.125*slot;
+                }
+            }
+        };
+        mark(actual);mark(reference);
+        for(int destination:{0,1}) {
+            a.runtime.migrate_host_leaf(leaf_endpoint(a,1-destination),destination);
+            actual.handles=a.runtime.handles();compare(actual,reference);
+            for(int id:actual.control.tree->GetActiveBlocks()) {
+                const auto& block=actual.control.pool->GetBlock(id);
+                const auto& expected=reference.control.pool->GetBlock(reference.control.tree->FindBlock(
+                    block.level,block.logical_x1,block.logical_x2,block.logical_x3));
+                for(auto member:{&amr::Block::fluid_state,&amr::Block::state_next,&amr::Block::state_scratch})
+                    require(MacroFieldWitness::repair_equal((block.*member).stage_repairs,(expected.*member).stage_repairs),
+                        "ownership round trip changed native repair metadata");
+            }
+        }
+    }
+    // Euler/RK2/RK3: migrate an evolved fine leaf out and back, then continue
+    // the original macro driver and compare to an independent serial runtime.
+    for(int method=0;method<3;++method) {
+        Fixture actual(2,rank,ranks,true),reference(2,0,1,true);
+        seed(actual,true);seed(reference,true);RuntimeRun a(actual);Run b(reference);
+        {SerialReferenceThreads serial;scheduler::ScopedStageBinding binding(b.context,reference.handles);b.ghosts();}
+        a.step(method);
+        serial_reference_step(b,method);
+        compare(actual,reference);
+        auto endpoint=leaf_endpoint(a,1);
+        const auto uid=endpoint.handle.uid;
+        for(int destination:{0,1}) {
+            const auto old_epoch=endpoint.handle.epoch;
+            const auto old_handles=a.runtime.handles();
+            const auto before_ids=actual.control.tree->GetActiveBlocks();
+            std::vector<MacroFieldWitness> kept;
+            for(int id:before_ids) {
+                const auto& block=actual.control.pool->GetBlock(id);
+                if(!(block.level==1&&block.logical_x1==2&&block.logical_x2==0))
+                    kept.emplace_back(actual.control.pool->GetBlock(id),id);
+            }
+            const auto before_context=a.runtime.stage_context();
+            const auto previous_version=before_context.clock.last_version();
+            const auto previous_token=before_context.clock.last_token();
+            a.runtime.migrate_host_leaf(endpoint,destination,[&](Phase phase) {
+                if(phase==Phase::Reserved||phase==Phase::ReadyToPublish)
+                    require(actual.control.pool->GetNumActiveBlocks()==static_cast<int>(
+                        before_ids.size()+(rank==destination?1:0)),
+                        "ownership transfer did not retain sender/receiver temporary peak");
+            });
+            for(const auto& witness:kept)witness.check(actual.control);
+            actual.handles=a.runtime.handles();
+            endpoint=leaf_endpoint(a,destination);
+            require(endpoint.handle.uid==uid&&endpoint.handle.epoch.value==old_epoch.value+1,
+                "ownership move replaced UID or failed to advance epoch");
+            require(actual.handles.size()==static_cast<std::size_t>(
+                rank==0?(destination==0?2:1):(destination==0?3:4)),
+                "ownership move has the wrong local leaf count");
+            require(actual.control.pool->GetNumReservedBlocks()==0,"ownership move leaked reservation");
+            auto context=a.runtime.stage_context();
+            require(context.clock.last_version()==previous_version+1
+                &&context.clock.last_token()==previous_token+1,
+                "ownership publication did not use exactly one scheduler witness");
+            for(auto handle:a.runtime.handles()) {
+                const auto current=context.ledger.inspect({handle,state::StateSlot::Current});
+                require(current.interior.version.value==previous_version+1
+                    &&current.interior.completion.value==previous_token+1,
+                    "ownership ledger derived its witness from a block identity");
+            }
+            bool stale=false;
+            try {(void)context.ledger.inspect({old_handles.front(),state::StateSlot::Current});}
+            catch(const std::exception&) {stale=true;}
+            require(stale,"ownership publication kept old epoch readable");
+            compare_transferred(actual,reference);
+            a.step(method);
+            serial_reference_step(b,method);
+            compare(actual,reference);
+            require(bits(a.controller.t_current,b.context.step_start_time),"ownership changed accepted time");
+        }
+    }
+    // Every rejection must restore the same original arrays, indices, neighbors,
+    // handles and ledger owner; then the same runtime must complete a real retry.
+    for(int fault=1;fault<=21;++fault) {
+        Fixture actual(2,rank,ranks,true),reference(2,0,1,true);
+        seed(actual,true);seed(reference,true);RuntimeRun a(actual);Run b(reference);
+        {SerialReferenceThreads serial;scheduler::ScopedStageBinding binding(b.context,reference.handles);b.ghosts();}
+        const auto ids=actual.control.tree->GetActiveBlocks();
+        const auto handles=a.runtime.handles();
+        auto context=a.runtime.stage_context();auto* ledger=&context.ledger;
+        std::vector<MacroFieldWitness> fields;
+        std::vector<LeafTopologyWitness> topology;
+        for(int id:ids) {
+            fields.emplace_back(actual.control.pool->GetBlock(id),id);
+            topology.emplace_back(actual.control.pool->GetBlock(id));
+        }
+        const int available=actual.control.pool->GetNumAvailableBlocks();
+        auto endpoint=leaf_endpoint(a,1),request=endpoint;
+        if(rank==0&&fault==1)++request.handle.uid.value;
+        if(rank==1&&fault==2)++request.handle.epoch.value;
+        if(rank==0&&fault==3)++request.logical.logical_x2;
+        std::optional<amr::MemoryPool::Reservation> occupied;
+        if(rank==0&&fault==4)occupied.emplace(actual.control.pool->ReserveBlocks(available));
+        int source_id=rank==1?actual.control.tree->FindBlock(1,2,0,0):-1;
+        double last=0.;
+        if(rank==1&&fault==14) {
+            auto& rho=actual.control.pool->GetBlock(source_id).fluid_state.rho;
+            last=rho.back();rho.pop_back();
+        }
+        if(rank==1&&fault==16)actual.control.pool->GetBlock(source_id).refine_flag=1;
+#if ARCH_MPI_ENABLED
+        if(rank==1&&fault>=17)ownership_wire_fault::mode=fault-16;
+#endif
+        int received=0;bool rejected=false;
+        try {
+            a.runtime.migrate_host_leaf(request,0,[&](Phase phase) {
+                if(rank==0&&phase==Phase::FieldReceived)++received;
+                const bool fail=(fault==5&&rank==0&&phase==Phase::Reserved)
+                    ||(fault==6&&rank==0&&phase==Phase::FieldReceived&&received==1)
+                    ||(fault==7&&rank==0&&phase==Phase::FieldReceived&&received==10)
+                    ||(fault==8&&rank==0&&phase==Phase::FieldReceived&&received==21)
+                    ||(fault==9&&rank==1&&phase==Phase::TopologyActivated)
+                    ||(fault==10&&rank==0&&phase==Phase::TopologyActivated)
+                    ||(fault==11&&rank==1&&phase==Phase::ReadyToPublish)
+                    ||(fault==12&&rank==0&&phase==Phase::ReadyToPublish);
+                if(fail)throw std::runtime_error("injected ownership rejection");
+                if(rank==0&&((fault==13&&phase==Phase::ReadyToPublish)
+                    ||(fault==15&&phase==Phase::Reserved)))allocation_fault::fail_after=1;
+            });
+        } catch(const std::exception&) {rejected=true;}
+        allocation_fault::fail_after=0;
+#if ARCH_MPI_ENABLED
+        ownership_wire_fault::mode=0;
+#endif
+        int all=rejected?1:0;
+#if ARCH_MPI_ENABLED
+        MPI_Allreduce(MPI_IN_PLACE,&all,1,MPI_INT,MPI_MIN,MPI_COMM_WORLD);
+#endif
+        require(all==1,"ownership rejection did not reach every rank");
+        occupied.reset();
+        if(rank==1&&fault==14)actual.control.pool->GetBlock(source_id).fluid_state.rho.push_back(last);
+        if(rank==1&&fault==16)actual.control.pool->GetBlock(source_id).refine_flag=0;
+        require(actual.control.tree->GetActiveBlocks()==ids&&a.runtime.handles()==handles,
+            "failed ownership move changed topology publication");
+        require(&a.runtime.stage_context().ledger==ledger,"failed ownership move replaced ledger");
+        require(actual.control.pool->GetNumAvailableBlocks()==available
+            &&actual.control.pool->GetNumReservedBlocks()==0,"failed ownership move leaked capacity");
+        for(const auto& witness:fields)witness.check(actual.control);
+        for(const auto& witness:topology)witness.check(actual.control.pool->GetBlock(witness.id));
+        compare_transferred(actual,reference);
+        a.runtime.migrate_host_leaf(endpoint,0);actual.handles=a.runtime.handles();
+        compare_transferred(actual,reference);
+        a.runtime.migrate_host_leaf(leaf_endpoint(a,0),1);actual.handles=a.runtime.handles();
+        compare_transferred(actual,reference);
+        a.step(2);serial_reference_step(b,2);compare(actual,reference);
+    }
+    if(rank==0)std::cout<<"Ownership: 3 evolved round trips; 21 collective rejections with same-runtime retries\n";
+}
 void runtime_macro_cases() {
     for(int method=0;method<3;++method)for(bool wave:{false,true}) {
         Fixture actual(2,rank,ranks,true),reference(2,0,1,true);
@@ -653,6 +888,7 @@ int main(int argc, char** argv) {
         require(ranks == 1 || ranks == 2, "test requires one or two ranks");
         successful_cases();
         runtime_macro_cases();
+        runtime_leaf_transfer_cases();
         rejected_cases();
         receipt_and_boundary_rejections();
         if (rank == 0)

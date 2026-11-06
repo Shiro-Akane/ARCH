@@ -70,6 +70,13 @@ public:
 
     void initialize_topology();
     bool perform_regrid(int step, double time, bool jeans_repair_only = false);
+    /** Collective owner-only Host transfer at a quiescent accepted boundary.
+     * Observers see completed local phases and may reject before publication.
+     * This narrow native consumer does not enable application MPI-AMR.
+     */
+    enum class LeafTransferPhase { Reserved, FieldReceived, TopologyActivated, ReadyToPublish };
+    void migrate_host_leaf(amr::AmrEndpoint source, int destination_rank,
+        const std::function<void(LeafTransferPhase)>& observer = {});
     void ensure_jeans_resolution(int step, double time);
     // Explicit diagnostic/enforcement request; never invoked for disabled JENS.
     std::vector<double> evaluate_current_jeans_resolution();

@@ -310,6 +310,7 @@ jobs:
               --inventory "build-ci/mpi/reports/inventory-$mode.json"
             ctest --test-dir "build-ci/mpi/$mode" -R "$pattern" --parallel 1 \
               --no-tests=error --output-on-failure --timeout 300 \
+              --test-output-size-passed 65536 \
               --output-junit "$PWD/build-ci/mpi/reports/ctest-$mode.xml"
             python3 tools/check_ci_results.py --profile "$profile" \
               --inventory "build-ci/mpi/reports/inventory-$mode.json" \

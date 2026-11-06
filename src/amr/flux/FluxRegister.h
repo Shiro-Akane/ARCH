@@ -169,6 +169,14 @@ public:
   public:
     bool DistributedRefluxComplete() const noexcept { return distributed_reflux_applied_; }
 
+    /** Owner changes may retire slots only after all captured fluxes are consumed. */
+    void RequireOwnershipTransferBoundary() const {
+        std::lock_guard lock(identity_mutex_);
+        if (host_stage_capture_ || (distributed_stage_ && !distributed_reflux_applied_))
+            throw std::logic_error("ownership transfer requires completed flux/reflux");
+    }
+
+
     /** Complete Host flux owner backup; values live outside the original arena. */
     class HostSnapshot {
         friend class FluxRegister;

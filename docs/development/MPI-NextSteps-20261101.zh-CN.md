@@ -2,7 +2,7 @@
 
 ## 当前起点与状态
 
-2026-11-06 再次 fetch 后，上游 main 仍为 2e05e66e（v1.4.1）；固定网格 CPU MPI 候选为 e43183d0，扩大实验和证据提交为 c6b0d628。A1 全局拓扑身份与所有权已在 55708157 完成，A2 远端邻接在 d7bff58e 完成。B1 实际跨 rank 粗细 ghost 交换已在 cbdf0b73 完成，其 GitHub CI 41545717485 已核实成功。B2a 跨 rank 通量注册/reflux 已在 3ae3493d 完成，其托管 CI 41816686932 已核实成功。B2b 的完整交换顺序已在 a3a713f0 完成，GitHub CI 41829575510 已核实成功。B2b 的规定静态 Host 宏步接受与恢复已在 30cfd843 完成，见下文 2026-11-05 增量。本轮 C1 完成原池成组预留及本地 PreparedRegrid 消费者，验收见资源章节。动态分布式重网格、细叶字段迁移和 CUDA MPI 尚未完成，应用预检继续拒绝 MPI-AMR。
+2026-11-06 再次 fetch 后，上游 main 仍为 2e05e66e（v1.4.1）；固定网格 CPU MPI 候选为 e43183d0，扩大实验和证据提交为 c6b0d628。A1 全局拓扑身份与所有权已在 55708157 完成，A2 远端邻接在 d7bff58e 完成。B1 实际跨 rank 粗细 ghost 交换已在 cbdf0b73 完成，其 GitHub CI 41545717485 已核实成功。B2a 跨 rank 通量注册/reflux 已在 3ae3493d 完成，其托管 CI 41816686932 已核实成功。B2b 的完整交换顺序已在 a3a713f0 完成，GitHub CI 41829575510 已核实成功。B2b 的规定静态 Host 宏步接受与恢复已在 30cfd843 完成，见下文 2026-11-05 增量。C1 已在 28081574 完成原池成组预留；本轮 C2 完成规定五叶案例中真实 Host 细叶往返、共同提交与失败恢复，验收见资源章节。自动动态重网格、空运行分区、CUDA MPI 和分布式输出/重启尚未完成，应用预检继续拒绝 MPI-AMR。
 
 开发、构建、测试、原始证据和 Git 发布仍只在 gpu-273312 / gpu-273312-ts（当前 100.97.101.5；直连 150.65.181.202） 的 /home/ubuntu/projects/ARCH-mpi 进行。旧 ARCH 工作区与历史实验不覆盖。现有实现达到“已有自动回归和扩展证据的 CPU 固定网格 MPI 候选”，没有达到完整 MPI 支持。
 
@@ -172,7 +172,7 @@
 | B1：粗细 ghost 字段交换（已完成） | GhostExchange、原粗细 cell 配方与 Host 执行 | 实际双 rank 结果与串行逐位一致；常量、trace species、三槽、空工作、单 rank 失败不写入与恢复；限算子面交换 |
 | B2a：通量注册/reflux 集合算子（已完成） | 原 flux 配方、FluxRegister、AMRControl | 原始面值跨 rank、粗 owner 原次序累加、独立界面预算、全字段逐位对照、单 rank 失败不写入与阶段回滚 |
 | B2b：完整交换/推进（规定静态 Host 案例已验收） | 原同层/粗细交换、scheduler、DriverRuntime/DriverMacroStep | 非根同层/棱角交换、阶段故障协调、最终接受和整步恢复通过；源项、迁移及应用入口仍分别验收，见第三项记录 |
-| C：迁移与提交（C1 原池预留已验收） | PreparedRegrid、MemoryPool、TopologyTransaction、DriverRegrid | 一个细叶跨 owner 往返，accepted 字段/身份不丢失；容量、故障、stale view 与提交顺序检查通过 |
+| C：迁移与提交（C1/C2 最小案例已验收） | PreparedRegrid、MemoryPool、TopologyTransaction、DriverRegrid | 一个细叶跨 owner 往返，accepted 字段/身份不丢失；容量、故障、stale view 与提交顺序检查通过 |
 | D：应用入口与回归 | 原 ExecutionPreflight、真实运行和现有 CI | A–C 完成后只开放明确通过的能力范围，查询与运行一致；四种构建、固定网格及受影响单进程 AMR 回归通过 |
 
 A–C 可先由直接调用生产设施的原生测试夹具验证，不能以测试绕过检查为依据宣布应用支持。不得提前删除所有 MPI-AMR 拒绝条件；预检开放必须与真实启动、资源和错误路径的能力匹配。
@@ -321,6 +321,34 @@ owner 变更即使不改变叶 key 集合，也必须触发新的拓扑发布；
 - 两份生产归档共 2,340 文件均逐一 SHA-256 回读，实际重开 HDF5 后才清理本轮 RAM 暂存。原池与 AmrTree 是仅有的两个修改生产源文件；原迁移执行、父/子几何与 species 初始化、物理父块判定的代码片段逐行比对一致。物理公式、数值容差和验收门槛未改变。
 - C1 是本地资源生命周期增量；没有新增细叶网络载荷或分布式重网格事务，也未做 CUDA 构建/设备执行、多节点性能或长程演化验收。应用 MPI-AMR 入口仍关闭。
 
+### C2 原生细叶所有权迁移（2026-11-06）
+
+C2 在既有 [DriverRegrid](../../src/driver/runtime/DriverRegrid.cpp) 增加显式 migrate_host_leaf 消费者，接收逻辑端点（key、UID、epoch）和目标 rank。它用于 accepted 边界的 Host owner-only 变更，不选择负载均衡策略，也不执行细化/粗化或打开应用 MPI-AMR 入口。当前验收案例仍是二维 Cartesian 五叶、双 rank，细叶从 rank 1 移至 rank 0，再移回。
+
+原 [PreparedRegrid](../../src/amr/topology/AmrTree.h) 同时承担本地重网格和 owner-only 候选的生命周期。接收端先在原池预留新槽并用原 InitGeometry 建立几何；发送端旧块保留至全体发布确认。已有 registry 继续核对全域覆盖并生成候选：移动叶保留 UID，所有参与 rank 的 epoch 同步推进。没有 MPI 专用池、另一套拓扑 registry 或平行状态机。
+
+本案例沿用每 rank 16 槽的原生夹具；五个全局活动叶在传输期间占用六个已构造槽，确认后回到五个。它检验局部接收预留与临时峰值，不构成应用全局 max_blocks 配额或可变池容量验收；没有改变用户可见资源预算语义。
+
+载荷仅包含显式身份和原生数据：事务编号、协议版本、逻辑端点、源/目标 owner、状态与布局，以及 Current/Next/Scratch 三槽七类数组（含 species 与全部 ghost）和原修复记录。字段以 binary64 位型传送，不改变算术。只在发送/接收 rank 分配一份打包缓冲；消息内没有远端池槽或指针。完整消息身份、布局和长度通过后才写未发布接收槽。原有 callback 附件、未完成通量/reflux、宏步进行中或空运行分区等未支持情形明确拒绝。
+
+所有可失败的本地阶段都在下一通信或发布之前共同确认。TopologyIdentityRegistry 的原提交入口增加可选的准备完成回调，把 result 复制/分配异常也纳入共同失败处理；最后的 tree、handles、ledger 发布只交换已经准备好的对象。所有 rank 发布后经过确认，发送端才归还旧槽。普通 MPI 的进程/网络故障仍终止作业，不作为可恢复的本地拒绝。
+
+为保证真正可回滚，PreparedRegrid 在开始前保存原块的固定大小邻接记录、active_index 和粗细面标记；激活失败与 abort 直接恢复这些记录，不再在异常路径 Sort/UpdateNeighbors 或分配内存。该调整也用于原本地重网格消费者。owner-only 变更没有改动逻辑覆盖或物理时刻，已接受的 ghost 数据逐位保留；原 flux/reflux 计划在新 epoch 发布时失效，下一阶段通过既有 owner 重建。
+
+测试沿用 [distributed_hydro_stage](../../tests/host/amr/test_distributed_hydro_stage.cpp) 及原 CI 的 MPI ON/OFF、OMP=1/2 入口。增加原生修复元数据往返、三种积分器在已演化状态上的细叶往返与后续宏步，以及 21 种单 rank 拒绝和同一 Runtime 重试。网络拒绝通过测试侧 PMPI 拦截实际消息，分别改变 UID、epoch、布局、事务号或截短载荷；生产实现没有故障开关。容量不足、部分写入、邻接激活、ledger/registry 分配失败均检查原字段地址、活动块、全局邻接、旧 ledger 归属和预留回收。
+
+C2 的服务器验收证据位于 /home/ubuntu/projects/ARCH-mpi-evidence-leaf-move-20261106，local-acceptance.json 汇总结果，source.json 绑定基于 28081574 dirty 工作树的生产源与测试。所有二进制在本次提交前构建，production-source.json 保留实际哈希，不把内嵌旧提交号当作发布提交。
+
+- Release MPI ON/OFF 完整应用及相关目标重建，分别 30/20 项 CTest 通过；Debug 相关目标重建，分别 28/18 项通过，共 96 项、无跳过。Debug ON 一项启动预检使用已有应用，其余受影响目标为本轮重建。
+- 双 rank OMP=1/2 的 C2 原生案例通过，包括修复记录与带符号零保真、Euler/RK2/RK3 已演化细叶往返及继续推进、21 种共同拒绝与原 Runtime 重试。另完成 20 次不绑核的双 rank、实际双线程重复运行。既有字段逐位比较与守恒阈值全部保留。
+- 固定网格生产回归对独立冻结串行基线完成 55 组逐位比较、10 项预期拒绝；629 项工具测试无跳过。架构、文档、diff 和 MPI ON/OFF CI inventory 检查通过。原始输出共 2,340 文件，逐一 SHA-256 回读并实际重开 HDF5 后才清理本轮 RAM 暂存。
+- 原细化/粗化选择及构造、保守迁移执行、全局邻接生成、flux/reflux 算术代码段与基线逐字一致；未修改数学叶文件、数值容差或验收门槛。
+- CTest 默认只保留成功输出的前 1,024 字节，会截掉后面的迁移覆盖标记。新增完整输出的四项 MPI 定向复跑并核对 21 项拒绝/实际线程数；CI 的成功输出上限调至 65,536 字节，仅影响报告保留，不改变超时、测试清单或验收条件。
+- 原 shared_stage_scheduler 的全 Driver UID 文本禁令随真实 wire UID 过时，现收窄到各 registration witness 源段，并增加真实迁移仅消耗一个 scheduler version/token、所有新 ledger 绑定该共同 witness 的行为检查。原物理、守恒、字段和失败验证保留；原失败日志在 obsolete-uid-source-assertion 中。
+- 初轮测试误将完整串行 Runtime 放入已有 MPI WORLD，原身份校验按约束拒绝。测试改为既有独立单线程串行执行参考，未放宽生产 communicator 校验。协议复查后补入事务号，未完成的首轮完整构建记录单独保存并重新冻结、重建；最终四配置均验证含 21 项拒绝的版本。
+
+此阶段不包含自动分布式细化传播、跨 rank 家族粗化、空 rank 运行、CUDA、分布式输出/重启、多节点或性能结论。C3 接下来应把真实细化/粗化、全域资源预算和全体提交接入同一个边界，再接 GPU Host staging。
+
 若真实案例证明固定容量分摊阻碍迁移，优先在原池中实现按需分段存储/容量调整，并由原拓扑事务调整未使用容量配额，不再增加 MPI 专用池。需要先测量并比较两种具体代价：连续容器扩容会使 Block/view 地址失效，要求静默边界统一重绑定；分段存储可稳定槽地址，但改变遍历局部性和容量管理。选型依据必须包含分配次数、RSS、迁移峰值、旧 view 检测与现有单进程性能，不为尚未出现的需求提前实现两套路径。
 
 字节峰值必须同时计入旧/新块及各状态槽、species、源状态备份、flux register、发送/接收缓冲、拓扑元数据；CUDA 阶段还包括 pinned staging 和 Device 旧/新 store。需要扩容也不能静默超出资源预算或改变 max_blocks 语义；如确需改变用户可见预算模型，先单独列出变更和兼容影响。
@@ -360,7 +388,7 @@ owner 变更即使不改变叶 key 集合，也必须触发新的拓扑发布；
 | 分支 / PR | 当前职责与推进方式 |
 | --- | --- |
 | MPI/execution-preflight / #25 | 保留已验收的固定网格候选及其 CI，供现有集成审阅。必要修复仍在此分支提交；不合并 main，除非得到明确合并指令。 |
-| MPI/scaling-16 / #26 | 继续承载扩大实验、当前设计及接下来的最小案例增量。它已经包含 #25；已包含 B2b 静态 Host 宏步接受与恢复，本轮推进 C1 原池容量预留，下一增量实现细叶迁移；沿用 #26 并同步更新标题/说明。 |
+| MPI/scaling-16 / #26 | 继续承载扩大实验、当前设计及接下来的最小案例增量。它已经包含 #25；已包含 B2b 静态 Host 宏步接受与恢复，已完成 C1 原池容量预留与 C2 原生细叶往返，下一增量推进 C3 全域重网格提交；沿用 #26 并同步更新标题/说明。 |
 | codex/mpi-fixed-grid-validated-20261102 / #24 | 已被上述历史包含。2026-11-03 核对时 #24 已关闭，朋友仓库旧分支已移除；个人仓库旧引用仅作历史快照，不再推进。 |
 
 所有新提交仍同步推送双方仓库。同一修改只在一条分支实现；必要时通过正常合并带入后继分支，不对两个分支分别维护两份实现。#25 集成后，再以实际 main 状态整理 #26 的 base 和差异；不为更名增加额外并行开发线，不随意重写已审阅历史。

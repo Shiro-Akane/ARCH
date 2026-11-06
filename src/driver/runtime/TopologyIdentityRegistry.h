@@ -19,6 +19,8 @@
 #include <compare>
 #include <cstdint>
 #include <limits>
+#include <exception>
+#include <optional>
 #include <map>
 #include <set>
 #include <stdexcept>
@@ -236,7 +238,24 @@ public:
     TopologyReconciliation commit_after_success(
         Candidate&& candidate, Finalizer&& finalizer)
     {
-        PreparedTransaction prepared = prepare_candidate(candidate);
+        return commit_after_success(std::move(candidate),std::forward<Finalizer>(finalizer),
+            [](std::exception_ptr failure) {if (failure) std::rethrow_exception(failure);});
+    }
+
+    /** Complete fallible registry staging on all participants before finalization.
+     * The completion callback must propagate a local or peer preparation failure.
+     */
+    template <typename Finalizer, typename CompletePreparation>
+    TopologyReconciliation commit_after_success(Candidate&& candidate,
+        Finalizer&& finalizer, CompletePreparation&& complete_preparation)
+    {
+        std::optional<PreparedTransaction> staged;
+        std::exception_ptr failure;
+        try { staged.emplace(prepare_candidate(candidate)); }
+        catch (...) { failure=std::current_exception(); }
+        std::forward<CompletePreparation>(complete_preparation)(failure);
+        if (failure) std::rethrow_exception(failure);
+        auto& prepared=*staged;
         TopologyReconciliation result = std::move(prepared.result);
         static_assert(std::is_nothrow_move_constructible_v<
                       TopologyReconciliation>);

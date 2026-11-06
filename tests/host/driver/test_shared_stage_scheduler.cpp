@@ -2308,7 +2308,25 @@ void test_production_lane_fingerprints_and_authority_absence()
                && completed_device.find("ExecutionSide::Device, payload.topology_witness.version,")!=std::string::npos
                && completed_device.find("payload.topology_witness.completion);")!=std::string::npos,
            "completed Device migration publishes its actual batch witness and original state identities");
-    expect(driver.find("handle.uid.value") == std::string::npos,
+    // Logical UIDs now travel in the native ownership packet. Restrict this
+    // invariant to registration witnesses instead of banning wire identities
+    // everywhere in DriverRegrid.
+    const auto ownership_begin=driver_regrid.find("void DriverRuntime::migrate_host_leaf(");
+    const auto ownership_registration=driver_regrid.find(
+        "const auto witness=scheduler_clock.next_publication();",ownership_begin);
+    const auto ownership_ready=driver_regrid.find("transaction->mark_ready();",ownership_registration);
+    expect(ownership_begin!=std::string::npos && ownership_registration!=std::string::npos
+               && ownership_ready!=std::string::npos,
+           "ownership registration has a real scheduler publication boundary");
+    const auto ownership_ledger=driver_regrid.substr(
+        ownership_registration,ownership_ready-ownership_registration);
+    expect(driver_runtime.find("handle.uid.value") == std::string::npos
+               && host_ledger.find("handle.uid.value") == std::string::npos
+               && completed_device.find("handle.uid.value") == std::string::npos
+               && ownership_ledger.find("handle.uid.value") == std::string::npos
+               && source_occurrences(ownership_ledger,"scheduler_clock.next_publication()")==1
+               && source_occurrences(ownership_ledger,"register_block(handle,witness.version,witness.completion)")==1
+               && source_occurrences(ownership_ledger,"witness.version,witness.completion);")==2,
            "registration batch witnesses never depend on handle identity");
     expect(driver.find("scheduler_clock =") == std::string::npos,
            "Driver never resets persistent scheduler clock");

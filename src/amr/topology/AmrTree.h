@@ -588,6 +588,8 @@ public:
               reservation_(std::move(other.reservation_)),
               retire_(std::move(other.retire_)),
               old_refinement_(std::move(other.old_refinement_)),
+              old_topology_(std::move(other.old_topology_)),
+              ownership_only_(other.ownership_only_),
               refinements_(std::move(other.refinements_)),
               restrictions_(std::move(other.restrictions_)),
               old_handles_(std::move(other.old_handles_)),
@@ -650,7 +652,7 @@ public:
                                  const AmrPlanScope& scope)
         {
             require_owner();
-            if (!changed_ || plans_built_ || old_handles.size() != old_active_.size()
+            if (ownership_only_ || !changed_ || plans_built_ || old_handles.size() != old_active_.size()
                 || proposed_handles.size() != proposed_active_.size()
                 || scope.transaction_id == 0
                 || scope.from_epoch == scope.to_epoch)
@@ -700,12 +702,21 @@ public:
             migration_complete_ = true;
         }
 
-        void ActivateForFinalization()
+        void ActivateForFinalization(std::span<const BlockTopology> global = {})
         {
             require_owner();
             if (!changed_ || !migration_complete_ || activated_ || published_)
                 throw std::logic_error("staged AMR topology is not activatable");
-            activate_topology();
+            activate_topology(global);
+        }
+
+        /** All native fields have arrived in unpublished original-pool slots. */
+        void CompleteOwnershipMigration()
+        {
+            require_owner();
+            if (!ownership_only_ || migration_complete_ || activated_)
+                throw std::logic_error("ownership migration is not completable");
+            migration_complete_ = true;
         }
 
         // A device executor needs the proposed neighbor geometry before its
@@ -745,17 +756,30 @@ public:
             validate_amr_plan(restriction_);
         }
 
-        void activate_topology()
+        void restore_topology_noexcept() noexcept
         {
             owner_->active_blocks.swap(proposed_active_);
+            for (const auto& saved : old_topology_) {
+                auto& block = owner_->pool->GetBlock(saved.id);
+                block.active_index = saved.active_index;
+                for (int face = 0; face < 6; ++face) {
+                    block.face_neighbors[face] = saved.faces[face];
+                    block.grid.amr_coarse_fine_face[face] = saved.coarse_fine[face];
+                }
+            }
+            activated_ = false;
+        }
+
+        void activate_topology(std::span<const BlockTopology> global = {})
+        {
+            owner_->active_blocks.swap(proposed_active_);
+            activated_ = true;
             try {
                 owner_->SortActiveBlocks();
-                owner_->UpdateNeighbors(config_);
-                activated_ = true;
+                if (global.empty()) owner_->UpdateNeighbors(config_);
+                else owner_->UpdateNeighbors(config_, global);
             } catch (...) {
-                owner_->active_blocks.swap(proposed_active_);
-                owner_->SortActiveBlocks();
-                owner_->UpdateNeighbors(config_);
+                restore_topology_noexcept();
                 throw;
             }
         }
@@ -802,6 +826,12 @@ public:
             int id = -1;
             int refine_flag = 0;
         };
+        // Fixed-size native metadata only; rollback never reconstructs adjacency.
+        struct TopologySnapshot {
+            int id = -1, active_index = -1;
+            std::array<Block::FaceNeighbors, 6> faces{};
+            std::array<bool, 6> coarse_fine{};
+        };
         struct RefinementRelation {
             int parent = -1;
             std::vector<int> children;
@@ -815,9 +845,18 @@ public:
             : owner_(&owner), config_(config), old_active_(owner.active_blocks)
         {
             old_refinement_.reserve(old_active_.size());
+            old_topology_.reserve(old_active_.size());
             for (const int id : old_active_) {
                 const Block& block = owner_->pool->GetBlock(id);
                 old_refinement_.push_back({id, block.refine_flag});
+                TopologySnapshot saved;
+                saved.id = id;
+                saved.active_index = block.active_index;
+                for (int face = 0; face < 6; ++face) {
+                    saved.faces[face] = block.face_neighbors[face];
+                    saved.coarse_fine[face] = block.grid.amr_coarse_fine_face[face];
+                }
+                old_topology_.push_back(saved);
             }
         }
 
@@ -915,12 +954,7 @@ public:
         {
             if (owner_ == nullptr || published_) return;
             try {
-                if (activated_) {
-                    owner_->active_blocks.swap(proposed_active_);
-                    owner_->SortActiveBlocks();
-                    owner_->UpdateNeighbors(config_);
-                    activated_ = false;
-                }
+                if (activated_) restore_topology_noexcept();
                 reservation_.reset();
                 for (const auto& snapshot : old_refinement_) {
                     Block& block = owner_->pool->GetBlock(snapshot.id);
@@ -939,6 +973,8 @@ public:
         std::optional<MemoryPool::Reservation> reservation_;
         std::vector<int> retire_;
         std::vector<RefinementSnapshot> old_refinement_;
+        std::vector<TopologySnapshot> old_topology_;
+        bool ownership_only_ = false;
         std::vector<RefinementRelation> refinements_;
         std::vector<RestrictionRelation> restrictions_;
         std::vector<BlockHandle> old_handles_;
@@ -954,6 +990,62 @@ public:
     };
 
 public:
+    /** Stage owner-only storage changes in the same regrid lifetime.
+     * The caller validates global ownership and completes transport before activation.
+     * Old senders remain live until publication and the collective retirement fence.
+     */
+    PreparedRegrid PrepareLeafOwnership(const SimConfig& config,
+        std::span<const int> outgoing, std::span<const LogicalBlockKey> incoming,
+        int species)
+    {
+        PreparedRegrid prepared(*this, config);
+        prepared.ownership_only_ = true;
+        prepared.changed_ = true; // Global owner change includes unaffected ranks.
+        std::set<int> retiring;
+        std::set<LogicalBlockKey> keys;
+        for (int id : outgoing) {
+            if (std::find(active_blocks.begin(), active_blocks.end(), id) == active_blocks.end()
+                || !retiring.insert(id).second)
+                throw std::invalid_argument("ownership source is not a unique active leaf");
+            prepared.retire_.push_back(id);
+        }
+        for (int id : active_blocks) {
+            keys.insert(PreparedRegrid::logical_key(pool->GetBlock(id), root_grid.dim));
+            if (!retiring.contains(id)) prepared.proposed_active_.push_back(id);
+        }
+        for (const auto& key : incoming) {
+            if (key.dimension != root_grid.dim || key.level < 0
+                || key.level > config.amr.lrefinemax || key.level > kMaxRefinementLevel
+                || !keys.insert(key).second)
+                throw std::invalid_argument("invalid or duplicate incoming ownership leaf");
+            const std::array<std::uint32_t, 3> xyz{key.logical_x1,key.logical_x2,key.logical_x3};
+            const std::array<int, 3> roots{root_grid.nblockx1,root_grid.nblockx2,root_grid.nblockx3};
+            for (int axis=0;axis<3;++axis)
+                if ((axis>=root_grid.dim && xyz[axis]!=0)
+                    || xyz[axis] >= (static_cast<std::uint64_t>(std::max(1,roots[axis]))<<key.level))
+                    throw std::invalid_argument("incoming ownership leaf lies outside domain");
+        }
+        prepared.proposed_active_.reserve(prepared.proposed_active_.size()+incoming.size());
+        prepared.reservation_.emplace(pool->ReserveBlocks(incoming.size()));
+        for (const auto& key : incoming) {
+            const int id = prepared.reservation_->AllocateBlock();
+            auto& block = pool->GetBlock(id);
+            block.level = key.level;
+            block.logical_x1 = key.logical_x1;
+            block.logical_x2 = key.logical_x2;
+            block.logical_x3 = key.logical_x3;
+            block.morton_code = encodeMorton(key.level,key.logical_x1,key.logical_x2,key.logical_x3);
+            block.InitGeometry(root_grid,root_dx1,root_dx2,root_dx3);
+            block.fluid_state.InitSpecies(species);
+            block.state_next.InitSpecies(species);
+            block.state_scratch.InitSpecies(species);
+            prepared.proposed_active_.push_back(id);
+        }
+        std::sort(prepared.proposed_active_.begin(),prepared.proposed_active_.end(),
+            [&](int a,int b) {return pool->GetBlock(a).morton_code<pool->GetBlock(b).morton_code;});
+        return prepared;
+    }
+
     /** Prepare conservative topology/transfer relations without publication.
      */
     PreparedRegrid PrepareRegrid(
