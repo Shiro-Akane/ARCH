@@ -90,7 +90,7 @@ void DriverRuntime::migrate_host_leaf(amr::AmrEndpoint source,int destination_ra
     migrate_host_leaves(std::span<const amr::AmrEndpoint>(&source,1),destination_rank,observer);
 }
 
-/** Explicit ownership preparation for the existing first-level regrid.
+/** Explicit ownership preparation for the existing level-one/two regrid.
  * Colocation and numerical coarsening are separate accepted transactions:
  * a later regrid veto retains the successfully published ownership.
  */
@@ -104,23 +104,33 @@ bool DriverRuntime::coalesce_host_siblings(amr::LogicalBlockKey parent,int desti
     prepare([&] {
         if (size<2 || rank!=amr_ctrl.tree->PartitionRank()
             || size!=amr_ctrl.tree->PartitionSize() || config.grid.dim!=2
-            || parent.dimension!=2 || parent.level!=0 || parent.logical_x3!=0
-            || config.amr.lrefinemin!=0 || config.amr.lrefinemax!=1
+            || parent.dimension!=2 || parent.level<0 || parent.level>1 || parent.logical_x3!=0
+            || config.amr.lrefinemin!=0 || config.amr.lrefinemax<1 || config.amr.lrefinemax>2
+            || parent.level>=config.amr.lrefinemax
             || destination_rank<0 || destination_rank>=size)
-            throw std::invalid_argument("sibling colocation requires a first-level two-dimensional family");
+            throw std::invalid_argument("sibling colocation requires a level-one/two two-dimensional family");
+        const auto& root=amr_ctrl.tree->GetRootGrid();
+        const auto cells_x=static_cast<std::uint64_t>(root.nblockx1)<<parent.level;
+        const auto cells_y=static_cast<std::uint64_t>(root.nblockx2)<<parent.level;
+        constexpr auto child_limit=(std::numeric_limits<std::uint32_t>::max()-1)/2;
+        if (parent.logical_x1>=cells_x || parent.logical_x2>=cells_y
+            || parent.logical_x1>child_limit || parent.logical_x2>child_limit)
+            throw std::invalid_argument("sibling parent lies outside the domain or child coordinate range");
+        for (const auto& leaf:topology_registry.blocks())
+            if (leaf.logical.level>config.amr.lrefinemax)
+                throw std::invalid_argument("sibling level limit is below the accepted topology");
         // Exact four child lookups also reject a missing or already coarse family.
         for (std::uint32_t y=0;y<2;++y) for (std::uint32_t x=0;x<2;++x) {
-            if (parent.logical_x1>=static_cast<std::uint32_t>(amr_ctrl.tree->GetRootGrid().nblockx1)
-                || parent.logical_x2>=static_cast<std::uint32_t>(amr_ctrl.tree->GetRootGrid().nblockx2))
-                throw std::invalid_argument("sibling parent lies outside the root domain");
-            const amr::LogicalBlockKey key{2,1,2*parent.logical_x1+x,2*parent.logical_x2+y,0};
+            const amr::LogicalBlockKey key{2,parent.level+1,
+                2*parent.logical_x1+x,2*parent.logical_x2+y,0};
             const auto handle=topology_registry.handle_for(key);
             if (topology_registry.owner_for(key)!=destination_rank) sources.push_back({key,handle});
         }
     });
     agree({6,static_cast<std::uint64_t>(parent.dimension),static_cast<std::uint64_t>(parent.level),
         parent.logical_x1,parent.logical_x2,parent.logical_x3,
-        static_cast<std::uint64_t>(destination_rank)});
+        static_cast<std::uint64_t>(destination_rank),
+        static_cast<std::uint64_t>(config.amr.lrefinemax)});
     migrate_host_leaves(sources,destination_rank,observer);
     return !sources.empty();
 #else

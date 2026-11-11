@@ -1314,6 +1314,244 @@ void runtime_ripple_cases() {
         <<failures<<" collective rejections with same-runtime retries; serial-identical promotions and coarsening vetoes\n";
 }
 
+/** Compose level-two ownership with the original ripple and restriction path.
+ * Both directions retain the same Runtime and evolved fields across cycles.
+ */
+void runtime_level_two_sibling_cases(int repetitions) {
+    if(ranks==1)return;
+    using Phase=driver::DriverRuntime::LeafTransferPhase;
+    const auto child_key=[](amr::LogicalBlockKey parent,int child) {
+        return amr::LogicalBlockKey{2,parent.level+1,2*parent.logical_x1+child%2,
+            2*parent.logical_x2+child/2,0};
+    };
+    const auto setup=[](RuntimeRun& a,Fixture& reference,std::unique_ptr<Run>& b,int method) {
+        for(int level=1;level<=2;++level) {
+            require(runtime_regrid(a),"deep family setup did not refine");
+            serial_reference_regrid(reference,b,a.controller.t_current);
+            a.step(method);serial_reference_step(*b,method);compare(a.f,reference);
+        }
+        require(a.runtime.handles().size()==(rank==0?4:16),"deep family setup has wrong ownership");
+    };
+    const auto split=[&](RuntimeRun& a,amr::LogicalBlockKey parent,int count) {
+        for(int child=0;child<count;++child) {
+            const auto source=leaf_endpoint(a,1,child_key(parent,child));
+            a.runtime.migrate_host_leaf(source,0);a.f.handles=a.runtime.handles();
+            const auto moved=leaf_endpoint(a,0,source.logical);
+            require(moved.handle.uid==source.handle.uid
+                &&moved.handle.epoch.value==source.handle.epoch.value+1,
+                "deep leaf move changed UID or used multiple epochs");
+        }
+    };
+    const amr::LogicalBlockKey root_parent{2,0,1,0,0};
+    int cycles=0,rejections=0;
+    for(int destination:{0,1})for(int method=0;method<3;++method) {
+        const amr::LogicalBlockKey parent{2,1,
+            static_cast<std::uint32_t>(destination==0?3:2),
+            static_cast<std::uint32_t>(destination==0?1:0),0};
+        const int count=2+method%2;
+        Fixture actual(2,rank,ranks,true,false,rank==0?9:21),reference(2,0,1,true,false,40);
+        seed_regrid_wave(actual,30);seed_regrid_wave(reference,30);
+        actual.config.amr.lrefinemax=reference.config.amr.lrefinemax=2;
+        RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
+        const auto initial=totals(reference);
+        const int available=actual.control.pool->GetNumAvailableBlocks();
+        const auto initial_epoch=actual.handles.front().epoch.value;
+        for(int cycle=0;cycle<repetitions;++cycle) {
+            actual.config.amr.refine_threshold=reference.config.amr.refine_threshold=.02;
+            actual.config.amr.derefine_threshold=reference.config.amr.derefine_threshold=.001;
+            a.step(method);serial_reference_step(*b,method);
+            setup(a,reference,b,method);split(a,parent,count);compare(actual,reference);
+            a.step(method);serial_reference_step(*b,method);compare(actual,reference);
+            require_conservation(actual,initial);
+            RegridWitness divided(a);bool rejected=false;
+            try {runtime_regrid(a);}catch(const std::exception&) {rejected=true;}
+            require(rejected,"split level-two family was accepted for numerical regrid");
+            divided.check(a);++rejections;
+            const auto old_handles=a.runtime.handles();
+            auto before=a.runtime.stage_context();
+            const auto version=before.clock.last_version(),token=before.clock.last_token();
+            std::array<amr::AmrEndpoint,4> children;
+            for(int child=0;child<4;++child)
+                children[child]=leaf_endpoint(a,child<count?0:1,child_key(parent,child));
+            const int moved=destination==1?count:4-count;int receipts=0;
+            require(a.runtime.coalesce_host_siblings(parent,destination,[&](Phase phase) {
+                if(phase==Phase::FieldReceived)++receipts;
+                if(phase==Phase::Reserved||phase==Phase::ReadyToPublish) {
+                    int local=actual.control.pool->GetNumActiveBlocks(),total=0;
+#if ARCH_MPI_ENABLED
+                    MPI_Allreduce(&local,&total,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
+#endif
+                    require(total==20+moved,"deep family retired source slots before acknowledgement");
+                }
+            }),"deep family did not publish ownership");
+            actual.handles=a.runtime.handles();
+            require(receipts==(rank==destination?21*moved:0),"deep family field receipts incomplete");
+            auto after=a.runtime.stage_context();
+            require(after.clock.last_version()==version+1&&after.clock.last_token()==token+1,
+                "deep family used multiple scheduler publications");
+            for(int child=0;child<4;++child) {
+                const auto now=leaf_endpoint(a,destination,children[child].logical);
+                require(now.handle.uid==children[child].handle.uid
+                    &&now.handle.epoch.value==children[child].handle.epoch.value+1,
+                    "deep family changed UID or committed multiple epochs");
+            }
+            bool stale=false;
+            try {(void)after.ledger.inspect({old_handles.front(),state::StateSlot::Current});}
+            catch(const std::exception&) {stale=true;}
+            require(stale,"deep family retained readable stale handles");
+            compare(actual,reference);require_conservation(actual,initial);
+            RegridWitness colocated(a);
+            require(!a.runtime.coalesce_host_siblings(parent,destination),"deep colocated family was not a no-op");
+            colocated.check(a);
+            a.step(method);serial_reference_step(*b,method);compare(actual,reference);
+            request_coarsening(actual);request_coarsening(reference);
+            RegridWitness evolved(a);rejected=false;
+            try {runtime_regrid(a,[&](driver::DriverRuntime::RegridPhase phase) {
+                if(rank==destination&&phase==driver::DriverRuntime::RegridPhase::ReadyToPublish)
+                    throw std::runtime_error("veto deep coarsening after accepted colocation");
+            });}catch(const std::exception&) {rejected=true;}
+            require(rejected,"deep numerical veto was not collective");evolved.check(a);++rejections;
+            require(runtime_regrid(a),"deep family could not coarsen after rejection");
+            serial_reference_regrid(reference,b,a.controller.t_current);compare(actual,reference);
+            if(destination==0) {
+                // A newly restricted parent now splits the next coarser family.
+                RegridWitness coarse_split(a);rejected=false;
+                try {runtime_regrid(a);}catch(const std::exception&) {rejected=true;}
+                require(rejected,"split level-one parents bypassed family ownership");
+                coarse_split.check(a);++rejections;
+                require(a.runtime.coalesce_host_siblings(root_parent,1),
+                    "restricted parent could not join the coarser family");
+                actual.handles=a.runtime.handles();compare(actual,reference);
+            }
+            a.step(method);serial_reference_step(*b,method);compare(actual,reference);
+            require(runtime_regrid(a),"organized deep cycle could not return to roots");
+            serial_reference_regrid(reference,b,a.controller.t_current);
+            a.step(method);serial_reference_step(*b,method);compare(actual,reference);
+            require_conservation(actual,initial);
+            require(actual.control.pool->GetNumActiveBlocks()==1
+                &&actual.control.pool->GetNumReservedBlocks()==0
+                &&actual.control.pool->GetNumAvailableBlocks()==available,
+                "deep ownership cycle leaked original pool capacity");
+            require(actual.handles.front().epoch.value==initial_epoch+(cycle+1)*(count+5+(destination==0)),
+                "deep ownership cycle committed the wrong epoch count");
+            require(a.controller.step_count==7*(cycle+1),"deep ownership cycle lost an accepted macro step");
+            ++cycles;
+        }
+        if(rank==0&&repetitions>1)
+            std::cout<<"Deep family trajectory: destination="<<destination<<"; method="<<method
+                <<"; cycles="<<repetitions<<"; macro_steps="<<a.controller.step_count
+                <<"; time="<<a.controller.t_current<<"; pool_restored=1\n";
+    }
+    // Keep the second packet and publication boundaries under the same
+    // rollback contract even when the leaves belong to a deeper family.
+    for(int fault=0;fault<33;++fault) {
+        const int capacity=rank==0?(fault==32?7:9):(fault==32?23:21);
+        Fixture actual(2,rank,ranks,true,false,capacity),reference(2,0,1,true,false,40);
+        seed_regrid_wave(actual,30);seed_regrid_wave(reference,30);
+        actual.config.amr.lrefinemax=reference.config.amr.lrefinemax=2;
+        RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
+        const auto initial=totals(reference);
+        setup(a,reference,b,2);
+        const amr::LogicalBlockKey parent{2,1,3,1,0};
+        split(a,parent,2);compare(actual,reference);
+        RegridWitness original(a);auto context=a.runtime.stage_context();
+        const auto ledger=context.ledger.snapshot_metadata(state::ExecutionSide::Host);
+        const auto saved_boundary=a.bc.snapshot_stage_context();
+        const auto saved=actual.config;
+        auto requested=parent;int destination=1;
+        if(fault==17&&rank==0)destination=0;
+        if(fault==18&&rank==0)requested={2,1,2,0,0};
+        if(fault==19&&rank==0)actual.config.grid.amr_max_blocks=31;
+        if(fault==20)actual.config.grid.amr_max_blocks=29;
+        if(fault==21)requested.level=-1;
+        if(fault==22)requested.level=2;
+        if(fault==23)actual.config.amr.lrefinemax=3;
+        if(fault==24)requested.logical_x1=4;
+        if(fault==25)requested.logical_x2=2;
+        if(fault==26)requested.logical_x1=std::numeric_limits<std::uint32_t>::max();
+        if(fault==27)requested.dimension=3;
+        if(fault==28)requested.logical_x3=1;
+        if(fault==29)destination=2;
+        if(fault==30)actual.config.amr.lrefinemax=1;
+        if(fault==31)requested=root_parent; // Its direct children are not leaves.
+        if(fault==32)destination=0; // Valid global budget, only one local slot free.
+#if ARCH_MPI_ENABLED
+        if(fault>=10&&fault<=16&&rank==0) {
+            ownership_wire_fault::mode=fault-9;ownership_wire_fault::skip_packets=1;
+        }
+#endif
+        int receipts=0;bool rejected=false,observed=false;
+        try {a.runtime.coalesce_host_siblings(requested,destination,[&](Phase phase) {
+            if(phase==Phase::FieldReceived)++receipts;
+            const int victim=fault%2;
+            const bool phase_failure=fault<6&&rank==victim
+                &&phase==(fault<2?Phase::Reserved:fault<4?Phase::TopologyActivated:Phase::ReadyToPublish);
+            const bool partial_failure=rank==1&&phase==Phase::FieldReceived
+                &&((fault==6&&receipts==22)||(fault==7&&receipts==42));
+            if(phase_failure||partial_failure) {
+                observed=true;throw std::runtime_error("injected deep family transaction failure");
+            }
+            if(rank==1&&((fault==8&&phase==Phase::Reserved)
+                ||(fault==9&&phase==Phase::ReadyToPublish))) {
+                observed=true;allocation_fault::fail_after=1;
+            }
+        });}catch(const std::exception& error) {
+            rejected=true;
+            if(rank==1&&(fault==8||fault==9))
+                require(std::string(error.what()).find("bad_alloc")!=std::string::npos,
+                    "deep family allocation rejected for another reason");
+        }
+        allocation_fault::fail_after=0;
+#if ARCH_MPI_ENABLED
+        ownership_wire_fault::mode=ownership_wire_fault::skip_packets=0;
+#endif
+        require(rejected,"deep family failure did not reject collectively");
+        if(fault<6&&rank==fault%2)require(observed,"deep family phase fault did not execute");
+        if(fault>=6&&fault<=9&&rank==1)require(observed,"deep family receipt/allocation fault did not execute");
+        if(fault>=10&&fault<=16&&rank==1)
+            require(receipts==21,"deep family wire fault did not target the second packet");
+        actual.config=saved;original.check(a);
+        require(context.ledger.metadata_snapshot_matches(ledger),"deep family rejection changed ledger");
+        require(a.bc.stage_context_matches(saved_boundary),"deep family rejection changed boundary context");
+        compare(actual,reference);require_conservation(actual,initial);
+        require(a.runtime.coalesce_host_siblings(parent,1),"deep family retry did not publish");
+        actual.handles=a.runtime.handles();compare(actual,reference);
+        request_coarsening(actual);request_coarsening(reference);
+        for(int level=1;level>=0;--level) {
+            require(runtime_regrid(a),"deep family retry could not continue coarsening");
+            serial_reference_regrid(reference,b,a.controller.t_current);
+            a.step(2);serial_reference_step(*b,2);compare(actual,reference);
+            require_conservation(actual,initial);
+        }
+        require(actual.control.pool->GetNumActiveBlocks()==1
+            &&actual.control.pool->GetNumReservedBlocks()==0,
+            "deep failure/retry leaked native storage");
+        ++rejections;
+    }
+    // Both maxima can independently allow this level-one no-op. Agreement must
+    // still reject differing controls before either rank returns from the call.
+    {
+        Fixture actual(2,rank,ranks,true,false,rank==0?9:21),reference(2,0,1,true,false,40);
+        seed_regrid_wave(actual,30);seed_regrid_wave(reference,30);
+        actual.config.amr.lrefinemax=reference.config.amr.lrefinemax=2;
+        RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
+        require(runtime_regrid(a),"maximum-agreement setup did not refine");
+        serial_reference_regrid(reference,b,a.controller.t_current);
+        RegridWitness before(a);if(rank==0)actual.config.amr.lrefinemax=1;
+        bool rejected=false;
+        try {a.runtime.coalesce_host_siblings(root_parent,1);}catch(const std::exception&) {rejected=true;}
+        require(rejected,"family no-op accepted mismatched maximum levels");
+        before.check(a);actual.config.amr.lrefinemax=2;
+        require(!a.runtime.coalesce_host_siblings(root_parent,1),"agreed family no-op changed ownership");
+        before.check(a);
+        require(runtime_regrid(a),"family control retry could not refine deeper");
+        serial_reference_regrid(reference,b,a.controller.t_current);
+        a.step(2);serial_reference_step(*b,2);compare(actual,reference);++rejections;
+    }
+    if(rank==0)std::cout<<"Deep families: "<<cycles<<" evolved migrate/colocate/regrid cycles; "
+        <<rejections<<" collective rejections with same-runtime retries; bidirectional level-two ownership\n";
+}
+
 void runtime_macro_cases() {
     for(int method=0;method<3;++method)for(bool wave:{false,true}) {
         Fixture actual(2,rank,ranks,true),reference(2,0,1,true);
@@ -1574,6 +1812,7 @@ int main(int argc, char** argv) {
         runtime_regrid_cases();
         runtime_sibling_cases(sibling_cycles);
         runtime_ripple_cases();
+        runtime_level_two_sibling_cases(sibling_cycles);
         rejected_cases();
         receipt_and_boundary_rejections();
         if (rank == 0)
