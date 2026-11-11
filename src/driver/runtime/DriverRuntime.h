@@ -79,6 +79,12 @@ public:
     enum class LeafTransferPhase { Reserved, FieldReceived, TopologyActivated, ReadyToPublish };
     void migrate_host_leaf(amr::AmrEndpoint source, int destination_rank,
         const std::function<void(LeafTransferPhase)>& observer = {});
+    /** Atomically colocate a complete level-one sibling family. Call perform_regrid
+     * separately to apply the original indicators and restriction. Returns false
+     * for an already colocated family, preserving its epoch and accepted state.
+     */
+    bool coalesce_host_siblings(amr::LogicalBlockKey parent, int destination_rank,
+        const std::function<void(LeafTransferPhase)>& observer = {});
     void ensure_jeans_resolution(int step, double time);
     // Explicit diagnostic/enforcement request; never invoked for disabled JENS.
     std::vector<double> evaluate_current_jeans_resolution();
@@ -151,6 +157,8 @@ private:
         std::span<const backend::BackendStateAccess>,
         std::span<const amr::BlockHandle>, state::StateSlot,
         state::StateVersion, state::CompletionToken);
+    void migrate_host_leaves(std::span<const amr::AmrEndpoint>, int destination_rank,
+        const std::function<void(LeafTransferPhase)>& observer);
     bool execute_regrid(bool jeans_repair_only);
     bool perform_regrid_impl(int step,double time,bool jeans_repair_only,
         const std::function<void(RegridPhase)>& observer = {});

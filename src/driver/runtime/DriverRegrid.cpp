@@ -83,13 +83,59 @@ struct RegridSourceBackup {
 };
 } // namespace
 
-/** Move one accepted Host leaf without changing its logical/numerical state.
- * Native fields (including ghosts and all three slots) travel as binary64 bits.
- * Only sender/receiver allocate the packet; original pool owns candidate storage.
- * Every fallible local phase completes collectively before subsequent transport
- * or publication. There are no outstanding MPI requests when rollback begins.
+/** One accepted leaf uses the same transaction and packet path as a family. */
+void DriverRuntime::migrate_host_leaf(amr::AmrEndpoint source,int destination_rank,
+    const std::function<void(LeafTransferPhase)>& observer)
+{
+    migrate_host_leaves(std::span<const amr::AmrEndpoint>(&source,1),destination_rank,observer);
+}
+
+/** Explicit ownership preparation for the existing first-level regrid.
+ * Colocation and numerical coarsening are separate accepted transactions:
+ * a later regrid veto retains the successfully published ownership.
  */
-void DriverRuntime::migrate_host_leaf(amr::AmrEndpoint source, int destination_rank,
+bool DriverRuntime::coalesce_host_siblings(amr::LogicalBlockKey parent,int destination_rank,
+    const std::function<void(LeafTransferPhase)>& observer)
+{
+#if ARCH_MPI_ENABLED
+    using namespace amr::flux_mpi_detail;
+    const auto [rank,size]=require_world();
+    std::vector<amr::AmrEndpoint> sources;
+    prepare([&] {
+        if (size<2 || rank!=amr_ctrl.tree->PartitionRank()
+            || size!=amr_ctrl.tree->PartitionSize() || config.grid.dim!=2
+            || parent.dimension!=2 || parent.level!=0 || parent.logical_x3!=0
+            || config.amr.lrefinemin!=0 || config.amr.lrefinemax!=1
+            || destination_rank<0 || destination_rank>=size)
+            throw std::invalid_argument("sibling colocation requires a first-level two-dimensional family");
+        // Exact four child lookups also reject a missing or already coarse family.
+        for (std::uint32_t y=0;y<2;++y) for (std::uint32_t x=0;x<2;++x) {
+            if (parent.logical_x1>=static_cast<std::uint32_t>(amr_ctrl.tree->GetRootGrid().nblockx1)
+                || parent.logical_x2>=static_cast<std::uint32_t>(amr_ctrl.tree->GetRootGrid().nblockx2))
+                throw std::invalid_argument("sibling parent lies outside the root domain");
+            const amr::LogicalBlockKey key{2,1,2*parent.logical_x1+x,2*parent.logical_x2+y,0};
+            const auto handle=topology_registry.handle_for(key);
+            if (topology_registry.owner_for(key)!=destination_rank) sources.push_back({key,handle});
+        }
+    });
+    agree({6,static_cast<std::uint64_t>(parent.dimension),static_cast<std::uint64_t>(parent.level),
+        parent.logical_x1,parent.logical_x2,parent.logical_x3,
+        static_cast<std::uint64_t>(destination_rank)});
+    migrate_host_leaves(sources,destination_rank,observer);
+    return !sources.empty();
+#else
+    (void)parent;(void)destination_rank;(void)observer;
+    throw std::logic_error("sibling colocation requires ARCH_ENABLE_MPI=ON");
+#endif
+}
+
+/** Move accepted Host leaves in one original ownership transaction.
+ * Native fields (including ghosts and all three slots) travel as binary64 bits.
+ * Only sender/receiver allocate a reusable single-leaf packet; the original pool
+ * owns all candidate storage. No source is retired until every packet and rank
+ * has completed validation and the common publication has been acknowledged.
+ */
+void DriverRuntime::migrate_host_leaves(std::span<const amr::AmrEndpoint> sources, int destination_rank,
     const std::function<void(LeafTransferPhase)>& observer)
 {
 #if ARCH_MPI_ENABLED
@@ -99,7 +145,8 @@ void DriverRuntime::migrate_host_leaf(amr::AmrEndpoint source, int destination_r
     constexpr std::array<FluidState amr::Block::*,3> slots{
         &amr::Block::fluid_state,&amr::Block::state_next,&amr::Block::state_scratch};
     std::vector<amr::BlockTopology> global;
-    int sender=-1, source_id=-1, target_id=-1;
+    std::vector<int> senders, source_ids, target_ids;
+    std::vector<std::array<std::uint64_t,21>> identities;
     state::StateVersion accepted{};
     prepare([&] {
         if (size<2 || rank!=amr_ctrl.tree->PartitionRank()
@@ -109,13 +156,31 @@ void DriverRuntime::migrate_host_leaf(amr::AmrEndpoint source, int destination_r
             || bc_handler.has_user() || !distributed_hydro_topology())
             throw std::logic_error("ownership transfer requires quiescent Cartesian Host Hydro");
         topology_registry.validate_committed_snapshot(observe_topology());
-        if (topology_registry.handle_for(source.logical)!=source.handle)
-            throw std::invalid_argument("ownership transfer has a stale logical endpoint");
-        sender=topology_registry.owner_for(source.logical);
-        if (destination_rank<0 || destination_rank>=size || sender==destination_rank)
-            throw std::invalid_argument("ownership transfer requires another valid rank");
-        if (rank==sender && stage_handles.size()<=1)
+        if (destination_rank<0 || destination_rank>=size || stage_handles.empty())
+            throw std::invalid_argument("ownership transfer requires valid nonempty ranks");
+        std::set<amr::LogicalBlockKey> unique;
+        std::size_t outgoing=0;
+        global=topology_registry.blocks();
+        for (const auto& source:sources) {
+            if (!unique.insert(source.logical).second
+                || topology_registry.handle_for(source.logical)!=source.handle)
+                throw std::invalid_argument("ownership transfer has a duplicate or stale logical endpoint");
+            const int sender=topology_registry.owner_for(source.logical);
+            if (sender==destination_rank)
+                throw std::invalid_argument("ownership transfer requires another valid rank");
+            senders.push_back(sender);
+            int source_id=-1;
+            for (const auto& leaf:global)
+                if (leaf.logical==source.logical) source_id=leaf.pool_index;
+            source_ids.push_back(source_id);
+            if (sender==rank) ++outgoing;
+        }
+        if (outgoing>=stage_handles.size())
             throw std::logic_error("ownership transfer does not yet support an empty runtime rank");
+        if (amr_ctrl.pool->GetNumReservedBlocks()!=0
+            || amr_ctrl.pool->GetNumActiveBlocks()!=static_cast<int>(stage_handles.size()))
+            throw std::logic_error("ownership transfer pool has foreign storage");
+        target_ids.resize(sources.size(),-1);
         if (next_amr_transaction_id==std::numeric_limits<std::uint64_t>::max())
             throw std::overflow_error("AMR transaction ID exhausted");
         accepted=current_interior_version();
@@ -123,9 +188,6 @@ void DriverRuntime::migrate_host_leaf(amr::AmrEndpoint source, int destination_r
             residency_ledger->require_readable({h,StateSlot::Current},
                 {ExecutionSide::Host,accepted,true,true});
         amr_ctrl.flux_register.RequireOwnershipTransferBoundary();
-        global=topology_registry.blocks();
-        for (const auto& leaf:global)
-            if (leaf.logical==source.logical) source_id=leaf.pool_index;
         // Borrowed callback attachments are not transportable process identities.
         for (int id:amr_ctrl.tree->GetActiveBlocks())
             for (auto member:slots) {
@@ -134,18 +196,39 @@ void DriverRuntime::migrate_host_leaf(amr::AmrEndpoint source, int destination_r
                     throw std::logic_error("ownership transfer cannot migrate boundary attachments");
             }
     });
-    agree(signature(amr_ctrl.tree->GetRootGrid(),specs.count(),source.handle.epoch,
+    agree(signature(amr_ctrl.tree->GetRootGrid(),specs.count(),topology_registry.epoch(),
         4,next_amr_transaction_id,ctrl.t_current,0));
-    std::array<std::uint64_t,21> identity{
-        source.handle.uid.value,source.handle.epoch.value,
-        static_cast<std::uint64_t>(source.logical.dimension),
-        static_cast<std::uint64_t>(source.logical.level),
-        source.logical.logical_x1,source.logical.logical_x2,source.logical.logical_x3,
-        static_cast<std::uint64_t>(sender),static_cast<std::uint64_t>(destination_rank),
-        accepted.value,scheduler_clock.last_token(),scheduler_clock.last_version(),
+    std::array<std::uint64_t,21> batch{
+        sources.size(),static_cast<std::uint64_t>(destination_rank),accepted.value,
+        scheduler_clock.last_token(),scheduler_clock.last_version(),
         static_cast<std::uint64_t>(ctrl.step_count),std::bit_cast<std::uint64_t>(ctrl.dt_old),
-        next_amr_transaction_id,1}; // Transaction identity and native packet schema.
-    agree(identity);
+        next_amr_transaction_id,static_cast<std::uint64_t>(config.grid.amr_max_blocks)};
+    agree(batch);
+    prepare([&] {
+        identities.reserve(sources.size());
+        for (std::size_t index=0;index<sources.size();++index) {
+            const auto& source=sources[index];
+            identities.push_back({source.handle.uid.value,source.handle.epoch.value,
+                static_cast<std::uint64_t>(source.logical.dimension),
+                static_cast<std::uint64_t>(source.logical.level),
+                source.logical.logical_x1,source.logical.logical_x2,source.logical.logical_x3,
+                static_cast<std::uint64_t>(senders[index]),static_cast<std::uint64_t>(destination_rank),
+                accepted.value,scheduler_clock.last_token(),scheduler_clock.last_version(),
+                static_cast<std::uint64_t>(ctrl.step_count),std::bit_cast<std::uint64_t>(ctrl.dt_old),
+                next_amr_transaction_id,2,sources.size(),index});
+        }
+    });
+    for (const auto& identity:identities) agree(identity);
+    std::array<std::uint64_t,2> local{
+        static_cast<std::uint64_t>(amr_ctrl.pool->GetCapacity()),stage_handles.size()},totals{};
+    check(MPI_Allreduce(local.data(),totals.data(),2,MPI_UINT64_T,MPI_SUM,MPI_COMM_WORLD));
+    prepare([&] {
+        if (config.grid.amr_max_blocks<=0
+            || totals[0]>static_cast<std::uint64_t>(config.grid.amr_max_blocks)
+            || totals[1]+sources.size()>static_cast<std::uint64_t>(config.grid.amr_max_blocks))
+            throw std::runtime_error("ownership transfer exceeds global max_blocks including the temporary peak");
+    });
+    if (sources.empty()) return; // Agreed no-op keeps the accepted epoch and ledger.
 
     std::optional<amr::AmrTree::PreparedRegrid> prepared;
     std::optional<topology::TopologyIdentityRegistry::Candidate> candidate;
@@ -158,23 +241,28 @@ void DriverRuntime::migrate_host_leaf(amr::AmrEndpoint source, int destination_r
     std::vector<std::uint64_t> packet;
     try {
         prepare([&] {
-            const std::span<const int> outgoing=rank==sender
-                ? std::span<const int>(&source_id,1):std::span<const int>{};
-            const std::span<const amr::LogicalBlockKey> incoming=rank==destination_rank
-                ? std::span<const amr::LogicalBlockKey>(&source.logical,1)
-                : std::span<const amr::LogicalBlockKey>{};
+            std::vector<int> outgoing;
+            std::vector<amr::LogicalBlockKey> incoming;
+            for (std::size_t index=0;index<sources.size();++index) {
+                if (rank==senders[index]) outgoing.push_back(source_ids[index]);
+                if (rank==destination_rank) incoming.push_back(sources[index].logical);
+            }
             prepared.emplace(amr_ctrl.tree->PrepareLeafOwnership(config,outgoing,incoming,specs.count()));
             if (rank==destination_rank)
-                for (int id:prepared->proposed_active_blocks()) {
-                    const auto& block=amr_ctrl.pool->GetBlock(id);
-                    if (source.logical==amr::LogicalBlockKey{config.grid.dim,block.level,
-                            block.logical_x1,block.logical_x2,block.logical_x3}) target_id=id;
+                for (std::size_t index=0;index<sources.size();++index) {
+                    for (int id:prepared->proposed_active_blocks()) {
+                        const auto& block=amr_ctrl.pool->GetBlock(id);
+                        if (sources[index].logical==amr::LogicalBlockKey{config.grid.dim,block.level,
+                                block.logical_x1,block.logical_x2,block.logical_x3}) target_ids[index]=id;
+                    }
+                    if (target_ids[index]<0)
+                        throw std::logic_error("ownership receiver has no candidate storage");
                 }
-            if (rank==destination_rank && target_id<0)
-                throw std::logic_error("ownership receiver has no candidate storage");
             auto observations=observe_blocks(prepared->proposed_active_blocks());
             for (auto leaf:global) {
-                if (leaf.logical==source.logical) leaf.owner_rank=destination_rank;
+                if (std::any_of(sources.begin(),sources.end(),
+                        [&](const auto& source) {return leaf.logical==source.logical;}))
+                    leaf.owner_rank=destination_rank;
                 if (leaf.owner_rank!=rank)
                     observations.push_back({-1,leaf.logical,leaf.owner_rank});
             }
@@ -184,120 +272,130 @@ void DriverRuntime::migrate_host_leaf(amr::AmrEndpoint source, int destination_r
                 throw std::logic_error("owner-only transfer changed logical block identities");
             handles=result.handles_in_observation_order;
             proposed_global=candidate->blocks();
-            transaction.emplace(next_amr_transaction_id++,source.handle.epoch,result.epoch);
+            transaction.emplace(next_amr_transaction_id++,topology_registry.epoch(),result.epoch);
             transaction->begin_migration();
-            if (rank==sender) {
-                const auto& block=amr_ctrl.pool->GetBlock(source_id);
-                if (block.refine_flag!=0)
-                    throw std::logic_error("ownership transfer requires no pending refinement decision");
-                for (std::size_t slot=0;slot<slots.size();++slot) {
-                    const auto& state=block.*slots[slot];
-                    const auto cells=static_cast<std::size_t>(block.grid.GetTotalSize());
-                    if (state.block_total_size_!=static_cast<int>(cells)
-                        || state.GetNumSpecies()!=specs.count())
-                        throw std::invalid_argument("ownership source state layout mismatch");
-                    layout[10*slot]=cells;layout[10*slot+1]=specs.count();
-                    for (std::size_t field=0;field<regrid_fields.size();++field) {
-                        const auto count=(state.*regrid_fields[field]).size();
-                        const auto expected=field==6?FluidState::CheckedSpeciesSize(specs.count(),cells):cells;
-                        if (count!=expected) throw std::invalid_argument("ownership field extent mismatch");
-                        layout[10*slot+2+field]=count;
-                    }
-                    layout[10*slot+9]=state.stage_repairs.values.size();
-                }
-            }
             notify(LeafTransferPhase::Reserved);
         });
-        check(MPI_Bcast(layout.data(),static_cast<int>(layout.size()),MPI_UINT64_T,sender,MPI_COMM_WORLD));
-        prepare([&] {
-            std::size_t count=identity.size()+layout.size();
-            for (std::size_t slot=0;slot<slots.size();++slot) {
-                const auto cells=layout[10*slot];
-                const auto species=layout[10*slot+1];
-                const auto repairs=layout[10*slot+9];
-                if (!cells || cells>std::numeric_limits<int>::max() || species!=static_cast<std::uint64_t>(specs.count())
-                    || repairs<state::RepairView::fixed_size
-                    || repairs>state::RepairView::fixed_size+2*species || (repairs-state::RepairView::fixed_size)%2)
-                    throw std::invalid_argument("ownership packet layout is invalid");
-                for (int field=0;field<7;++field) {
-                    const auto expected=field==6?FluidState::CheckedSpeciesSize(species,cells):cells;
-                    if (layout[10*slot+2+field]!=expected)
-                        throw std::invalid_argument("ownership packet field extent is invalid");
-                    count+=expected;
+        // Complete and validate one packet at a time. All receipts stay private
+        // in the one original pool reservation until the whole batch commits.
+        for (std::size_t index=0;index<sources.size();++index) {
+            const int sender=senders[index],source_id=source_ids[index],target_id=target_ids[index];
+            const auto& identity=identities[index];
+            prepare([&] {
+                if (rank==sender) {
+                    const auto& block=amr_ctrl.pool->GetBlock(source_id);
+                    if (block.refine_flag!=0)
+                        throw std::logic_error("ownership transfer requires no pending refinement decision");
+                    for (std::size_t slot=0;slot<slots.size();++slot) {
+                        const auto& state=block.*slots[slot];
+                        const auto cells=static_cast<std::size_t>(block.grid.GetTotalSize());
+                        if (state.block_total_size_!=static_cast<int>(cells)
+                            || state.GetNumSpecies()!=specs.count())
+                            throw std::invalid_argument("ownership source state layout mismatch");
+                        layout[10*slot]=cells;layout[10*slot+1]=specs.count();
+                        for (std::size_t field=0;field<regrid_fields.size();++field) {
+                            const auto count=(state.*regrid_fields[field]).size();
+                            const auto expected=field==6?FluidState::CheckedSpeciesSize(specs.count(),cells):cells;
+                            if (count!=expected) throw std::invalid_argument("ownership field extent mismatch");
+                            layout[10*slot+2+field]=count;
+                        }
+                        layout[10*slot+9]=state.stage_repairs.values.size();
+                    }
                 }
-                count+=repairs+6; // UID, stage, time, and three coordinates.
-            }
-            if (count>static_cast<std::size_t>(std::numeric_limits<int>::max()))
-                throw std::overflow_error("ownership packet exceeds MPI count");
-            if (rank==sender || rank==destination_rank) packet.resize(count);
-            if (rank==sender) {
-                auto out=std::copy(identity.begin(),identity.end(),packet.begin());
-                out=std::copy(layout.begin(),layout.end(),out);
-                for (auto member:slots) {
-                    const auto& state=amr_ctrl.pool->GetBlock(source_id).*member;
-                    for (auto field:regrid_fields)
-                        for (double value:state.*field) *out++=std::bit_cast<std::uint64_t>(value);
-                    const auto& repair=state.stage_repairs;
-                    for (double value:repair.values) *out++=std::bit_cast<std::uint64_t>(value);
-                    *out++=repair.block_uid;
-                    *out++=static_cast<std::uint64_t>(static_cast<std::int64_t>(repair.stage));
-                    *out++=std::bit_cast<std::uint64_t>(repair.time);
-                    for (double value:repair.position) *out++=std::bit_cast<std::uint64_t>(value);
-                }
-                if (out!=packet.end()) throw std::logic_error("ownership packet packing mismatch");
-            }
-            if (rank==destination_rank) {
-                auto& block=amr_ctrl.pool->GetBlock(target_id);
+            });
+            check(MPI_Bcast(layout.data(),static_cast<int>(layout.size()),MPI_UINT64_T,sender,MPI_COMM_WORLD));
+            prepare([&] {
+                std::size_t count=identity.size()+layout.size();
                 for (std::size_t slot=0;slot<slots.size();++slot) {
-                    auto& state=block.*slots[slot];
-                    if (state.block_total_size_!=static_cast<int>(layout[10*slot])
-                        || state.GetNumSpecies()!=static_cast<int>(layout[10*slot+1]))
-                        throw std::invalid_argument("ownership receiver state layout mismatch");
-                    for (int field=0;field<7;++field)
-                        if ((state.*regrid_fields[field]).size()!=layout[10*slot+2+field])
-                            throw std::invalid_argument("ownership receiver field extent mismatch");
-                    state.stage_repairs.values.resize(layout[10*slot+9]);
-                    state.diffusion_boundary.reset();
-                    state.boundary_flux_capture.reset();
+                    const auto cells=layout[10*slot];
+                    const auto species=layout[10*slot+1];
+                    const auto repairs=layout[10*slot+9];
+                    if (!cells || cells>std::numeric_limits<int>::max() || species!=static_cast<std::uint64_t>(specs.count())
+                        || repairs<state::RepairView::fixed_size
+                        || repairs>state::RepairView::fixed_size+2*species || (repairs-state::RepairView::fixed_size)%2)
+                        throw std::invalid_argument("ownership packet layout is invalid");
+                    for (int field=0;field<7;++field) {
+                        const auto expected=field==6?FluidState::CheckedSpeciesSize(species,cells):cells;
+                        if (layout[10*slot+2+field]!=expected)
+                            throw std::invalid_argument("ownership packet field extent is invalid");
+                        count+=expected;
+                    }
+                    count+=repairs+6; // UID, stage, time, and three coordinates.
                 }
+                if (count>static_cast<std::size_t>(std::numeric_limits<int>::max()))
+                    throw std::overflow_error("ownership packet exceeds MPI count");
+                if (rank==sender || rank==destination_rank) packet.resize(count);
+                if (rank==sender) {
+                    auto out=std::copy(identity.begin(),identity.end(),packet.begin());
+                    out=std::copy(layout.begin(),layout.end(),out);
+                    for (auto member:slots) {
+                        const auto& state=amr_ctrl.pool->GetBlock(source_id).*member;
+                        for (auto field:regrid_fields)
+                            for (double value:state.*field) *out++=std::bit_cast<std::uint64_t>(value);
+                        const auto& repair=state.stage_repairs;
+                        for (double value:repair.values) *out++=std::bit_cast<std::uint64_t>(value);
+                        *out++=repair.block_uid;
+                        *out++=static_cast<std::uint64_t>(static_cast<std::int64_t>(repair.stage));
+                        *out++=std::bit_cast<std::uint64_t>(repair.time);
+                        for (double value:repair.position) *out++=std::bit_cast<std::uint64_t>(value);
+                    }
+                    if (out!=packet.end()) throw std::logic_error("ownership packet packing mismatch");
+                }
+                if (rank==destination_rank) {
+                    auto& block=amr_ctrl.pool->GetBlock(target_id);
+                    for (std::size_t slot=0;slot<slots.size();++slot) {
+                        auto& state=block.*slots[slot];
+                        if (state.block_total_size_!=static_cast<int>(layout[10*slot])
+                            || state.GetNumSpecies()!=static_cast<int>(layout[10*slot+1]))
+                            throw std::invalid_argument("ownership receiver state layout mismatch");
+                        for (int field=0;field<7;++field)
+                            if ((state.*regrid_fields[field]).size()!=layout[10*slot+2+field])
+                                throw std::invalid_argument("ownership receiver field extent mismatch");
+                        state.stage_repairs.values.resize(layout[10*slot+9]);
+                        state.diffusion_boundary.reset();
+                        state.boundary_flux_capture.reset();
+                    }
+                }
+            });
+            // A single completed point-to-point packet; no remote pool IDs or pointers.
+            constexpr int tag=49;
+            if (rank==sender)
+                check(MPI_Send(packet.data(),static_cast<int>(packet.size()),MPI_UINT64_T,destination_rank,tag,MPI_COMM_WORLD));
+            else if (rank==destination_rank) {
+                MPI_Status status{};
+                check(MPI_Recv(packet.data(),static_cast<int>(packet.size()),MPI_UINT64_T,sender,tag,MPI_COMM_WORLD,&status));
+                int count=0;check(MPI_Get_count(&status,MPI_UINT64_T,&count));
+                // Preserve count error for the next collective, not a unilateral exit.
+                if (count!=static_cast<int>(packet.size())) packet.clear();
             }
-        });
-        // A single completed point-to-point packet; no remote pool IDs or pointers.
-        constexpr int tag=49;
-        if (rank==sender)
-            check(MPI_Send(packet.data(),static_cast<int>(packet.size()),MPI_UINT64_T,destination_rank,tag,MPI_COMM_WORLD));
-        else if (rank==destination_rank) {
-            MPI_Status status{};
-            check(MPI_Recv(packet.data(),static_cast<int>(packet.size()),MPI_UINT64_T,sender,tag,MPI_COMM_WORLD,&status));
-            int count=0;check(MPI_Get_count(&status,MPI_UINT64_T,&count));
-            // Preserve count error for the next collective, not a unilateral exit.
-            if (count!=static_cast<int>(packet.size())) packet.clear();
+            prepare([&] {
+                if (rank==destination_rank) {
+                    if (packet.size()<identity.size()+layout.size()
+                        || !std::equal(identity.begin(),identity.end(),packet.begin())
+                        || !std::equal(layout.begin(),layout.end(),packet.begin()+identity.size()))
+                        throw std::invalid_argument("ownership packet identity/layout mismatch");
+                    auto in=packet.begin()+identity.size()+layout.size();
+                    auto& block=amr_ctrl.pool->GetBlock(target_id);
+                    for (auto member:slots) {
+                        auto& state=block.*member;
+                        for (auto field:regrid_fields) {
+                            for (double& value:state.*field) value=std::bit_cast<double>(*in++);
+                            notify(LeafTransferPhase::FieldReceived);
+                        }
+                        auto& repair=state.stage_repairs;
+                        for (double& value:repair.values) value=std::bit_cast<double>(*in++);
+                        repair.block_uid=*in++;
+                        const auto stage=std::bit_cast<std::int64_t>(*in++);
+                        if (stage<std::numeric_limits<int>::min() || stage>std::numeric_limits<int>::max())
+                            throw std::invalid_argument("ownership repair stage exceeds int");
+                        repair.stage=static_cast<int>(stage);
+                        repair.time=std::bit_cast<double>(*in++);
+                        for (double& value:repair.position) value=std::bit_cast<double>(*in++);
+                    }
+                }
+            });
         }
         prepare([&] {
-            if (rank==destination_rank) {
-                if (packet.size()<identity.size()+layout.size()
-                    || !std::equal(identity.begin(),identity.end(),packet.begin())
-                    || !std::equal(layout.begin(),layout.end(),packet.begin()+identity.size()))
-                    throw std::invalid_argument("ownership packet identity/layout mismatch");
-                auto in=packet.begin()+identity.size()+layout.size();
-                auto& block=amr_ctrl.pool->GetBlock(target_id);
-                for (auto member:slots) {
-                    auto& state=block.*member;
-                    for (auto field:regrid_fields) {
-                        for (double& value:state.*field) value=std::bit_cast<double>(*in++);
-                        notify(LeafTransferPhase::FieldReceived);
-                    }
-                    auto& repair=state.stage_repairs;
-                    for (double& value:repair.values) value=std::bit_cast<double>(*in++);
-                    repair.block_uid=*in++;
-                    const auto stage=std::bit_cast<std::int64_t>(*in++);
-                    if (stage<std::numeric_limits<int>::min() || stage>std::numeric_limits<int>::max())
-                        throw std::invalid_argument("ownership repair stage exceeds int");
-                    repair.stage=static_cast<int>(stage);
-                    repair.time=std::bit_cast<double>(*in++);
-                    for (double& value:repair.position) value=std::bit_cast<double>(*in++);
-                }
-            }
             prepared->CompleteOwnershipMigration();
             prepared->ActivateForFinalization(proposed_global);
             notify(LeafTransferPhase::TopologyActivated);
@@ -339,7 +437,7 @@ void DriverRuntime::migrate_host_leaf(amr::AmrEndpoint source, int destination_r
         throw;
     }
 #else
-    (void)source;(void)destination_rank;(void)observer;
+    (void)sources;(void)destination_rank;(void)observer;
     throw std::logic_error("ownership transfer requires ARCH_ENABLE_MPI=ON");
 #endif
 }

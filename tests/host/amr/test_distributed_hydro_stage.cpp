@@ -24,14 +24,18 @@
 #endif
 namespace allocation_fault { inline thread_local int fail_after=0; }
 #if ARCH_MPI_ENABLED
-namespace ownership_wire_fault { inline int mode=0; }
+namespace ownership_wire_fault { inline int mode=0,skip_packets=0; }
 extern "C" int MPI_Send(const void* buffer,int count,MPI_Datatype type,int dest,int tag,MPI_Comm comm) {
     if(tag!=49||ownership_wire_fault::mode==0)
         return PMPI_Send(buffer,count,type,dest,tag,comm);
+    if(ownership_wire_fault::skip_packets>0) {
+        --ownership_wire_fault::skip_packets;
+        return PMPI_Send(buffer,count,type,dest,tag,comm);
+    }
     if(ownership_wire_fault::mode==4)
         return PMPI_Send(buffer,count-1,type,dest,tag,comm);
     auto* words=const_cast<std::uint64_t*>(static_cast<const std::uint64_t*>(buffer));
-    const int index=ownership_wire_fault::mode==1?0:ownership_wire_fault::mode==2?1:ownership_wire_fault::mode==5?14:21;
+    const int index=ownership_wire_fault::mode==1?0:ownership_wire_fault::mode==2?1:ownership_wire_fault::mode==5?14:ownership_wire_fault::mode==6?16:ownership_wire_fault::mode==7?17:21;
     const auto original=words[index];words[index]^=1;
     const int result=PMPI_Send(buffer,count,type,dest,tag,comm);
     words[index]=original;return result;
@@ -439,13 +443,14 @@ struct LeafTopologyWitness {
         }
     }
 };
-amr::AmrEndpoint leaf_endpoint(const RuntimeRun& run,int owner) {
-    amr::AmrEndpoint source{{2,1,2,0,0},{}};
+amr::AmrEndpoint leaf_endpoint(const RuntimeRun& run,int owner,
+    amr::LogicalBlockKey key={2,1,2,0,0}) {
+    amr::AmrEndpoint source{key,{}};
     if(rank==owner) {
         const auto& ids=run.f.control.tree->GetActiveBlocks();
         for(std::size_t i=0;i<ids.size();++i) {
             const auto& b=run.f.control.pool->GetBlock(ids[i]);
-            if(b.level==1&&b.logical_x1==2&&b.logical_x2==0)
+            if(amr::LogicalBlockKey{2,b.level,b.logical_x1,b.logical_x2,b.logical_x3}==key)
                 source.handle=run.runtime.handles()[i];
         }
     }
@@ -741,6 +746,172 @@ void require_conservation(const Fixture& f,const std::array<long double,7>& init
         require(std::abs(sum[field]-initial[field])<=2.e-11L+2.e-12L*std::abs(initial[field]),
             "dynamic regrid conservation failed");
 }
+
+/** The family boundary commits ownership once. The later numerical regrid is
+ * independently accepted: a veto there must retain the colocated old leaves.
+ */
+void runtime_sibling_cases() {
+    using Phase=driver::DriverRuntime::LeafTransferPhase;
+    const amr::LogicalBlockKey parent{2,0,1,0,0};
+    if(ranks==1) {
+        Fixture actual(2,0,1,true);seed(actual,true);RuntimeRun a(actual);
+        bool rejected=false;
+        try {a.runtime.coalesce_host_siblings(parent,0);}catch(const std::exception&) {rejected=true;}
+        require(rejected,"serial runtime accepted distributed sibling colocation");
+        return;
+    }
+    const auto split=[](RuntimeRun& a,int count) {
+        for(int child=0;child<count;++child) {
+            const amr::LogicalBlockKey key{2,1,static_cast<std::uint32_t>(2+child%2),
+                static_cast<std::uint32_t>(child/2),0};
+            a.runtime.migrate_host_leaf(leaf_endpoint(a,1,key),0);
+            a.f.handles=a.runtime.handles();
+        }
+    };
+    int cycles=0,rejections=0;
+    for(int count:{2,3})for(int method=0;method<3;++method) {
+        Fixture actual(2,rank,ranks,true,false,rank==0?count+1:5),reference(2,0,1,true,false);
+        seed_regrid_wave(actual,count+6);seed_regrid_wave(reference,count+6);
+        RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
+        const auto initial=totals(reference);
+        a.step(method);serial_reference_step(*b,method);
+        require(runtime_regrid(a),"family setup did not refine");
+        serial_reference_regrid(reference,b,a.controller.t_current);
+        a.step(method);serial_reference_step(*b,method);
+        split(a,count);compare(actual,reference);
+        // Evolve while siblings are on different owners, then gather accepted data.
+        a.step(method);serial_reference_step(*b,method);compare(actual,reference);
+        const auto before=a.runtime.stage_context();
+        const auto version=before.clock.last_version(),token=before.clock.last_token();
+        const auto old_handles=a.runtime.handles();
+        std::array<amr::AmrEndpoint,4> children;
+        for(int child=0;child<4;++child)
+            children[child]=leaf_endpoint(a,child<count?0:1,
+                {2,1,static_cast<std::uint32_t>(2+child%2),static_cast<std::uint32_t>(child/2),0});
+        int receipts=0;
+        require(a.runtime.coalesce_host_siblings(parent,1,[&](Phase phase) {
+            if(phase==Phase::FieldReceived)++receipts;
+            if(phase==Phase::Reserved||phase==Phase::ReadyToPublish) {
+                int live=actual.control.pool->GetNumActiveBlocks(),total=0;
+#if ARCH_MPI_ENABLED
+                MPI_Allreduce(&live,&total,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
+#endif
+                require(total==5+count,"family transaction did not retain all source slots until acknowledgement");
+            }
+        }),"split family reported no ownership change");
+        actual.handles=a.runtime.handles();
+        require(receipts==(rank==1?21*count:0),"family packet field coverage incomplete");
+        require(actual.handles.size()==(rank==0?1:4),"family colocation has wrong owner counts");
+        const auto after=a.runtime.stage_context();
+        require(after.clock.last_version()==version+1&&after.clock.last_token()==token+1,
+            "family colocation used more than one scheduler publication");
+        for(int child=0;child<4;++child) {
+            const auto now=leaf_endpoint(a,1,children[child].logical);
+            require(now.handle.uid==children[child].handle.uid
+                &&now.handle.epoch.value==children[child].handle.epoch.value+1,
+                "family colocation changed a UID or committed multiple epochs");
+        }
+        bool stale=false;
+        try {(void)after.ledger.inspect({old_handles.front(),state::StateSlot::Current});}
+        catch(const std::exception&) {stale=true;}
+        require(stale,"family publication kept old handles readable");
+        compare(actual,reference);require_conservation(actual,initial);
+        RegridWitness colocated(a);
+        require(!a.runtime.coalesce_host_siblings(parent,1),"colocated family was not an exact no-op");
+        colocated.check(a);
+        request_coarsening(actual);request_coarsening(reference);
+        bool rejected=false;
+        try {runtime_regrid(a,[&](driver::DriverRuntime::RegridPhase phase) {
+            if(rank==1&&phase==driver::DriverRuntime::RegridPhase::ReadyToPublish)
+                throw std::runtime_error("reject numerical coarsening after accepted colocation");
+        });}catch(const std::exception&) {rejected=true;}
+        require(rejected,"coarsening veto did not reach all ranks");colocated.check(a);
+        ++rejections;
+        require(runtime_regrid(a),"colocated family could not coarsen on retry");
+        serial_reference_regrid(reference,b,a.controller.t_current);
+        compare(actual,reference);require_conservation(actual,initial);
+        a.step(method);serial_reference_step(*b,method);compare(actual,reference);
+        require_conservation(actual,initial);++cycles;
+    }
+    // Fail after one packet has already been received. No partial ownership
+    // publication is allowed, including allocation and wire validation failures.
+    for(int fault=0;fault<22;++fault) {
+        Fixture actual(2,rank,ranks,true,false,rank==0?3:5),reference(2,0,1,true,false);
+        seed_regrid_wave(actual,8);seed_regrid_wave(reference,8);
+        RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
+        require(runtime_regrid(a),"family fault setup did not refine");
+        serial_reference_regrid(reference,b,a.controller.t_current);
+        split(a,2);
+        RegridWitness original(a);
+        auto context=a.runtime.stage_context();
+        const auto snapshot=context.ledger.snapshot_metadata(state::ExecutionSide::Host);
+        const auto saved=actual.config;
+        int destination=1;auto requested=parent;
+        if(fault==17&&rank==0)destination=0;
+        if(fault==18&&rank==0)requested.logical_x1=0;
+        if(fault==19&&rank==0)actual.config.grid.amr_max_blocks=9;
+        if(fault==20)actual.config.grid.amr_max_blocks=7;
+        if(fault==21)destination=0; // Would leave rank one empty.
+#if ARCH_MPI_ENABLED
+        if(fault>=10&&fault<=16&&rank==0) {
+            ownership_wire_fault::mode=fault-9;ownership_wire_fault::skip_packets=1;
+        }
+#endif
+        int received=0;bool rejected=false,observed=false;
+        try {a.runtime.coalesce_host_siblings(requested,destination,[&](Phase phase) {
+            if(phase==Phase::FieldReceived)++received;
+            const int victim=fault%2;
+            const bool phase_failure=fault<6&&rank==victim
+                &&phase==(fault<2?Phase::Reserved:fault<4?Phase::TopologyActivated:Phase::ReadyToPublish);
+            const bool partial_failure=rank==1&&phase==Phase::FieldReceived
+                &&((fault==6&&received==22)||(fault==7&&received==42));
+            if(phase_failure||partial_failure) {
+                observed=true;throw std::runtime_error("injected family transaction failure");
+            }
+            if(rank==1&&((fault==8&&phase==Phase::Reserved)
+                ||(fault==9&&phase==Phase::ReadyToPublish)))allocation_fault::fail_after=1;
+        });}catch(const std::exception&) {rejected=true;}
+        allocation_fault::fail_after=0;
+#if ARCH_MPI_ENABLED
+        ownership_wire_fault::mode=ownership_wire_fault::skip_packets=0;
+#endif
+        require(rejected,"family failure did not reject collectively");
+        if(fault<6&&rank==fault%2)require(observed,"family phase fault did not execute");
+        if(fault==6||fault==7)if(rank==1)require(observed,"second packet partial-write fault did not execute");
+        if(fault>=10&&fault<=16&&rank==1)require(received==21,"wire fault did not target the second packet");
+        actual.config=saved;
+        original.check(a);
+        require(context.ledger.metadata_snapshot_matches(snapshot),"family failure modified accepted ledger");
+        compare(actual,reference);
+        require(a.runtime.coalesce_host_siblings(parent,1),"same-runtime family retry failed");
+        actual.handles=a.runtime.handles();compare(actual,reference);
+        request_coarsening(actual);request_coarsening(reference);
+        require(runtime_regrid(a),"family retry could not coarsen");
+        serial_reference_regrid(reference,b,a.controller.t_current);
+        a.step(2);serial_reference_step(*b,2);compare(actual,reference);
+        ++rejections;
+    }
+    // A feasible global budget cannot lend capacity from the other rank's pool.
+    // Keep a root on the donor so this rejection specifically tests local quota.
+    {
+        Fixture actual(2,rank,ranks,true,false,rank==0?3:5),reference(2,0,1,true,false);
+        seed_regrid_wave(actual,8);seed_regrid_wave(reference,8);
+        RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
+        require(runtime_regrid(a),"quota setup did not refine");
+        serial_reference_regrid(reference,b,a.controller.t_current);split(a,2);
+        const amr::LogicalBlockKey root{2,0,0,0,0};
+        a.runtime.migrate_host_leaf(leaf_endpoint(a,0,root),1);actual.handles=a.runtime.handles();
+        RegridWitness before(a);bool rejected=false;
+        try {a.runtime.coalesce_host_siblings(parent,0);}catch(const std::exception&) {rejected=true;}
+        require(rejected,"family exceeded destination local pool quota");before.check(a);compare(actual,reference);
+        a.runtime.migrate_host_leaf(leaf_endpoint(a,1,root),0);actual.handles=a.runtime.handles();
+        require(a.runtime.coalesce_host_siblings(parent,1),"feasible family destination could not retry");
+        actual.handles=a.runtime.handles();compare(actual,reference);++rejections;
+    }
+    if(rank==0)std::cout<<"Siblings: "<<cycles<<" evolved split/colocate/coarsen cycles; "
+        <<rejections<<" collective rejections with same-runtime retries; one epoch per batch; second-packet rollback\n";
+}
+
 void runtime_regrid_cases() {
     using Phase=driver::DriverRuntime::RegridPhase;
     if(ranks==1)return; // Original serial regrid has its own transaction tests.
@@ -1169,6 +1340,7 @@ int main(int argc, char** argv) {
         runtime_macro_cases();
         runtime_leaf_transfer_cases();
         runtime_regrid_cases();
+        runtime_sibling_cases();
         rejected_cases();
         receipt_and_boundary_rejections();
         if (rank == 0)
