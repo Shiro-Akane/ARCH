@@ -396,6 +396,22 @@ C3 的后续工作仍需覆盖深层全局细化传播、迁移后的跨 owner �
 
 本轮证据保存在 /home/ubuntu/projects/ARCH-mpi-evidence-siblings-20261111；protocol.json 先于运行记录范围和门槛，local-acceptance.json 记录冻结源码的验收。Release/Debug × MPI ON/OFF 全应用及相关目标重建后，100 项 CTest（30/20/30/20）通过；另有 20 次不绑核的双 rank 双线程复跑。新增 6 个演化归并/粗化周期、29 项共同拒绝和重试，原 C2 的 21 项拒绝、C3 的 38 项拒绝及 8 个元数据分配故障均保留。629 项工具测试、架构/文档/actionlint/inventory 检查通过。固定网格生产回归的 55 组逐位比较、10 项预期拒绝及 2,340 文件归档回读/HDF5 重开通过；这些仍是固定网格生产证据，不构成动态 MPI-AMR 应用输出验收。原包字段打包/解包与修复元数据赋值仅移动到逐叶循环；原重网格和之后的执行主体逐字不变，数学叶文件和容差未改。更深层 ripple、自动家族组织、空 rank、GPU、分布式输出/重启及应用入口继续留在后续阶段。
 
+### C3 连续生命周期实验（2026-11-12）
+
+在 d1fdf271 的原生运行时案例上补充连续循环参数：arch_distributed_hydro_stage 的第一个参数仍是预期 OpenMP 线程数，可选第二个参数为同一 Runtime 内的家族周期数，限双 rank、1–256；默认仍为 1，原 CI 覆盖标记保持不变。没有改动生产执行器、数学实现、物理公式或验收容差。
+
+每条轨迹只初始化一次物理状态、Runtime、池和调度器；之后连续执行原细化指标、细叶迁移、跨 owner 演化、家族归并、粗化否决/重试与后续宏步。每轮恢复预先固定的细化输入 .02/.001，粗化仍用 .9/.8；不重新播种字段。原生命周期检查逐字保留（仅缩进变化），另核对每轮池槽 active/reserved/available 恢复初始值、epoch 增量精确为迁移叶数加 3，以及实际宏步数。池槽恢复不等价于全部 RSS 或通信内存泄漏的排除。
+
+在已有 MPI 构建和工具链环境中复现双线程轨迹：
+
+~~~sh
+OMP_NUM_THREADS=2 OMP_DYNAMIC=FALSE mpiexec --bind-to none -n 2 build-gpu-release/arch_distributed_hydro_stage 2 64
+~~~
+
+服务器证据为 /home/ubuntu/projects/ARCH-mpi-evidence-cycles-20261112。先记录 protocol.json 和测试源哈希，Release 两线程配置各通过 2 轮试运行；正式实验为 Release/Debug × OMP 1/2 × 迁移 2/3 叶 × Euler/RK2/RK3，共 24 条独立轨迹，每条连续 64 轮、256 宏步，算例时间达到 0.0256。合计 1,536 轮、6,144 个宏步；不按 MPI rank 重复计数。每条轨迹保留原三槽全部字段、species 和 ghost 的逐位串行对照，守恒仍使用 2e-11 + 2e-12*abs(initial)，全部通过。各轮粗化失败后都在同一 Runtime 中重试；原失败注入与单轮覆盖继续执行。
+
+四个构建配置只重建受影响的测试目标，MPI ON/OFF × Release/Debug 的 8 项直接相关 CTest（3/1/3/1）通过，无跳过。原 d1fdf271 的 100 项及生产回归属于上一提交的证据，未将它们计作本轮重跑结果。64 轮结果验证本例的重复生命周期；不作为深层细化传播、长物理时间、多节点、CUDA 或动态应用入口的验收。下一项功能仍为跨 rank 的 level 0/1/2 细化传播。
+
 ## CUDA、输出与运行环境的后续范围
 
 - CUDA 先走可移植 Host staging：原设备执行器按共同交换配方打包，D2H 完成后才能发送；MPI 接收完成后才可 H2D/unpack，设备完成事件后再发布原 residency/completion token。每一阶段的缓冲、旧 store 和租约存活到所有消费者完成。Host staging 可复用已有工作区/生命周期，不能变成每步全域镜像。取得实机正确性、内存与时间证据后再考虑 device-aware MPI。

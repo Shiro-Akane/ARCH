@@ -750,7 +750,7 @@ void require_conservation(const Fixture& f,const std::array<long double,7>& init
 /** The family boundary commits ownership once. The later numerical regrid is
  * independently accepted: a veto there must retain the colocated old leaves.
  */
-void runtime_sibling_cases() {
+void runtime_sibling_cases(int repetitions) {
     using Phase=driver::DriverRuntime::LeafTransferPhase;
     const amr::LogicalBlockKey parent{2,0,1,0,0};
     if(ranks==1) {
@@ -774,64 +774,86 @@ void runtime_sibling_cases() {
         seed_regrid_wave(actual,count+6);seed_regrid_wave(reference,count+6);
         RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
         const auto initial=totals(reference);
-        a.step(method);serial_reference_step(*b,method);
-        require(runtime_regrid(a),"family setup did not refine");
-        serial_reference_regrid(reference,b,a.controller.t_current);
-        a.step(method);serial_reference_step(*b,method);
-        split(a,count);compare(actual,reference);
-        // Evolve while siblings are on different owners, then gather accepted data.
-        a.step(method);serial_reference_step(*b,method);compare(actual,reference);
-        const auto before=a.runtime.stage_context();
-        const auto version=before.clock.last_version(),token=before.clock.last_token();
-        const auto old_handles=a.runtime.handles();
-        std::array<amr::AmrEndpoint,4> children;
-        for(int child=0;child<4;++child)
-            children[child]=leaf_endpoint(a,child<count?0:1,
-                {2,1,static_cast<std::uint32_t>(2+child%2),static_cast<std::uint32_t>(child/2),0});
-        int receipts=0;
-        require(a.runtime.coalesce_host_siblings(parent,1,[&](Phase phase) {
-            if(phase==Phase::FieldReceived)++receipts;
-            if(phase==Phase::Reserved||phase==Phase::ReadyToPublish) {
-                int live=actual.control.pool->GetNumActiveBlocks(),total=0;
-#if ARCH_MPI_ENABLED
-                MPI_Allreduce(&live,&total,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
-#endif
-                require(total==5+count,"family transaction did not retain all source slots until acknowledgement");
+        const int initial_available=actual.control.pool->GetNumAvailableBlocks();
+        const auto initial_epoch=actual.handles.front().epoch.value;
+        // Retain evolved fields, Runtime, pool and scheduler between cycles.
+        // Restore the original indicator inputs; never reseed the fluid state.
+        for(int cycle=0;cycle<repetitions;++cycle) {
+            actual.config.amr.refine_threshold=reference.config.amr.refine_threshold=.02;
+            actual.config.amr.derefine_threshold=reference.config.amr.derefine_threshold=.001;
+            a.step(method);serial_reference_step(*b,method);
+            require(runtime_regrid(a),"family setup did not refine");
+            serial_reference_regrid(reference,b,a.controller.t_current);
+            a.step(method);serial_reference_step(*b,method);
+            split(a,count);compare(actual,reference);
+            // Evolve while siblings are on different owners, then gather accepted data.
+            a.step(method);serial_reference_step(*b,method);compare(actual,reference);
+            const auto before=a.runtime.stage_context();
+            const auto version=before.clock.last_version(),token=before.clock.last_token();
+            const auto old_handles=a.runtime.handles();
+            std::array<amr::AmrEndpoint,4> children;
+            for(int child=0;child<4;++child)
+                children[child]=leaf_endpoint(a,child<count?0:1,
+                    {2,1,static_cast<std::uint32_t>(2+child%2),static_cast<std::uint32_t>(child/2),0});
+            int receipts=0;
+            require(a.runtime.coalesce_host_siblings(parent,1,[&](Phase phase) {
+                if(phase==Phase::FieldReceived)++receipts;
+                if(phase==Phase::Reserved||phase==Phase::ReadyToPublish) {
+                    int live=actual.control.pool->GetNumActiveBlocks(),total=0;
+    #if ARCH_MPI_ENABLED
+                    MPI_Allreduce(&live,&total,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
+    #endif
+                    require(total==5+count,"family transaction did not retain all source slots until acknowledgement");
+                }
+            }),"split family reported no ownership change");
+            actual.handles=a.runtime.handles();
+            require(receipts==(rank==1?21*count:0),"family packet field coverage incomplete");
+            require(actual.handles.size()==(rank==0?1:4),"family colocation has wrong owner counts");
+            const auto after=a.runtime.stage_context();
+            require(after.clock.last_version()==version+1&&after.clock.last_token()==token+1,
+                "family colocation used more than one scheduler publication");
+            for(int child=0;child<4;++child) {
+                const auto now=leaf_endpoint(a,1,children[child].logical);
+                require(now.handle.uid==children[child].handle.uid
+                    &&now.handle.epoch.value==children[child].handle.epoch.value+1,
+                    "family colocation changed a UID or committed multiple epochs");
             }
-        }),"split family reported no ownership change");
-        actual.handles=a.runtime.handles();
-        require(receipts==(rank==1?21*count:0),"family packet field coverage incomplete");
-        require(actual.handles.size()==(rank==0?1:4),"family colocation has wrong owner counts");
-        const auto after=a.runtime.stage_context();
-        require(after.clock.last_version()==version+1&&after.clock.last_token()==token+1,
-            "family colocation used more than one scheduler publication");
-        for(int child=0;child<4;++child) {
-            const auto now=leaf_endpoint(a,1,children[child].logical);
-            require(now.handle.uid==children[child].handle.uid
-                &&now.handle.epoch.value==children[child].handle.epoch.value+1,
-                "family colocation changed a UID or committed multiple epochs");
+            bool stale=false;
+            try {(void)after.ledger.inspect({old_handles.front(),state::StateSlot::Current});}
+            catch(const std::exception&) {stale=true;}
+            require(stale,"family publication kept old handles readable");
+            compare(actual,reference);require_conservation(actual,initial);
+            RegridWitness colocated(a);
+            require(!a.runtime.coalesce_host_siblings(parent,1),"colocated family was not an exact no-op");
+            colocated.check(a);
+            request_coarsening(actual);request_coarsening(reference);
+            bool rejected=false;
+            try {runtime_regrid(a,[&](driver::DriverRuntime::RegridPhase phase) {
+                if(rank==1&&phase==driver::DriverRuntime::RegridPhase::ReadyToPublish)
+                    throw std::runtime_error("reject numerical coarsening after accepted colocation");
+            });}catch(const std::exception&) {rejected=true;}
+            require(rejected,"coarsening veto did not reach all ranks");colocated.check(a);
+            ++rejections;
+            require(runtime_regrid(a),"colocated family could not coarsen on retry");
+            serial_reference_regrid(reference,b,a.controller.t_current);
+            compare(actual,reference);require_conservation(actual,initial);
+            a.step(method);serial_reference_step(*b,method);compare(actual,reference);
+            require_conservation(actual,initial);++cycles;
+            require(actual.control.pool->GetNumActiveBlocks()==1
+                &&actual.control.pool->GetNumReservedBlocks()==0
+                &&actual.control.pool->GetNumAvailableBlocks()==initial_available,
+                "repeated sibling lifecycle leaked original pool capacity");
+            require(actual.handles.front().epoch.value==initial_epoch+(cycle+1)*(count+3),
+                "repeated sibling lifecycle did not commit the exact epoch count");
+            require(a.controller.step_count==4*(cycle+1),
+                "repeated sibling lifecycle lost an accepted macro step");
         }
-        bool stale=false;
-        try {(void)after.ledger.inspect({old_handles.front(),state::StateSlot::Current});}
-        catch(const std::exception&) {stale=true;}
-        require(stale,"family publication kept old handles readable");
-        compare(actual,reference);require_conservation(actual,initial);
-        RegridWitness colocated(a);
-        require(!a.runtime.coalesce_host_siblings(parent,1),"colocated family was not an exact no-op");
-        colocated.check(a);
-        request_coarsening(actual);request_coarsening(reference);
-        bool rejected=false;
-        try {runtime_regrid(a,[&](driver::DriverRuntime::RegridPhase phase) {
-            if(rank==1&&phase==driver::DriverRuntime::RegridPhase::ReadyToPublish)
-                throw std::runtime_error("reject numerical coarsening after accepted colocation");
-        });}catch(const std::exception&) {rejected=true;}
-        require(rejected,"coarsening veto did not reach all ranks");colocated.check(a);
-        ++rejections;
-        require(runtime_regrid(a),"colocated family could not coarsen on retry");
-        serial_reference_regrid(reference,b,a.controller.t_current);
-        compare(actual,reference);require_conservation(actual,initial);
-        a.step(method);serial_reference_step(*b,method);compare(actual,reference);
-        require_conservation(actual,initial);++cycles;
+        if(rank==0&&repetitions>1)
+            std::cout<<"Sibling trajectory: moved="<<count<<"; method="<<method
+                <<"; cycles="<<repetitions<<"; macro_steps="<<a.controller.step_count
+                <<"; time="<<a.controller.t_current
+                <<"; epoch_delta="<<(actual.handles.front().epoch.value-initial_epoch)
+                <<"; pool_restored=1\n";
     }
     // Fail after one packet has already been received. No partial ownership
     // publication is allowed, including allocation and wire validation failures.
@@ -1320,7 +1342,16 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &ranks);
 #endif
     try {
-        require(argc == 2, "test requires an explicit expected thread count");
+        require(argc == 2 || argc == 3,
+                "test requires an expected thread count and optional sibling cycle count");
+        int sibling_cycles=1;
+        if(argc==3) {
+            std::size_t consumed=0;
+            sibling_cycles=std::stoi(argv[2],&consumed);
+            require(consumed==std::string(argv[2]).size()
+                &&sibling_cycles>=1&&sibling_cycles<=256&&ranks==2,
+                "sibling cycle count requires two ranks and an integer in [1,256]");
+        }
         const int expected_threads = std::stoi(argv[1]);
         int observed_threads = 1;
 #ifdef _OPENMP
@@ -1340,7 +1371,7 @@ int main(int argc, char** argv) {
         runtime_macro_cases();
         runtime_leaf_transfer_cases();
         runtime_regrid_cases();
-        runtime_sibling_cases();
+        runtime_sibling_cases(sibling_cycles);
         rejected_cases();
         receipt_and_boundary_rejections();
         if (rank == 0)
