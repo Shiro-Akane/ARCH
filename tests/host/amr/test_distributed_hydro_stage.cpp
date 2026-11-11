@@ -1113,6 +1113,207 @@ void runtime_regrid_cases() {
         <<" phase/allocation/control/capacity rejections with same-runtime retries; 3 split-family rejections; 8 metadata allocation retries; six-slot peak\n";
 }
 
+void runtime_ripple_cases() {
+    using Phase=driver::DriverRuntime::RegridPhase;
+    if(ranks==1)return;
+    int cycles=0;
+    for(int method=0;method<3;++method) {
+        Fixture actual(2,rank,ranks,true,false,rank==0?9:21),
+            reference(2,0,1,true,false,40);
+        seed_regrid_wave(actual,30);seed_regrid_wave(reference,30);
+        actual.config.amr.lrefinemax=reference.config.amr.lrefinemax=2;
+        RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
+        const auto initial=totals(reference);
+        a.step(method);serial_reference_step(*b,method);compare(actual,reference);
+        for(int transition=0;transition<4;++transition) {
+            if(transition>=2) {request_coarsening(actual);request_coarsening(reference);}
+            // The original serial tree provides exact decisions before relation
+            // selection marks coarsening siblings consumed. No forced flags.
+            reference.control.tree->EvaluateRefinement(reference.config);
+            reference.control.tree->RippleCheck(reference.config.amr.lrefinemax);
+            std::map<amr::LogicalBlockKey,int> decisions;
+            for(int id:reference.control.tree->GetActiveBlocks()) {
+                const auto& block=reference.control.pool->GetBlock(id);
+                decisions[{2,block.level,block.logical_x1,block.logical_x2,0}]=block.refine_flag;
+            }
+            bool observed=false;
+            require(runtime_regrid(a,[&](Phase phase) {
+                if(phase!=Phase::Balanced)return;
+                observed=true;
+                for(int id:actual.control.tree->GetActiveBlocks()) {
+                    const auto& block=actual.control.pool->GetBlock(id);
+                    require(block.refine_flag==decisions.at(
+                        {2,block.level,block.logical_x1,block.logical_x2,0}),
+                        "distributed ripple decision differs from the original serial tree");
+                    if(rank==0&&transition==1)
+                        require(block.refine_flag==1,"remote fine refinement did not promote the coarse owner");
+                    if(rank==0&&transition==2)
+                        require(block.refine_flag==0,"remote level-two neighbors did not veto coarse family removal");
+                }
+            }),"deeper regrid did not publish");
+            require(observed,"distributed ripple did not complete its original decision boundary");
+            serial_reference_regrid(reference,b,a.controller.t_current);
+            const int expected=transition==0?(rank==0?1:4):
+                transition==1?(rank==0?4:16):transition==2?4:1;
+            require(static_cast<int>(actual.handles.size())==expected,"wrong deeper local leaf count");
+            compare(actual,reference);require_conservation(actual,initial);
+            a.step(method);serial_reference_step(*b,method);compare(actual,reference);
+            require_conservation(actual,initial);
+        }
+        require(actual.control.pool->GetNumActiveBlocks()==1
+            &&actual.control.pool->GetNumReservedBlocks()==0,
+            "deeper refinement cycle leaked native pool slots");
+        ++cycles;
+    }
+    const auto setup=[](RuntimeRun& a,Fixture& reference,std::unique_ptr<Run>& b,bool coarsen) {
+        require(runtime_regrid(a),"ripple failure setup did not refine to level one");
+        serial_reference_regrid(reference,b,a.controller.t_current);
+        if(coarsen) {
+            require(runtime_regrid(a),"ripple failure setup did not refine to level two");
+            serial_reference_regrid(reference,b,a.controller.t_current);
+            request_coarsening(a.f);request_coarsening(reference);
+        }
+        compare(a.f,reference);
+    };
+    const auto retry=[&](RuntimeRun& a,Fixture& reference,std::unique_ptr<Run>& b) {
+        require(runtime_regrid(a),"rejected ripple could not retry in the same Runtime");
+        serial_reference_regrid(reference,b,a.controller.t_current);
+        compare(a.f,reference);
+        const auto initial=totals(reference);
+        a.step(2);serial_reference_step(*b,2);compare(a.f,reference);
+        require_conservation(a.f,initial);
+    };
+    int failures=0;
+    constexpr std::array<Phase,10> phases{Phase::IndicatorsEvaluated,Phase::BalancePrepared,
+        Phase::BalanceRound,Phase::Balanced,Phase::Selected,Phase::Constructed,
+        Phase::Migrated,Phase::TopologyActivated,Phase::GhostsSynchronized,Phase::ReadyToPublish};
+    for(bool coarsen:{false,true})for(int victim:{0,1})for(auto phase:phases) {
+        Fixture actual(2,rank,ranks,true,false,rank==0?9:21),reference(2,0,1,true,false,40);
+        seed_regrid_wave(actual,30);seed_regrid_wave(reference,30);
+        actual.config.amr.lrefinemax=reference.config.amr.lrefinemax=2;
+        RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
+        setup(a,reference,b,coarsen);RegridWitness before(a);
+        auto context=a.runtime.stage_context();
+        const auto ledger=context.ledger.snapshot_metadata(state::ExecutionSide::Host);
+        const auto boundary=a.bc.snapshot_stage_context();
+        bool rejected=false,observed=false;
+        try {runtime_regrid(a,[&](Phase now) {
+            if(rank==victim&&now==phase) {observed=true;throw std::runtime_error("injected ripple phase failure");}
+        });}catch(const std::exception&) {rejected=true;}
+        require(rejected&&(rank!=victim||observed),"ripple phase rejection was not collective");
+        before.check(a);
+        require(context.ledger.metadata_snapshot_matches(ledger),"ripple rejection changed accepted ledger");
+        require(a.bc.stage_context_matches(boundary),"ripple rejection changed boundary context");
+        retry(a,reference,b);++failures;
+    }
+    // Fail only after a completed promotion round has mutated accepted flags;
+    // also exercise actual allocation failure before transport and between rounds.
+    for(bool coarsen:{false,true})for(int victim:{0,1})for(int fault:{0,1,2}) {
+        Fixture actual(2,rank,ranks,true,false,rank==0?9:21),reference(2,0,1,true,false,40);
+        seed_regrid_wave(actual,30);seed_regrid_wave(reference,30);
+        actual.config.amr.lrefinemax=reference.config.amr.lrefinemax=2;
+        RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
+        setup(a,reference,b,coarsen);RegridWitness before(a);
+        int rounds=0;bool rejected=false,balanced=false,observed=false;
+        try {runtime_regrid(a,[&](Phase now) {
+            if(now==Phase::Balanced)balanced=true;
+            if(now==Phase::BalanceRound)++rounds;
+            if(rank!=victim)return;
+            if(fault==1&&now==Phase::IndicatorsEvaluated) {
+                observed=true;allocation_fault::fail_after=1;
+            }
+            if(fault!=1&&now==Phase::BalanceRound&&rounds==2) {
+                observed=true;
+                if(fault==0)throw std::runtime_error("reject after a completed ripple round");
+                allocation_fault::fail_after=1;
+                // Allocate in the round observer: std::function's small-buffer
+                // policy differs between standard libraries and is not a contract.
+                std::vector<int> diagnostic_scratch(1);
+                require(!diagnostic_scratch.empty(),"unreachable allocation probe");
+            }
+        });}catch(const std::exception& error) {
+            rejected=true;
+            if(rank==victim&&fault!=0)
+                require(std::string(error.what()).find("bad_alloc")!=std::string::npos,
+                    "ripple allocation rejected for another reason");
+        }
+        allocation_fault::fail_after=0;
+        require(rejected&&!balanced&&(rank!=victim||observed),"ripple failed outside the intended preparation/round");
+        before.check(a);retry(a,reference,b);++failures;
+    }
+    // Bad accepted neighbor descriptors must be rejected without changing
+    // fields/flags. Repair only the injected descriptor before the same-runtime retry.
+    for(bool coarsen:{false,true})for(int victim:{0,1})for(int fault=0;fault<4;++fault) {
+        Fixture actual(2,rank,ranks,true,false,rank==0?9:21),reference(2,0,1,true,false,40);
+        seed_regrid_wave(actual,30);seed_regrid_wave(reference,30);
+        actual.config.amr.lrefinemax=reference.config.amr.lrefinemax=2;
+        RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
+        setup(a,reference,b,coarsen);
+        amr::BlockTopology* corrupted=nullptr;amr::BlockTopology saved;
+        if(rank==victim) {
+            for(int id:actual.control.tree->GetActiveBlocks())
+                for(auto& face:actual.control.pool->GetBlock(id).face_neighbors)
+                    for(int n=0;n<face.count;++n)
+                        if(!corrupted&&face.blocks[n].pool_index<0)corrupted=&face.blocks[n];
+            require(corrupted,"missing remote neighbor for ripple identity test");saved=*corrupted;
+            if(fault==0)++corrupted->handle.epoch.value;
+            if(fault==1)corrupted->handle.uid.value^=0x100000;
+            if(fault==2)corrupted->owner_rank=rank;
+            if(fault==3)++corrupted->logical.logical_x1;
+        }
+        RegridWitness before(a);bool rejected=false;
+        try {runtime_regrid(a);}catch(const std::exception&) {rejected=true;}
+        require(rejected,"ripple accepted a stale/mismatched remote neighbor");
+        before.check(a);if(corrupted)*corrupted=saved;
+        retry(a,reference,b);++failures;
+    }
+    // Global peak and destination-local quota remain distinct rejection paths.
+    for(int fault=0;fault<2;++fault) {
+        const int capacity=fault==0?9:(rank==0?4:21),budget=fault==0?18:25;
+        Fixture actual(2,rank,ranks,true,false,capacity),reference(2,0,1,true,false,40);
+        seed_regrid_wave(actual,budget);seed_regrid_wave(reference,budget);
+        actual.config.amr.lrefinemax=reference.config.amr.lrefinemax=2;
+        RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
+        setup(a,reference,b,false);RegridWitness before(a);
+        bool rejected=false,balanced=false;
+        try {runtime_regrid(a,[&](Phase phase) {if(phase==Phase::Balanced)balanced=true;});}
+        catch(const std::exception& error) {
+            rejected=true;
+            if(fault==0)require(std::string(error.what()).find("global max_blocks")!=std::string::npos,
+                "global ripple peak failed for another reason");
+        }
+        require(rejected&&balanced,"ripple capacity was not checked after collective convergence");
+        before.check(a);
+        actual.config.amr.refine_threshold=.9;actual.config.amr.derefine_threshold=0.;
+        require(!runtime_regrid(a),"capacity rejection prevented a feasible no-change retry");
+        compare(actual,reference);
+        a.step(2);serial_reference_step(*b,2);compare(actual,reference);++failures;
+    }
+    // The native entry's increased limit is bounded; level three stays closed.
+    {
+        Fixture actual(2,rank,ranks,true,false,rank==0?9:21);
+        seed_regrid_wave(actual,30);actual.config.amr.lrefinemax=2;
+        RuntimeRun a(actual);RegridWitness before(a);actual.config.amr.lrefinemax=3;
+        bool rejected=false;try {runtime_regrid(a);}catch(const std::exception&) {rejected=true;}
+        require(rejected,"ripple accepted an unqualified maximum level");before.check(a);
+        actual.config.amr.lrefinemax=2;require(runtime_regrid(a),"bounded ripple controls could not retry");
+        ++failures;
+    }
+    {
+        Fixture actual(2,rank,ranks,true,false,rank==0?9:21),reference(2,0,1,true,false,40);
+        seed_regrid_wave(actual,30);seed_regrid_wave(reference,30);
+        actual.config.amr.lrefinemax=reference.config.amr.lrefinemax=2;
+        RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
+        setup(a,reference,b,true);RegridWitness before(a);
+        actual.config.amr.lrefinemax=1;
+        bool rejected=false;try {runtime_regrid(a);}catch(const std::exception&) {rejected=true;}
+        require(rejected,"local-only ripple accepted an existing level-two topology");before.check(a);
+        actual.config.amr.lrefinemax=2;retry(a,reference,b);++failures;
+    }
+    if(rank==0)std::cout<<"Ripple: "<<cycles<<" evolved 2/5/20/8/2-leaf cycles; "
+        <<failures<<" collective rejections with same-runtime retries; serial-identical promotions and coarsening vetoes\n";
+}
+
 void runtime_macro_cases() {
     for(int method=0;method<3;++method)for(bool wave:{false,true}) {
         Fixture actual(2,rank,ranks,true),reference(2,0,1,true);
@@ -1372,6 +1573,7 @@ int main(int argc, char** argv) {
         runtime_leaf_transfer_cases();
         runtime_regrid_cases();
         runtime_sibling_cases(sibling_cycles);
+        runtime_ripple_cases();
         rejected_cases();
         receipt_and_boundary_rejections();
         if (rank == 0)

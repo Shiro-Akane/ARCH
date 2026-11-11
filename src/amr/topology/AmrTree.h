@@ -523,53 +523,60 @@ public:
         }
         failure.rethrow();
     }
-    void RippleCheck(int refinement_limit = kMaxRefinementLevel) {
-        bool changed = true;
-        while (changed) {
-            changed = false;
-            for (int block_id : active_blocks) {
-                Block& b = pool->GetBlock(block_id);
-                // Coarsening is kept at its current level until its group is
-                // verified below not to violate the 2:1 balance constraint.
-                int future_L = b.level + (b.refine_flag == 1 ? 1 : 0);
+    /** One original balance sweep; a distributed caller supplies temporary
+     * remote decisions and completes its collective outside this local method.
+     */
+    bool RippleSweep(int refinement_limit,
+        const std::function<int&(const BlockTopology&)>& remote_decision = {}) {
+        bool changed = false;
+        for (int block_id : active_blocks) {
+            Block& b = pool->GetBlock(block_id);
+            // Coarsening is kept at its current level until its group is
+            // verified below not to violate the 2:1 balance constraint.
+            int future_L = b.level + (b.refine_flag == 1 ? 1 : 0);
 
-                // Check all neighbors
-                for (int f = 0; f < 6; ++f) {
-                    if (b.face_neighbors[f].count == 0) continue;
-                    for (int n = 0; n < b.face_neighbors[f].count; ++n) {
-                        const auto& neighbor = b.face_neighbors[f].blocks[n];
-                        if (neighbor.pool_index < 0) {
-                            // With only levels 0/1, either remote decision is
-                            // necessarily 2:1 balanced. Deeper propagation still
-                            // needs a global fixed point and remains rejected.
-                            if (b.refine_flag != 0
-                                && (refinement_limit > 1 || b.level > 1 || neighbor.logical.level > 1))
-                                throw std::logic_error(
-                                    "distributed refinement propagation above level one is not implemented");
-                            continue;
-                        }
-                        int n_id = neighbor.pool_index;
-                        Block& nb = pool->GetBlock(n_id);
-                        // Merging nb would lower it one more level.  If that
-                        // would leave a gap larger than one level, keep the
-                        // sibling group intact instead of refining the domain.
-                        if (nb.refine_flag == -1 && future_L > nb.level) {
-                            nb.refine_flag = 0;
+            // Check all neighbors
+            for (int f = 0; f < 6; ++f) {
+                if (b.face_neighbors[f].count == 0) continue;
+                for (int n = 0; n < b.face_neighbors[f].count; ++n) {
+                    const auto& neighbor = b.face_neighbors[f].blocks[n];
+                    if (neighbor.pool_index < 0 && !remote_decision) {
+                        // A local-only caller cannot converge remote decisions.
+                        // The level 0/1 boundary needs no remote promotion.
+                        if (b.refine_flag != 0
+                            && (refinement_limit > 1 || b.level > 1 || neighbor.logical.level > 1))
+                            throw std::logic_error(
+                                "distributed refinement above level one requires collective decision convergence");
+                        continue;
+                    }
+                    const int neighbor_level = neighbor.pool_index < 0
+                        ? neighbor.logical.level : pool->GetBlock(neighbor.pool_index).level;
+                    int& neighbor_flag = neighbor.pool_index < 0
+                        ? remote_decision(neighbor) : pool->GetBlock(neighbor.pool_index).refine_flag;
+                    // Merging nb would lower it one more level.  If that
+                    // would leave a gap larger than one level, keep the
+                    // sibling group intact instead of refining the domain.
+                    if (neighbor_flag == -1 && future_L > neighbor_level) {
+                        neighbor_flag = 0;
+                        changed = true;
+                    }
+                    int nb_future_L = neighbor_level + (neighbor_flag == 1 ? 1 : 0);
+
+                    // Refine the neighbor when the proposed levels would differ by more than one.
+                    if (future_L > nb_future_L + 1) {
+                        if (neighbor_flag != 1) {
+                            neighbor_flag = 1; // Enforce the 2:1 balance constraint.
                             changed = true;
-                        }
-                        int nb_future_L = nb.level + (nb.refine_flag == 1 ? 1 : 0);
-
-                        // Refine the neighbor when the proposed levels would differ by more than one.
-                        if (future_L > nb_future_L + 1) {
-                            if (nb.refine_flag != 1) {
-                                nb.refine_flag = 1; // Enforce the 2:1 balance constraint.
-                                changed = true;
-                            }
                         }
                     }
                 }
             }
         }
+        return changed;
+    }
+
+    void RippleCheck(int refinement_limit = kMaxRefinementLevel) {
+        while (RippleSweep(refinement_limit)) {}
     }
 
     using PreApplyRegridObserver = std::function<void(const AmrTree&)>;
@@ -595,6 +602,7 @@ public:
               old_refinement_(std::move(other.old_refinement_)),
               old_topology_(std::move(other.old_topology_)),
               ownership_only_(other.ownership_only_),
+              relations_selected_(other.relations_selected_),
               refinements_(std::move(other.refinements_)),
               restrictions_(std::move(other.restrictions_)),
               old_handles_(std::move(other.old_handles_)),
@@ -656,7 +664,7 @@ public:
         void ConstructCandidates(const StagedAllocationObserver& allocation_observer = {})
         {
             require_owner();
-            if (reservation_ || ownership_only_)
+            if (reservation_ || ownership_only_ || !relations_selected_)
                 throw std::logic_error("regrid candidate storage already prepared");
             const int num_children = 1 << owner_->root_grid.dim;
             // Retired blocks remain live until publication: reserve the full
@@ -1060,6 +1068,7 @@ public:
         std::vector<RefinementSnapshot> old_refinement_;
         std::vector<TopologySnapshot> old_topology_;
         bool ownership_only_ = false;
+        bool relations_selected_ = false;
         std::vector<RefinementRelation> refinements_;
         std::vector<RestrictionRelation> restrictions_;
         std::vector<BlockHandle> old_handles_;
@@ -1147,6 +1156,23 @@ public:
         RippleCheck(config.amr.lrefinemax);
         if (observer) observer(*this);
 
+        SelectRegridRelations(prepared,candidate_parent);
+        return prepared;
+    }
+
+    /** Capture accepted flags and topology before any local/remote decision work. */
+    PreparedRegrid BeginRegrid(const SimConfig& config) {
+        return PreparedRegrid(*this,config);
+    }
+
+    /** Finish the original relation selection after the caller's balance barrier. */
+    void SelectRegridRelations(PreparedRegrid& prepared,
+        const std::function<bool(const Block&,std::span<const int>)>& candidate_parent = {}) {
+        prepared.require_owner();
+        if(prepared.owner_!=this || prepared.ownership_only_ || prepared.relations_selected_)
+            throw std::logic_error("regrid relation selection requires a fresh snapshot");
+        prepared.relations_selected_=true;
+        const auto& config=prepared.config_;
         const int num_children = 1 << root_grid.dim;
         std::size_t required_slots = 0;
         // Select each relation once, before constructing any candidate storage.
@@ -1206,7 +1232,6 @@ public:
             }
         }
         prepared.required_slots_=required_slots;
-        return prepared;
     }
 
     PreparedRegrid PrepareRegrid(

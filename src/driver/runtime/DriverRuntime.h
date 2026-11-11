@@ -69,7 +69,7 @@ public:
     DriverRuntime& operator=(const DriverRuntime&) = delete;
 
     void initialize_topology();
-    enum class RegridPhase { Selected, Constructed, Migrated, TopologyActivated, GhostsSynchronized, ReadyToPublish };
+    enum class RegridPhase { IndicatorsEvaluated, BalancePrepared, BalanceRound, Balanced, Selected, Constructed, Migrated, TopologyActivated, GhostsSynchronized, ReadyToPublish };
     bool perform_regrid(int step, double time, bool jeans_repair_only = false,
         const std::function<void(RegridPhase)>& observer = {});
     /** Collective owner-only Host transfer at a quiescent accepted boundary.
@@ -162,6 +162,7 @@ private:
     bool execute_regrid(bool jeans_repair_only);
     bool perform_regrid_impl(int step,double time,bool jeans_repair_only,
         const std::function<void(RegridPhase)>& observer = {});
+    void balance_distributed_refinement(const std::function<void(RegridPhase)>& observer);
     bool execute_distributed_regrid(int step,double time,bool jeans_repair_only,
         const std::function<void(RegridPhase)>& observer);
     // Original Device indicator arithmetic.

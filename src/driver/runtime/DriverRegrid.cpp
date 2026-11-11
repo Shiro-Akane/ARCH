@@ -443,9 +443,100 @@ void DriverRuntime::migrate_host_leaves(std::span<const amr::AmrEndpoint> source
 }
 
 
-/** Collective first-level Host regrid using the original selection, pool and
- * conservative migration. Unchanged local ranks still join the global epoch.
- * Families must be colocated; deeper distributed ripple propagation is separate.
+/** Converge only refinement decisions over the already committed identities.
+ * The caller holds the original PreparedRegrid snapshot throughout. All local
+ * work completes collectively before transport; no MPI call lives in RippleSweep.
+ */
+void DriverRuntime::balance_distributed_refinement(
+    const std::function<void(RegridPhase)>& observer)
+{
+#if ARCH_MPI_ENABLED
+    using namespace amr::flux_mpi_detail;
+    const auto [rank,size]=require_world();
+    std::vector<amr::BlockTopology> blocks;
+    std::map<amr::BlockHandle,std::size_t> indices;
+    std::vector<int> decisions;
+    prepare([&] {
+        blocks=topology_registry.blocks();
+        if(blocks.empty() || blocks.size()>static_cast<std::size_t>(std::numeric_limits<int>::max()))
+            throw std::logic_error("distributed refinement decision count is invalid");
+        decisions.assign(blocks.size(),-2); // Only the original owner contributes initially.
+        for(std::size_t i=0;i<blocks.size();++i) {
+            const auto& b=blocks[i];
+            if(!indices.emplace(b.handle,i).second || b.handle.epoch!=topology_registry.epoch()
+                || b.owner_rank<0 || b.owner_rank>=size)
+                throw std::logic_error("distributed refinement identity is invalid");
+            if(b.owner_rank==rank) {
+                if(b.pool_index<0)throw std::logic_error("refinement owner has no native block");
+                const int flag=amr_ctrl.pool->GetBlock(b.pool_index).refine_flag;
+                if(flag < -1 || flag > 1)throw std::logic_error("invalid initial refinement decision");
+                decisions[i]=flag;
+            }
+        }
+        if(observer)observer(RegridPhase::BalancePrepared);
+    });
+    // Array order is part of this operation's wire identity, including UID,
+    // epoch, logical position and owner. Pool indices never leave this rank.
+    std::array<std::uint64_t,21> identity{blocks.size()};
+    agree(identity);
+    for(const auto& b:blocks) {
+        identity={b.handle.uid.value,b.handle.epoch.value,
+            static_cast<std::uint64_t>(b.logical.dimension),
+            static_cast<std::uint64_t>(b.logical.level),b.logical.logical_x1,
+            b.logical.logical_x2,b.logical.logical_x3,static_cast<std::uint64_t>(b.owner_rank)};
+        agree(identity);
+    }
+    const int count=static_cast<int>(decisions.size());
+    check(MPI_Allreduce(MPI_IN_PLACE,decisions.data(),count,MPI_INT,MPI_MAX,MPI_COMM_WORLD));
+    std::size_t rounds=0;
+    while(true) {
+        int changed=0,any=0;
+        prepare([&] {
+            if(++rounds>2*blocks.size()+1)
+                throw std::logic_error("distributed refinement did not converge monotonically");
+            for(int flag:decisions)
+                if(flag < -1 || flag > 1)throw std::logic_error("invalid received refinement decision");
+            if(observer)observer(RegridPhase::BalanceRound);
+            changed=amr_ctrl.tree->RippleSweep(config.amr.lrefinemax,
+                [&](const amr::BlockTopology& neighbor)->int& {
+                    const auto found=indices.find(neighbor.handle);
+                    if(found==indices.end())
+                        throw std::logic_error("remote refinement neighbor has a stale handle");
+                    const auto& committed=blocks[found->second];
+                    if(neighbor.logical!=committed.logical || neighbor.owner_rank!=committed.owner_rank
+                        || committed.owner_rank==rank || neighbor.pool_index>=0)
+                        throw std::logic_error("remote refinement neighbor identity mismatch");
+                    return decisions[found->second];
+                });
+            for(std::size_t i=0;i<blocks.size();++i)
+                if(blocks[i].owner_rank==rank)
+                    decisions[i]=amr_ctrl.pool->GetBlock(blocks[i].pool_index).refine_flag;
+        });
+        check(MPI_Allreduce(MPI_IN_PLACE,decisions.data(),count,MPI_INT,MPI_MAX,MPI_COMM_WORLD));
+        prepare([&] {
+            for(std::size_t i=0;i<blocks.size();++i) {
+                if(decisions[i] < -1 || decisions[i] > 1)
+                    throw std::logic_error("invalid received refinement promotion");
+                if(blocks[i].owner_rank==rank) {
+                    auto& flag=amr_ctrl.pool->GetBlock(blocks[i].pool_index).refine_flag;
+                    if(decisions[i]<flag)
+                        throw std::logic_error("distributed refinement demoted a local decision");
+                    if(decisions[i]!=flag) {flag=decisions[i];changed=1;}
+                }
+            }
+        });
+        check(MPI_Allreduce(&changed,&any,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD));
+        if(!any)break;
+    }
+    prepare([&] {if(observer)observer(RegridPhase::Balanced);});
+#else
+    (void)observer;
+    throw std::logic_error("distributed refinement requires ARCH_ENABLE_MPI=ON");
+#endif
+}
+
+/** Collective Host regrid using the original selection, pool and conservative
+ * migration. Families stay colocated; the native boundary is limited to level 2.
  */
 bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_repair_only,
     const std::function<void(RegridPhase)>& observer)
@@ -459,11 +550,12 @@ bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_r
     prepare([&] {
         if(size<2 || rank!=amr_ctrl.tree->PartitionRank() || size!=amr_ctrl.tree->PartitionSize()
             || compute_backend || host_hydro_attempt_ || config.grid.geometry!="cartesian"
-            || config.grid.dim!=2 || config.amr.lrefinemin!=0 || config.amr.lrefinemax!=1
+            || config.grid.dim!=2 || config.amr.lrefinemin!=0
+            || config.amr.lrefinemax<1 || config.amr.lrefinemax>2
             || config.physics.burn.use_burn || config.physics.diffusion.use_diffusion
             || config.physics.gravity.type!="none" || config.amr.refine_on_jeans
             || jeans_repair_only || bc_handler.has_user())
-            throw std::logic_error("distributed regrid requires first-level Cartesian Host Hydro");
+            throw std::logic_error("distributed regrid requires Cartesian Host Hydro with maximum level one or two");
         if(step!=ctrl.step_count || !std::isfinite(time) || time!=ctrl.t_current
             || next_amr_transaction_id==std::numeric_limits<std::uint64_t>::max())
             throw std::invalid_argument("distributed regrid is not at the accepted controller boundary");
@@ -476,9 +568,10 @@ bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_r
         amr_ctrl.flux_register.RequireOwnershipTransferBoundary();
         std::map<amr::LogicalBlockKey,int> family_owner;
         for(const auto& leaf:topology_registry.blocks()) {
-            if(leaf.logical.level>1)throw std::logic_error("distributed regrid requires levels zero/one");
-            if(leaf.logical.level==1) {
-                const amr::LogicalBlockKey parent{leaf.logical.dimension,0,
+            if(leaf.logical.level>2 || leaf.logical.level>config.amr.lrefinemax)
+                throw std::logic_error("distributed regrid level limit is below the accepted topology");
+            if(leaf.logical.level>0) {
+                const amr::LogicalBlockKey parent{leaf.logical.dimension,leaf.logical.level-1,
                     leaf.logical.logical_x1>>1,leaf.logical.logical_x2>>1,0};
                 const auto [it,inserted]=family_owner.emplace(parent,leaf.owner_rank);
                 if(!inserted && it->second!=leaf.owner_rank)
@@ -536,9 +629,19 @@ bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_r
     scheduler::PublicationWitness witness{};
     try {
         prepare([&] {
-            prepared.emplace(amr_ctrl.tree->SelectRegrid(config));
-            notify(RegridPhase::Selected);
+            if(config.amr.lrefinemax==1)
+                prepared.emplace(amr_ctrl.tree->SelectRegrid(config));
+            else {
+                prepared.emplace(amr_ctrl.tree->BeginRegrid(config));
+                amr_ctrl.tree->EvaluateRefinement(config);
+                notify(RegridPhase::IndicatorsEvaluated);
+            }
         });
+        if(config.amr.lrefinemax>1) {
+            balance_distributed_refinement(observer);
+            prepare([&] {amr_ctrl.tree->SelectRegridRelations(*prepared);});
+        }
+        prepare([&] {notify(RegridPhase::Selected);});
         std::array<std::uint64_t,4> local{
             static_cast<std::uint64_t>(amr_ctrl.pool->GetCapacity()),
             static_cast<std::uint64_t>(amr_ctrl.pool->GetNumActiveBlocks()),
