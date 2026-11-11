@@ -16,8 +16,8 @@ struct PartitionedTopologyFixture {
     amr::AMRControl control;
     TopologyIdentityRegistry registry;
     std::vector<amr::BlockHandle> handles;
-    PartitionedTopologyFixture(int dim, int rank, int size, bool periodic, bool refine = true)
-        : control(16, dim), registry({dim, {2, 1, 1}, 2}, rank, size) {
+    PartitionedTopologyFixture(int dim, int rank, int size, bool periodic, bool refine = true, int capacity = 16)
+        : control(capacity, dim), registry({dim, {2, 1, 1}, 2}, rank, size) {
         config.grid.dim = dim;
         config.grid.geometry = "cartesian";
         config.grid.nblockx1 = 2;

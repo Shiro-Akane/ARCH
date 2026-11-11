@@ -641,6 +641,285 @@ void runtime_leaf_transfer_cases() {
     }
     if(rank==0)std::cout<<"Ownership: 3 evolved round trips; 21 collective rejections with same-runtime retries\n";
 }
+
+// C3 first increment: real density indicators and original transfer operators.
+// Threshold pairs below are fixed experiment inputs, not acceptance tolerances.
+void seed_regrid_wave(Fixture& f,int budget) {
+    seed(f,false);
+    f.config.grid.amr_max_blocks=budget;
+    f.config.amr.refine_threshold=.02;
+    f.config.amr.derefine_threshold=.001;
+    for(int id:f.control.tree->GetActiveBlocks()) {
+        auto& block=f.control.pool->GetBlock(id);
+        for(int j=0;j<block.grid.GetTotalY();++j)for(int i=0;i<block.grid.GetTotalX();++i) {
+            const int c=block.grid.GetIndex(i,j,0);
+            const double x=block.grid.GetCellCenterX(i);
+            const double rho=1.+(std::abs(x-.75)<.1
+                ? .08*(1.+std::cos(2.*std::numbers::pi*(x-.75)/.2)):0.);
+            block.fluid_state.set(c,{rho,rho*.125,-rho*.0625,0.,
+                2.5+.5*rho*(.125*.125+.0625*.0625)});
+        }
+        block.state_next=block.state_scratch=block.fluid_state;
+    }
+}
+void request_coarsening(Fixture& f) {
+    f.config.amr.refine_threshold=.9;
+    f.config.amr.derefine_threshold=.8;
+}
+// Independent serial owner: original tree, registry and numerical operators.
+// A serial DriverRuntime inside a live two-rank WORLD would misidentify its owner.
+void serial_reference_regrid(Fixture& f,std::unique_ptr<Run>& run,double time) {
+    SerialReferenceThreads serial;
+    run.reset();
+    auto prepared=f.control.tree->PrepareRegrid(f.config);
+    std::vector<topology::TopologyObservation> observations;
+    for(int id:prepared.proposed_active_blocks()) {
+        const auto& b=f.control.pool->GetBlock(id);
+        observations.push_back({id,{2,b.level,b.logical_x1,b.logical_x2,b.logical_x3},0});
+    }
+    auto candidate=f.registry.stage_reconciliation(observations);
+    auto next=candidate.reconciliation().handles_in_observation_order;
+    require(prepared.topology_changed(),"serial indicator did not request the expected regrid");
+    prepared.BuildMigrationPlans(f.handles,next,
+        {f.registry.epoch().value,f.registry.epoch(),candidate.reconciliation().epoch});
+    prepared.ExecuteMigration();
+    prepared.ActivateForFinalization(candidate.blocks());
+    prepared.PublishNoexcept();
+    f.registry.commit(std::move(candidate));
+    f.handles=std::move(next);
+    f.control.BindActiveHandles(f.handles);
+    prepared.ReleaseRetiredNoexcept();
+    run=std::make_unique<Run>(f);
+    run->context.step_start_time=time;
+    scheduler::ScopedStageBinding binding(run->context,f.handles);
+    run->ghosts();
+}
+bool runtime_regrid(RuntimeRun& run,
+    const std::function<void(driver::DriverRuntime::RegridPhase)>& observer={}) {
+    const bool changed=run.runtime.perform_regrid(
+        run.controller.step_count,run.controller.t_current,false,observer);
+    run.f.handles=run.runtime.handles();
+    return changed;
+}
+struct RegridWitness {
+    std::vector<MacroFieldWitness> fields;
+    std::vector<LeafTopologyWitness> topology;
+    std::vector<int> active,flags;
+    std::vector<amr::BlockHandle> handles;
+    const state::StateResidencyLedger* ledger;
+    int available;
+    explicit RegridWitness(RuntimeRun& run)
+        :active(run.f.control.tree->GetActiveBlocks()),handles(run.runtime.handles()),
+         ledger(&run.runtime.stage_context().ledger),
+         available(run.f.control.pool->GetNumAvailableBlocks()) {
+        for(int id:active) {
+            const auto& b=run.f.control.pool->GetBlock(id);
+            fields.emplace_back(run.f.control.pool->GetBlock(id),id);
+            topology.emplace_back(b);flags.push_back(b.refine_flag);
+        }
+    }
+    void check(RuntimeRun& run) const {
+        require(run.f.control.tree->GetActiveBlocks()==active
+            &&run.runtime.handles()==handles,"regrid rollback changed active identities");
+        require(&run.runtime.stage_context().ledger==ledger,"regrid rollback replaced ledger");
+        require(run.f.control.pool->GetNumAvailableBlocks()==available
+            &&run.f.control.pool->GetNumReservedBlocks()==0,"regrid rollback leaked original pool capacity");
+        for(std::size_t i=0;i<active.size();++i) {
+            fields[i].check(run.f.control);
+            const auto& b=run.f.control.pool->GetBlock(active[i]);
+            topology[i].check(b);
+            require(b.refine_flag==flags[i],"regrid rollback changed original indicator decision");
+        }
+    }
+};
+void require_conservation(const Fixture& f,const std::array<long double,7>& initial) {
+    auto sum=totals(f);
+#if ARCH_MPI_ENABLED
+    if(ranks>1) {auto local=sum;MPI_Allreduce(local.data(),sum.data(),7,MPI_LONG_DOUBLE,MPI_SUM,MPI_COMM_WORLD);}
+#endif
+    for(int field=0;field<7;++field)
+        require(std::abs(sum[field]-initial[field])<=2.e-11L+2.e-12L*std::abs(initial[field]),
+            "dynamic regrid conservation failed");
+}
+void runtime_regrid_cases() {
+    using Phase=driver::DriverRuntime::RegridPhase;
+    if(ranks==1)return; // Original serial regrid has its own transaction tests.
+    for(int method=0;method<3;++method) {
+        Fixture actual(2,rank,ranks,true,false,rank==0?3:5),reference(2,0,1,true,false);
+        seed_regrid_wave(actual,8);seed_regrid_wave(reference,8);
+        RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
+        const auto initial=totals(reference);
+        a.step(method);serial_reference_step(*b,method);compare(actual,reference);
+        const auto old=actual.handles;
+        require(runtime_regrid(a),"an unchanged rank missed the global refine publication");
+        serial_reference_regrid(reference,b,a.controller.t_current);
+        require(actual.handles.size()==(rank==0?1:4),"wrong first-level local leaf count");
+        require(actual.handles.front().epoch.value>old.front().epoch.value,"regrid did not advance epoch");
+        if(rank==0)require(actual.handles.front().uid==old.front().uid,"unchanged root lost UID");
+        else for(auto h:actual.handles)require(h.uid!=old.front().uid,"retired root UID reused");
+        compare(actual,reference);require_conservation(actual,initial);
+        a.step(method);serial_reference_step(*b,method);compare(actual,reference);
+        // C2 interoperation: split a family, reject regrid, then return that leaf.
+        a.runtime.migrate_host_leaf(leaf_endpoint(a,1),0);actual.handles=a.runtime.handles();
+        RegridWitness split(a);
+        bool rejected=false;
+        try {runtime_regrid(a);}catch(const std::logic_error& error) {
+            rejected=std::string(error.what()).find("colocated sibling")!=std::string::npos;
+        }
+        require(rejected,"split sibling ownership was not rejected");split.check(a);
+        a.runtime.migrate_host_leaf(leaf_endpoint(a,0),1);actual.handles=a.runtime.handles();
+        compare(actual,reference);
+        request_coarsening(actual);request_coarsening(reference);
+        require(runtime_regrid(a),"distributed sibling coarsening did not publish");
+        serial_reference_regrid(reference,b,a.controller.t_current);
+        require(actual.handles.size()==1,"coarsening did not restore two global roots");
+        if(rank==1)require(actual.handles.front().uid!=old.front().uid,"coarsening reused a retired UID");
+        compare(actual,reference);require_conservation(actual,initial);
+        a.step(method);serial_reference_step(*b,method);compare(actual,reference);
+        require_conservation(actual,initial);
+        RegridWitness nochange(a);
+        require(!runtime_regrid(a),"unchanged global topology reported a regrid");
+        nochange.check(a);
+    }
+    // Both changing and unchanged ranks may fail at every publication phase.
+    // Both refine and coarsen must restore leases, flags, indices and epoch.
+    constexpr std::array<Phase,6> phases{Phase::Selected,Phase::Constructed,
+        Phase::Migrated,Phase::TopologyActivated,Phase::GhostsSynchronized,Phase::ReadyToPublish};
+    int failures=0;
+    for(bool coarsen:{false,true})for(int victim:{0,1})for(auto phase:phases) {
+        Fixture actual(2,rank,ranks,true,false,rank==0?1:5),reference(2,0,1,true,false);
+        seed_regrid_wave(actual,6);seed_regrid_wave(reference,6);
+        RuntimeRun a(actual);auto b=std::make_unique<Run>(reference);
+        if(coarsen) {
+            require(runtime_regrid(a),"precondition refine failed");
+            serial_reference_regrid(reference,b,a.controller.t_current);
+            request_coarsening(actual);request_coarsening(reference);
+        }
+        RegridWitness before(a);
+        const auto c=a.runtime.stage_context();
+        const auto ledger=c.ledger.snapshot_metadata(state::ExecutionSide::Host);
+        const auto bc=a.bc.snapshot_stage_context();
+        bool rejected=false,observed=false;
+        try {runtime_regrid(a,[&](Phase current) {
+            if(rank==victim&&current==phase) {observed=true;throw std::runtime_error("injected regrid phase failure");}
+        });}catch(const std::exception&) {rejected=true;}
+        require(rejected&&(rank!=victim||observed),"single-rank regrid failure did not reach all ranks");
+        before.check(a);
+        require(c.ledger.metadata_snapshot_matches(ledger),"regrid rollback changed accepted ledger metadata");
+        require(a.bc.stage_context_matches(bc),"regrid rollback changed boundary context");
+        require(runtime_regrid(a),"same-runtime regrid retry did not publish");
+        serial_reference_regrid(reference,b,a.controller.t_current);
+        compare(actual,reference);
+        a.step(2);serial_reference_step(*b,2);compare(actual,reference);
+        ++failures;
+    }
+    // Real allocation failures before metadata transport, staged binding and commit.
+    for(auto phase:{Phase::Constructed,Phase::TopologyActivated,Phase::ReadyToPublish}) {
+        Fixture actual(2,rank,ranks,true,false,rank==0?1:5);
+        seed_regrid_wave(actual,6);RuntimeRun a(actual);RegridWitness before(a);
+        bool rejected=false;
+        try {runtime_regrid(a,[&](Phase current) {
+            if(rank==1&&current==phase)allocation_fault::fail_after=1;
+        });}catch(const std::exception& error) {
+            rejected=true;
+            if(rank==1)require(std::string(error.what()).find("bad_alloc")!=std::string::npos,
+                "allocation failure was rejected for another reason");
+        }
+        allocation_fault::fail_after=0;
+        require(rejected,"regrid accepted a local allocation failure");before.check(a);
+        require(runtime_regrid(a),"allocation rejection prevented same-runtime retry");
+        ++failures;
+    }
+    // All allocations inside the metadata collector, including those between
+    // count and payload collectives, must fail collectively and permit reuse.
+    for(int ordinal=1;ordinal<=8;++ordinal) {
+        std::vector<topology::TopologyObservation> local{
+            {rank+7,{2,0,static_cast<std::uint32_t>(rank),0,0},rank}};
+        bool rejected=false;
+        if(rank==1)allocation_fault::fail_after=ordinal;
+        try {(void)topology::collect_topology_observations(local,rank,ranks);}
+        catch(const std::exception& error) {
+            rejected=true;
+            if(rank==1)require(std::string(error.what()).find("bad_alloc")!=std::string::npos,
+                "metadata allocation failed for another reason");
+        }
+        allocation_fault::fail_after=0;
+        require(rejected,"metadata allocation failure did not complete collectively");
+        const auto collected=topology::collect_topology_observations(local,rank,ranks);
+        require(collected.size()==2,"metadata collector could not retry");
+        for(int peer=0;peer<ranks;++peer)
+            require(collected[peer].owner_rank==peer
+                &&collected[peer].pool_index==(peer==rank?rank+7:-1),
+                "metadata collector transported a remote native pool index");
+    }
+    for(int fault=1;fault<=9;++fault) {
+        Fixture actual(2,rank,ranks,true,false,rank==0?3:5);
+        seed_regrid_wave(actual,8);RuntimeRun a(actual);RegridWitness before(a);
+        auto c=a.runtime.stage_context();
+        auto ledger=c.ledger.snapshot_metadata(state::ExecutionSide::Host);
+        const auto config=actual.config;
+        std::optional<amr::MemoryPool::Reservation> borrowed;
+        if(rank==1) {
+            if(fault==3)actual.config.amr.refine_threshold=.03;
+            if(fault==4)actual.config.grid.amr_max_blocks=9;
+            if(fault==5)actual.config.grid.x1l_boundary_type="outflow";
+            if(fault==6)actual.config.amr.lrefinemax=2;
+            if(fault==7) {
+                c.ledger.freeze_metadata_snapshot(ledger);
+                c.ledger.publish_interior({actual.handles.front(),state::StateSlot::Current},
+                    state::ExecutionSide::Host,{2},{3,state::CompletionState::Complete});
+            }
+            if(fault==8)borrowed.emplace(actual.control.pool->ReserveBlocks(1));
+            if(fault==9)actual.config.physics.burn.use_burn=true;
+        }
+        bool rejected=false;
+        try {(void)a.runtime.perform_regrid(a.controller.step_count+(rank==1&&fault==1?1:0),
+            a.controller.t_current+(rank==1&&fault==2?1.e-4:0.));}
+        catch(const std::exception&) {rejected=true;}
+        require(rejected,"regrid accepted inconsistent controls, stale state or borrowed storage");
+        borrowed.reset();actual.config=config;
+        if(rank==1&&fault==7) {
+            c.ledger.restore_metadata_snapshot_noexcept(ledger);
+            c.ledger.release_metadata_snapshot(ledger);
+        } else require(c.ledger.metadata_snapshot_matches(ledger),"rejected controls changed accepted metadata");
+        before.check(a);
+        require(runtime_regrid(a),"restored regrid controls could not retry");
+        ++failures;
+    }
+    // Global temporary peak is six slots, despite only five final leaves.
+    // Local quota exhaustion is distinct from that global budget.
+    for(int mode=0;mode<3;++mode) {
+        const int capacity=mode==0?(rank==0?1:5):mode==1?(rank==0?1:4):3;
+        const int budget=mode==1?5:6;
+        Fixture actual(2,rank,ranks,true,false,capacity);
+        seed_regrid_wave(actual,budget);RuntimeRun a(actual);RegridWitness before(a);
+        int peak=0;bool rejected=false;
+        try {
+            require(runtime_regrid(a,[&](Phase phase) {
+                if(phase==Phase::Constructed)peak=actual.control.pool->GetNumActiveBlocks();
+            }),"capacity case did not request refinement");
+        }catch(const std::exception& error) {
+            rejected=true;
+            if(mode==1)require(std::string(error.what()).find("global max_blocks")!=std::string::npos,
+                "global capacity failed for another reason");
+        }
+        require(rejected==(mode!=0),"temporary peak/local quota guard failed");
+        if(rejected) {
+            before.check(a);
+            request_coarsening(actual); // Restore a feasible no-change request in this same owner.
+            require(!runtime_regrid(a),"capacity rejection prevented a subsequent no-change transaction");
+            ++failures;
+        } else {
+            require(peak==(rank==0?1:5),"minimum six-slot pool peak was not observed");
+            require(actual.control.pool->GetNumActiveBlocks()==(rank==0?1:4),"retired root slot leaked");
+            request_coarsening(actual);require(runtime_regrid(a),"minimum pool could not coarsen");
+            require(actual.control.pool->GetNumActiveBlocks()==1,"retired sibling slots leaked");
+        }
+    }
+    if(rank==0)std::cout<<"Regrid: 3 evolved 2/5/2-leaf cycles; "<<failures
+        <<" phase/allocation/control/capacity rejections with same-runtime retries; 3 split-family rejections; 8 metadata allocation retries; six-slot peak\n";
+}
+
 void runtime_macro_cases() {
     for(int method=0;method<3;++method)for(bool wave:{false,true}) {
         Fixture actual(2,rank,ranks,true),reference(2,0,1,true);
@@ -889,6 +1168,7 @@ int main(int argc, char** argv) {
         successful_cases();
         runtime_macro_cases();
         runtime_leaf_transfer_cases();
+        runtime_regrid_cases();
         rejected_cases();
         receipt_and_boundary_rejections();
         if (rank == 0)

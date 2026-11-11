@@ -69,7 +69,9 @@ public:
     DriverRuntime& operator=(const DriverRuntime&) = delete;
 
     void initialize_topology();
-    bool perform_regrid(int step, double time, bool jeans_repair_only = false);
+    enum class RegridPhase { Selected, Constructed, Migrated, TopologyActivated, GhostsSynchronized, ReadyToPublish };
+    bool perform_regrid(int step, double time, bool jeans_repair_only = false,
+        const std::function<void(RegridPhase)>& observer = {});
     /** Collective owner-only Host transfer at a quiescent accepted boundary.
      * Observers see completed local phases and may reject before publication.
      * This narrow native consumer does not enable application MPI-AMR.
@@ -150,7 +152,10 @@ private:
         std::span<const amr::BlockHandle>, state::StateSlot,
         state::StateVersion, state::CompletionToken);
     bool execute_regrid(bool jeans_repair_only);
-    bool perform_regrid_impl(int step,double time,bool jeans_repair_only);
+    bool perform_regrid_impl(int step,double time,bool jeans_repair_only,
+        const std::function<void(RegridPhase)>& observer = {});
+    bool execute_distributed_regrid(int step,double time,bool jeans_repair_only,
+        const std::function<void(RegridPhase)>& observer);
     // Original Device indicator arithmetic.
     void evaluate_device_regrid_indicators(bool jeans_repair_only);
     bool device_jeans_parent_resolved(const amr::Block&,std::span<const int>);

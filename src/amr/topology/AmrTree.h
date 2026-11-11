@@ -523,7 +523,7 @@ public:
         }
         failure.rethrow();
     }
-    void RippleCheck() {
+    void RippleCheck(int refinement_limit = kMaxRefinementLevel) {
         bool changed = true;
         while (changed) {
             changed = false;
@@ -539,10 +539,14 @@ public:
                     for (int n = 0; n < b.face_neighbors[f].count; ++n) {
                         const auto& neighbor = b.face_neighbors[f].blocks[n];
                         if (neighbor.pool_index < 0) {
-                            if (b.refine_flag != 0)
+                            // With only levels 0/1, either remote decision is
+                            // necessarily 2:1 balanced. Deeper propagation still
+                            // needs a global fixed point and remains rejected.
+                            if (b.refine_flag != 0
+                                && (refinement_limit > 1 || b.level > 1 || neighbor.logical.level > 1))
                                 throw std::logic_error(
-                                    "distributed refinement propagation is not implemented");
-                            continue; // Fixed-grid no-change pass.
+                                    "distributed refinement propagation above level one is not implemented");
+                            continue;
                         }
                         int n_id = neighbor.pool_index;
                         Block& nb = pool->GetBlock(n_id);
@@ -586,6 +590,7 @@ public:
               old_active_(std::move(other.old_active_)),
               proposed_active_(std::move(other.proposed_active_)),
               reservation_(std::move(other.reservation_)),
+              required_slots_(other.required_slots_),
               retire_(std::move(other.retire_)),
               old_refinement_(std::move(other.old_refinement_)),
               old_topology_(std::move(other.old_topology_)),
@@ -647,12 +652,91 @@ public:
             return std::nullopt;
         }
 
+        /** Reserve/construct only after the caller has agreed all rank demands. */
+        void ConstructCandidates(const StagedAllocationObserver& allocation_observer = {})
+        {
+            require_owner();
+            if (reservation_ || ownership_only_)
+                throw std::logic_error("regrid candidate storage already prepared");
+            const int num_children = 1 << owner_->root_grid.dim;
+            // Retired blocks remain live until publication: reserve the full
+            // temporary peak, including all children and restricted parents.
+            reservation_.emplace(owner_->pool->ReserveBlocks(required_slots_));
+            auto refinement = refinements_.begin();
+            auto restriction = restrictions_.begin();
+            // Preserve the original interleaved allocation order across relations.
+            for (const int block_id : old_active_) {
+                const Block& block = owner_->pool->GetBlock(block_id);
+                if (refinement != refinements_.end()
+                    && refinement->parent == block_id) {
+                    auto& relation = *refinement++;
+                    for (int child_index = 0; child_index < num_children;
+                         ++child_index) {
+                        const int child_id = reservation_->AllocateBlock();
+                        if (allocation_observer)
+                            allocation_observer(*owner_, child_id);
+                        Block& child = owner_->pool->GetBlock(child_id);
+                        child.level = block.level + 1;
+                        child.logical_x1 = (block.logical_x1 << 1)
+                            + ((child_index & 1) ? 1 : 0);
+                        child.logical_x2 = (block.logical_x2 << 1)
+                            + ((owner_->root_grid.dim >= 2 && (child_index & 2)) ? 1 : 0);
+                        child.logical_x3 = (block.logical_x3 << 1)
+                            + ((owner_->root_grid.dim == 3 && (child_index & 4)) ? 1 : 0);
+                        child.morton_code = encodeMorton(
+                            child.level, child.logical_x1,
+                            child.logical_x2, child.logical_x3);
+                        child.InitGeometry(
+                            owner_->root_grid, owner_->root_dx1, owner_->root_dx2, owner_->root_dx3);
+                        const int species = block.fluid_state.GetNumSpecies();
+                        child.fluid_state.InitSpecies(species);
+                        child.state_next.InitSpecies(species);
+                        child.state_scratch.InitSpecies(species);
+                        relation.children.push_back(child_id);
+                        proposed_active_.push_back(child_id);
+                    }
+                } else if (restriction != restrictions_.end()
+                           && restriction->children.front() == block_id) {
+                    const int parent_id = reservation_->AllocateBlock();
+                    if (allocation_observer) allocation_observer(*owner_, parent_id);
+                    Block& parent = owner_->pool->GetBlock(parent_id);
+                    parent.level = block.level - 1;
+                    parent.logical_x1 = block.logical_x1 >> 1;
+                    parent.logical_x2 = block.logical_x2 >> 1;
+                    parent.logical_x3 = block.logical_x3 >> 1;
+                    parent.morton_code = encodeMorton(
+                        parent.level, parent.logical_x1,
+                        parent.logical_x2, parent.logical_x3);
+                    parent.InitGeometry(
+                        owner_->root_grid, owner_->root_dx1, owner_->root_dx2, owner_->root_dx3);
+                    const int species = block.fluid_state.GetNumSpecies();
+                    parent.fluid_state.InitSpecies(species);
+                    parent.state_next.InitSpecies(species);
+                    parent.state_scratch.InitSpecies(species);
+                    restriction->parent = parent_id;
+                    ++restriction;
+                    proposed_active_.push_back(parent_id);
+                }
+            }
+            std::sort(proposed_active_.begin(),
+                      proposed_active_.end(),
+                      [this](int lhs, int rhs) {
+                          return owner_->pool->GetBlock(lhs).morton_code
+                              < owner_->pool->GetBlock(rhs).morton_code;
+                      });
+        }
+
+        std::size_t required_slots() const noexcept { return required_slots_; }
+        std::size_t proposed_leaf_count() const noexcept {
+            return old_active_.size()-retire_.size()+required_slots_;
+        }
+
         void BuildMigrationPlans(std::span<const BlockHandle> old_handles,
                                  std::span<const BlockHandle> proposed_handles,
                                  const AmrPlanScope& scope)
         {
             require_owner();
-            if (ownership_only_ || !changed_ || plans_built_ || old_handles.size() != old_active_.size()
+            if (ownership_only_ || !reservation_ || plans_built_ || old_handles.size() != old_active_.size()
                 || proposed_handles.size() != proposed_active_.size()
                 || scope.transaction_id == 0
                 || scope.from_epoch == scope.to_epoch)
@@ -705,7 +789,7 @@ public:
         void ActivateForFinalization(std::span<const BlockTopology> global = {})
         {
             require_owner();
-            if (!changed_ || !migration_complete_ || activated_ || published_)
+            if (!migration_complete_ || activated_ || published_)
                 throw std::logic_error("staged AMR topology is not activatable");
             activate_topology(global);
         }
@@ -971,6 +1055,7 @@ public:
         std::vector<int> old_active_;
         std::vector<int> proposed_active_;
         std::optional<MemoryPool::Reservation> reservation_;
+        std::size_t required_slots_ = 0;
         std::vector<int> retire_;
         std::vector<RefinementSnapshot> old_refinement_;
         std::vector<TopologySnapshot> old_topology_;
@@ -1048,10 +1133,9 @@ public:
 
     /** Prepare conservative topology/transfer relations without publication.
      */
-    PreparedRegrid PrepareRegrid(
+    PreparedRegrid SelectRegrid(
         const SimConfig& config,
         const PreApplyRegridObserver& observer = {},
-        const StagedAllocationObserver& allocation_observer = {},
         const std::function<void()>& evaluate_indicators = {},
         bool jeans_repair_only = false,
         const std::function<bool(const Block&,std::span<const int>)>& candidate_parent = {})
@@ -1060,7 +1144,7 @@ public:
         if (evaluate_indicators) evaluate_indicators();
         else if (jeans_repair_only) EvaluateJeansRepair(config);
         else EvaluateRefinement(config);
-        RippleCheck();
+        RippleCheck(config.amr.lrefinemax);
         if (observer) observer(*this);
 
         const int num_children = 1 << root_grid.dim;
@@ -1121,71 +1205,20 @@ public:
                 prepared.proposed_active_.push_back(block_id);
             }
         }
-        // Retired blocks remain live until publication: reserve the full
-        // temporary peak, including all children and restricted parents.
-        prepared.reservation_.emplace(pool->ReserveBlocks(required_slots));
-        auto refinement = prepared.refinements_.begin();
-        auto restriction = prepared.restrictions_.begin();
-        // Preserve the original interleaved allocation order across relations.
-        for (const int block_id : active_blocks) {
-            const Block& block = pool->GetBlock(block_id);
-            if (refinement != prepared.refinements_.end()
-                && refinement->parent == block_id) {
-                auto& relation = *refinement++;
-                for (int child_index = 0; child_index < num_children;
-                     ++child_index) {
-                    const int child_id = prepared.reservation_->AllocateBlock();
-                    if (allocation_observer)
-                        allocation_observer(*this, child_id);
-                    Block& child = pool->GetBlock(child_id);
-                    child.level = block.level + 1;
-                    child.logical_x1 = (block.logical_x1 << 1)
-                        + ((child_index & 1) ? 1 : 0);
-                    child.logical_x2 = (block.logical_x2 << 1)
-                        + ((root_grid.dim >= 2 && (child_index & 2)) ? 1 : 0);
-                    child.logical_x3 = (block.logical_x3 << 1)
-                        + ((root_grid.dim == 3 && (child_index & 4)) ? 1 : 0);
-                    child.morton_code = encodeMorton(
-                        child.level, child.logical_x1,
-                        child.logical_x2, child.logical_x3);
-                    child.InitGeometry(
-                        root_grid, root_dx1, root_dx2, root_dx3);
-                    const int species = block.fluid_state.GetNumSpecies();
-                    child.fluid_state.InitSpecies(species);
-                    child.state_next.InitSpecies(species);
-                    child.state_scratch.InitSpecies(species);
-                    relation.children.push_back(child_id);
-                    prepared.proposed_active_.push_back(child_id);
-                }
-            } else if (restriction != prepared.restrictions_.end()
-                       && restriction->children.front() == block_id) {
-                const int parent_id = prepared.reservation_->AllocateBlock();
-                if (allocation_observer) allocation_observer(*this, parent_id);
-                Block& parent = pool->GetBlock(parent_id);
-                parent.level = block.level - 1;
-                parent.logical_x1 = block.logical_x1 >> 1;
-                parent.logical_x2 = block.logical_x2 >> 1;
-                parent.logical_x3 = block.logical_x3 >> 1;
-                parent.morton_code = encodeMorton(
-                    parent.level, parent.logical_x1,
-                    parent.logical_x2, parent.logical_x3);
-                parent.InitGeometry(
-                    root_grid, root_dx1, root_dx2, root_dx3);
-                const int species = block.fluid_state.GetNumSpecies();
-                parent.fluid_state.InitSpecies(species);
-                parent.state_next.InitSpecies(species);
-                parent.state_scratch.InitSpecies(species);
-                restriction->parent = parent_id;
-                ++restriction;
-                prepared.proposed_active_.push_back(parent_id);
-            }
-        }
-        std::sort(prepared.proposed_active_.begin(),
-                  prepared.proposed_active_.end(),
-                  [this](int lhs, int rhs) {
-                      return pool->GetBlock(lhs).morton_code
-                          < pool->GetBlock(rhs).morton_code;
-                  });
+        prepared.required_slots_=required_slots;
+        return prepared;
+    }
+
+    PreparedRegrid PrepareRegrid(
+        const SimConfig& config,
+        const PreApplyRegridObserver& observer = {},
+        const StagedAllocationObserver& allocation_observer = {},
+        const std::function<void()>& evaluate_indicators = {},
+        bool jeans_repair_only = false,
+        const std::function<bool(const Block&,std::span<const int>)>& candidate_parent = {})
+    {
+        auto prepared=SelectRegrid(config,observer,evaluate_indicators,jeans_repair_only,candidate_parent);
+        prepared.ConstructCandidates(allocation_observer);
         return prepared;
     }
 

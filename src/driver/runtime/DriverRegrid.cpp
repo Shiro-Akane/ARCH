@@ -344,6 +344,212 @@ void DriverRuntime::migrate_host_leaf(amr::AmrEndpoint source, int destination_r
 #endif
 }
 
+
+/** Collective first-level Host regrid using the original selection, pool and
+ * conservative migration. Unchanged local ranks still join the global epoch.
+ * Families must be colocated; deeper distributed ripple propagation is separate.
+ */
+bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_repair_only,
+    const std::function<void(RegridPhase)>& observer)
+{
+#if ARCH_MPI_ENABLED
+    using namespace amr::flux_mpi_detail;
+    const auto [rank,size]=require_world();
+    const auto notify=[&](RegridPhase phase) {if(observer)observer(phase);};
+    state::StateVersion accepted{};
+    std::vector<std::uint64_t> controls;
+    prepare([&] {
+        if(size<2 || rank!=amr_ctrl.tree->PartitionRank() || size!=amr_ctrl.tree->PartitionSize()
+            || compute_backend || host_hydro_attempt_ || config.grid.geometry!="cartesian"
+            || config.grid.dim!=2 || config.amr.lrefinemin!=0 || config.amr.lrefinemax!=1
+            || config.physics.burn.use_burn || config.physics.diffusion.use_diffusion
+            || config.physics.gravity.type!="none" || config.amr.refine_on_jeans
+            || jeans_repair_only || bc_handler.has_user())
+            throw std::logic_error("distributed regrid requires first-level Cartesian Host Hydro");
+        if(step!=ctrl.step_count || !std::isfinite(time) || time!=ctrl.t_current
+            || next_amr_transaction_id==std::numeric_limits<std::uint64_t>::max())
+            throw std::invalid_argument("distributed regrid is not at the accepted controller boundary");
+        topology_registry.validate_committed_snapshot(observe_topology());
+        if(stage_handles.empty())throw std::logic_error("distributed regrid requires a nonempty rank");
+        accepted=current_interior_version();
+        for(auto handle:stage_handles)
+            residency_ledger->require_readable({handle,StateSlot::Current},
+                {ExecutionSide::Host,accepted,true,true});
+        amr_ctrl.flux_register.RequireOwnershipTransferBoundary();
+        std::map<amr::LogicalBlockKey,int> family_owner;
+        for(const auto& leaf:topology_registry.blocks()) {
+            if(leaf.logical.level>1)throw std::logic_error("distributed regrid requires levels zero/one");
+            if(leaf.logical.level==1) {
+                const amr::LogicalBlockKey parent{leaf.logical.dimension,0,
+                    leaf.logical.logical_x1>>1,leaf.logical.logical_x2>>1,0};
+                const auto [it,inserted]=family_owner.emplace(parent,leaf.owner_rank);
+                if(!inserted && it->second!=leaf.owner_rank)
+                    throw std::logic_error("distributed regrid requires colocated sibling families");
+            }
+        }
+        for(int id:amr_ctrl.tree->GetActiveBlocks())
+            for(auto member:{&amr::Block::fluid_state,&amr::Block::state_next,&amr::Block::state_scratch}) {
+                const auto& state=amr_ctrl.pool->GetBlock(id).*member;
+                if(state.diffusion_boundary || state.boundary_flux_capture)
+                    throw std::logic_error("distributed regrid cannot borrow boundary attachments");
+            }
+        regrid_measurements.reserve(regrid_measurements.size()+1);
+        const auto& a=config.amr;
+        controls={static_cast<std::uint64_t>(config.grid.amr_max_blocks),
+            static_cast<std::uint64_t>(a.lrefinemin),static_cast<std::uint64_t>(a.lrefinemax),
+            std::bit_cast<std::uint64_t>(a.refine_threshold),std::bit_cast<std::uint64_t>(a.derefine_threshold),
+            std::bit_cast<std::uint64_t>(config.numerics.sml_rho),
+            std::bit_cast<std::uint64_t>(config.numerics.min_eint),
+            a.refine_on_rho,a.refine_on_p,a.refine_on_temp,a.refine_on_velx,a.refine_on_vely,
+            a.refine_on_velz,a.refine_on_eng,a.refine_on_vorticity,a.refine_on_div_v,
+            a.refine_on_entropy,a.refine_on_enuc,a.refine_on_species,a.refine_all_species};
+        const auto species=amr_ctrl.tree->RefinementSpecies();
+        controls.push_back(species.size());
+        for(int index:species)controls.push_back(static_cast<std::uint64_t>(index));
+        for(const auto* face:{&config.grid.x1l_boundary_type,&config.grid.x1r_boundary_type,
+            &config.grid.x2l_boundary_type,&config.grid.x2r_boundary_type,
+            &config.grid.x3l_boundary_type,&config.grid.x3r_boundary_type}) {
+            controls.push_back(face->size());
+            for(unsigned char ch:*face)controls.push_back(ch);
+        }
+    });
+    agree(signature(amr_ctrl.tree->GetRootGrid(),specs.count(),topology_registry.epoch(),
+        5,next_amr_transaction_id,time,0));
+    std::array<std::uint64_t,21> identity{
+        static_cast<std::uint64_t>(step),accepted.value,scheduler_clock.last_token(),
+        scheduler_clock.last_version(),next_amr_transaction_id,controls.size(),
+        std::bit_cast<std::uint64_t>(ctrl.dt_old)};
+    agree(identity);
+    for(std::size_t offset=0;offset<controls.size();offset+=identity.size()) {
+        identity.fill(0);
+        std::copy_n(controls.begin()+offset,std::min(identity.size(),controls.size()-offset),identity.begin());
+        agree(identity);
+    }
+
+    std::optional<amr::AmrTree::PreparedRegrid> prepared;
+    std::optional<topology::TopologyIdentityRegistry::Candidate> candidate;
+    std::optional<amr::TopologyTransaction> transaction;
+    std::vector<TopologyObservation> observations;
+    std::vector<amr::BlockTopology> proposed_global;
+    std::vector<amr::BlockHandle> handles;
+    std::vector<RegridSourceBackup> backups;
+    std::optional<BCHandler::StageContextSnapshot> boundary_context;
+    std::unique_ptr<StateResidencyLedger> ledger;
+    scheduler::PublicationWitness witness{};
+    try {
+        prepare([&] {
+            prepared.emplace(amr_ctrl.tree->SelectRegrid(config));
+            notify(RegridPhase::Selected);
+        });
+        std::array<std::uint64_t,4> local{
+            static_cast<std::uint64_t>(amr_ctrl.pool->GetCapacity()),
+            static_cast<std::uint64_t>(amr_ctrl.pool->GetNumActiveBlocks()),
+            prepared->required_slots(),prepared->proposed_leaf_count()},global{};
+        check(MPI_Allreduce(local.data(),global.data(),4,MPI_UINT64_T,MPI_SUM,MPI_COMM_WORLD));
+        prepare([&] {
+            if(config.grid.amr_max_blocks<=0 || global[0]>static_cast<std::uint64_t>(config.grid.amr_max_blocks)
+                || global[1]+global[2]>static_cast<std::uint64_t>(config.grid.amr_max_blocks)
+                || global[3]>static_cast<std::uint64_t>(config.grid.amr_max_blocks))
+                throw std::runtime_error("distributed regrid exceeds global max_blocks including the temporary peak");
+            if(amr_ctrl.pool->GetNumReservedBlocks()!=0
+                || local[1]!=stage_handles.size() || prepared->proposed_leaf_count()==0)
+                throw std::logic_error("distributed regrid pool has foreign storage or an empty candidate rank");
+            prepared->ConstructCandidates();
+            notify(RegridPhase::Constructed);
+            observations=observe_blocks(prepared->proposed_active_blocks());
+        });
+        observations=topology::collect_topology_observations(observations,rank,size);
+        prepare([&] {
+            candidate.emplace(topology_registry.stage_reconciliation(observations));
+            proposed_global=candidate->blocks();
+            handles=candidate->reconciliation().handles_in_observation_order;
+            if(candidate->reconciliation().topology_changed==false
+                && (prepared->topology_changed() || handles!=stage_handles))
+                throw std::logic_error("distributed no-change reconciliation drifted");
+        });
+        if(!candidate->reconciliation().topology_changed) {
+            (void)topology_registry.commit_after_success(std::move(*candidate),
+                [&](const auto&) {prepared->PublishNoChangeNoexcept();},
+                [&](std::exception_ptr failure) {prepare([&] {if(failure)std::rethrow_exception(failure);});});
+            check(MPI_Barrier(MPI_COMM_WORLD));
+            return false;
+        }
+        prepare([&] {
+            const amr::AmrPlanScope scope{next_amr_transaction_id++,topology_registry.epoch(),
+                candidate->reconciliation().epoch};
+            prepared->BuildMigrationPlans(stage_handles,handles,scope);
+            transaction.emplace(scope.transaction_id,scope.from_epoch,scope.to_epoch);
+            transaction->begin_migration();
+            transaction->require_scope(prepared->prolongation_plan());
+            transaction->require_scope(prepared->restriction_plan());
+            prepared->ExecuteMigration();
+            notify(RegridPhase::Migrated);
+            // Boundary completion writes unchanged leaves too. Lease the original
+            // arrays before activating candidates, not a second MPI field store.
+            boundary_context.emplace(bc_handler.snapshot_stage_context());
+            backups.reserve(amr_ctrl.tree->GetActiveBlocks().size());
+            for(int id:amr_ctrl.tree->GetActiveBlocks())
+                backups.emplace_back(id,amr_ctrl.pool->GetBlock(id));
+            witness=scheduler_clock.next_publication();
+            ledger=std::make_unique<StateResidencyLedger>(candidate->reconciliation().epoch);
+            for(auto handle:handles)ledger->register_block(handle,witness.version,witness.completion);
+            prepared->ActivateForFinalization(proposed_global);
+            notify(RegridPhase::TopologyActivated);
+        });
+        std::optional<StageExecutionContext> context;
+        std::optional<scheduler::ScopedStageBinding> binding;
+        prepare([&] {
+            context.emplace(ExecutionSide::Host,*ledger,scheduler_clock);
+            context->hydro_rank_completion=[this](std::exception_ptr failure) {
+                amr_ctrl.CompleteDistributedHydroPhase(failure);
+            };
+            for(int id:amr_ctrl.tree->GetActiveBlocks())
+                (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
+            binding.emplace(*context,handles);
+        });
+        TimeIntegration::synchronize_domain_boundary(amr_ctrl,bc_handler,&amr::Block::fluid_state,handles);
+        prepare([&] {
+            (void)scheduler::complete_boundary(*context,handles,StateSlot::Current,witness.version,
+                [](StateSlot,state::StateVersion,state::CompletionToken token) {return token;});
+            for(auto handle:handles)ledger->require_readable({handle,StateSlot::Current},
+                {ExecutionSide::Host,witness.version,true,true});
+            notify(RegridPhase::GhostsSynchronized);
+            transaction->mark_ready();
+            notify(RegridPhase::ReadyToPublish);
+        });
+        binding.reset();
+        (void)topology_registry.commit_after_success(std::move(*candidate),
+            [&](const auto&) {
+                transaction->commit_after_success(
+                    [](const auto&) {return 0;},[](const auto&,int&) {},
+                    [&](int&&) noexcept {
+                        prepared->PublishNoexcept();
+                        stage_handles.swap(handles);
+                        residency_ledger.swap(ledger);
+                        amr_ctrl.PublishActiveHandlesNoexcept(stage_handles);
+                    });
+            },[&](std::exception_ptr failure) {
+                prepare([&] {if(failure)std::rethrow_exception(failure);});
+            });
+        check(MPI_Barrier(MPI_COMM_WORLD));
+        prepared->ReleaseRetiredNoexcept();
+        return true;
+    } catch(...) {
+        for(auto& backup:backups)backup.restore(amr_ctrl.pool->GetBlock(backup.pool_index));
+        if(boundary_context)bc_handler.restore_stage_context_noexcept(*boundary_context);
+        if(prepared)prepared->AbortNoexcept();
+        std::array<std::uint64_t,3> local{next_amr_transaction_id,scheduler_clock.last_token(),
+            scheduler_clock.last_version()},high{};
+        check(MPI_Allreduce(local.data(),high.data(),3,MPI_UINT64_T,MPI_MAX,MPI_COMM_WORLD));
+        next_amr_transaction_id=high[0];scheduler_clock.retain_high_watermarks(high[1],high[2]);
+        throw;
+    }
+#else
+    (void)step;(void)time;(void)jeans_repair_only;(void)observer;
+    throw std::logic_error("distributed regrid requires ARCH_ENABLE_MPI=ON");
+#endif
+}
+
 /** Evaluate the original Device source flags before topology preparation.
  * Workflow: select indicators -> complete actual Current ghosts -> evaluate
  * original summaries/JENS -> reject finest deficits -> publish only flags.
@@ -748,18 +954,24 @@ bool DriverRuntime::device_jeans_parent_resolved(
 
 /** Apply the configured regrid cadence through the actual chart transaction.
  */
-bool DriverRuntime::perform_regrid(int step, double time, bool jeans_repair_only)
+bool DriverRuntime::perform_regrid(int step, double time, bool jeans_repair_only,
+    const std::function<void(RegridPhase)>& observer)
 {
-    return perform_regrid_impl(step,time,jeans_repair_only);
+    return perform_regrid_impl(step,time,jeans_repair_only,observer);
 }
-bool DriverRuntime::perform_regrid_impl(int step,double time,bool jeans_repair_only)
+bool DriverRuntime::perform_regrid_impl(int step,double time,bool jeans_repair_only,
+    const std::function<void(RegridPhase)>& observer)
 {
     if(host_hydro_attempt_)throw std::logic_error("Cannot regrid during Host Hydro attempt");
     const auto started = std::chrono::steady_clock::now();
     const auto before = compute_backend ? compute_backend->counters()
         : arch::backend::BackendCounters{};
     const auto old_blocks = stage_handles.size();
-    const bool changed = execute_regrid(jeans_repair_only);
+    if(amr_ctrl.tree->PartitionSize()==1 && observer)
+        throw std::logic_error("collective regrid observers require a distributed topology");
+    const bool changed = amr_ctrl.tree->PartitionSize()>1
+        ? execute_distributed_regrid(step,time,jeans_repair_only,observer)
+        : execute_regrid(jeans_repair_only);
     const auto after = compute_backend ? compute_backend->counters()
         : arch::backend::BackendCounters{};
     regrid_measurements.push_back({step, time, old_blocks, stage_handles.size(), changed,
