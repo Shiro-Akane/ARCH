@@ -1,0 +1,93 @@
+{
+  "stage": "G1 same-level CUDA kernel transport witness",
+  "status": "locally_validated",
+  "base_commit": "4aae33e400f509467947cc085d47c75517a7dab5",
+  "upstream_main": "2e05e66e3b09e3890488fb872cd842b1885f71e4",
+  "branch": "MPI/gpu-amr-integration",
+  "hardware": {
+    "host": "gpu-273312",
+    "gpu": "NVIDIA H100-20C",
+    "visible_devices": 1,
+    "ranks": 2,
+    "multi_gpu_validated": false,
+    "multi_node_validated": false
+  },
+  "scope": {
+    "dimensions": [
+      1,
+      2,
+      3
+    ],
+    "same_level_values": [
+      0,
+      2
+    ],
+    "mixed_level": false,
+    "species": [
+      0,
+      4,
+      37
+    ],
+    "slots": 3,
+    "repetitions": 3,
+    "layouts_per_build": 18,
+    "slot_exchanges_per_build": 162,
+    "phase_checks_per_rank_per_build": 324,
+    "bitwise_comparison": true,
+    "wire_order": "existing Host MPI cell-major 6+species uint64 words",
+    "staged_field_bytes_per_rank_per_build": 7408512,
+    "application_runtime_integrated": false
+  },
+  "tests": [
+    {
+      "build": "release",
+      "tests": 1,
+      "failed": 0,
+      "skipped": 0,
+      "junit_sha256": "09a833854742d86a35ff4eb0bc7268cfc8dc925d08b36e9ebb70580f5d5174ae",
+      "binary_sha256": "d76ba8ab7dd6c8cbdfe8501918eadb06e035eab1ae09d6f6c586b7fe19f5fa74"
+    },
+    {
+      "build": "debug",
+      "tests": 1,
+      "failed": 0,
+      "skipped": 0,
+      "junit_sha256": "fa89cfa4285d155ee3f295569519019fa519c3f3529122a2694b8658a81a9874",
+      "binary_sha256": "6a164968f7c832e51b3f1be527017dfae3cca7e8a052a7b7334f4f6995618cb9"
+    }
+  ],
+  "tooling": {
+    "passed": 629,
+    "skipped": 0,
+    "log_sha256": "5955e249f9ae47ffa63b0cd479a9374a6df5ae9fc7a837cb51ec3e53f2751917"
+  },
+  "optional_build_boundaries": {
+    "cuda_on_mpi_off_staging_absent": true,
+    "tests": 146,
+    "cuda_off_mpi_on_staging_absent": true
+  },
+  "source_sha256": {
+    "src/cuda/hydro/boundary/ExchangeKernels.cuh": "a324e486e15495b1ff144a2828c8fe9825e772405aef308dc848bb7d114c31d5",
+    "tests/cuda/amr/test_cuda_mpi_staging.cu": "f37bb2f8d1e775ea03bfc9df856a4b03aeabccabfb6e0d71039101dda20ddbaf",
+    "tests/cuda/amr/CudaMpiStagingPlan.cpp": "f46a4cf12064d1babc4b0ea255eff80e13e63dc49b671bc486a328d68563c25e",
+    "cmake/tests/CudaTests.cmake": "2846a343665fcde7b697fe6920819edb775fdf5bde0c1f55c2e8eaf580f13a8b"
+  },
+  "unchanged_math": true,
+  "server_evidence": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-staging-20261112",
+  "failed_attempts_retained": [
+    "build-release.log: NVCC Host planner comparison emission; fixture moved to ordinary C++",
+    "wire-contract-red.log: original CUDA packet order differs from Host MPI; cell-major alignment verified",
+    "tooling.log: wrong Python/tool PATH; rerun using existing registered tooling environment"
+  ],
+  "limitations": [
+    "No production CudaBackend ghost/residency publication integration yet",
+    "No GPU Hydro macrostep, mixed-level transfer/reflux or device migration acceptance",
+    "No complete MPI-AMR application entry, distributed output/restart or performance claim",
+    "compute-sanitizer not available in the existing toolkit"
+  ],
+  "storage_cleanup": {
+    "receipt": "/home/ubuntu/projects/ARCH-mpi-storage-20261112/cleanup-receipt.json",
+    "receipt_sha256": "ce2c7fd7086797da42a42f885ddefb1773ecf9177ef773bcecb424708d019860",
+    "files_archived_and_removed": 9278
+  }
+}

@@ -39,8 +39,10 @@ __device__ inline bool locate_exchange_work(
         if (linear >= begin && linear < end) {
             operation_index = index;
             const std::uint64_t local = linear - begin;
-            field = static_cast<int>(local / cells);
-            cell = local % cells;
+            // Match GhostExchange's existing cell-major MPI payload:
+            // rho, momentum, energy, enuc, then species for each cell.
+            field = static_cast<int>(local % field_count);
+            cell = local / field_count;
             return true;
         }
     }
@@ -104,31 +106,87 @@ __global__ void scatter_same_level_exchange_kernel(
         scratch[linear];
 }
 
+// Both local exchange and Host-staged MPI use these same gather/scatter
+// kernels. The caller validates the immutable lowering and owns storage.
+// Gather only dereferences source_block; scatter only destination_block.
+// The other endpoint may therefore be absent from this rank's device store.
+inline cudaError_t same_level_exchange_launch_extent(
+    const DeviceExchangeBlock* blocks,
+    const DeviceExchangeOperation* operations, int operation_count,
+    int field_count, std::uint64_t phase_cells, const double* scratch,
+    std::uint64_t& work, unsigned int& block_count)
+{
+    work = 0;
+    block_count = 0;
+    if (operation_count < 0) return cudaErrorInvalidValue;
+    if (operation_count == 0)
+        return phase_cells == 0 ? cudaSuccess : cudaErrorInvalidValue;
+    if (!blocks || !operations || !scratch || field_count < 6
+        || phase_cells == 0
+        || phase_cells > std::numeric_limits<std::uint64_t>::max()
+            / static_cast<std::uint64_t>(field_count))
+        return cudaErrorInvalidValue;
+    work = phase_cells * static_cast<std::uint64_t>(field_count);
+    constexpr unsigned int threads = 256;
+    const std::uint64_t count = (work - 1) / threads + 1;
+    if (count > std::numeric_limits<unsigned int>::max())
+        return cudaErrorInvalidValue;
+    block_count = static_cast<unsigned int>(count);
+    return cudaSuccess;
+}
+
+/** Queue packing only. D2H must complete before MPI reads the Host buffer. */
+inline cudaError_t launch_same_level_exchange_gather(
+    const DeviceExchangeBlock* blocks,
+    const DeviceExchangeOperation* operations, int operation_count,
+    int field_count, std::uint64_t phase_cells, double* scratch,
+    cudaStream_t stream)
+{
+    std::uint64_t work = 0;
+    unsigned int block_count = 0;
+    const auto status = same_level_exchange_launch_extent(
+        blocks, operations, operation_count, field_count, phase_cells,
+        scratch, work, block_count);
+    if (status != cudaSuccess || block_count == 0) return status;
+    gather_same_level_exchange_kernel<<<block_count, 256, 0, stream>>>(
+        blocks, operations, operation_count, field_count, work, scratch);
+    return cudaGetLastError();
+}
+
+/** Queue unpacking only, after MPI completion and same-stream H2D.
+ * The owner must finish this stream before publishing valid ghosts or
+ * reusing/releasing any borrowed buffer or block view.
+ */
+inline cudaError_t launch_same_level_exchange_scatter(
+    const DeviceExchangeBlock* blocks,
+    const DeviceExchangeOperation* operations, int operation_count,
+    int field_count, std::uint64_t phase_cells, const double* scratch,
+    cudaStream_t stream)
+{
+    std::uint64_t work = 0;
+    unsigned int block_count = 0;
+    const auto status = same_level_exchange_launch_extent(
+        blocks, operations, operation_count, field_count, phase_cells,
+        scratch, work, block_count);
+    if (status != cudaSuccess || block_count == 0) return status;
+    scatter_same_level_exchange_kernel<<<block_count, 256, 0, stream>>>(
+        blocks, operations, operation_count, field_count, work, scratch);
+    return cudaGetLastError();
+}
+
 inline cudaError_t launch_same_level_exchange_phase(
     const DeviceExchangeBlock* blocks,
     const DeviceExchangeOperation* operations, int operation_count,
     int field_count, std::uint64_t phase_cells, double* scratch,
     cudaStream_t stream)
 {
-    if (operation_count == 0) return cudaSuccess;
-    if (blocks == nullptr || operations == nullptr || scratch == nullptr
-        || field_count < 6 || phase_cells == 0)
-        return cudaErrorInvalidValue;
-    const std::uint64_t work = phase_cells * field_count;
-    constexpr int threads = 256;
-    const std::uint64_t block_count = (work + threads - 1) / threads;
-    if (block_count > static_cast<std::uint64_t>(
-            std::numeric_limits<unsigned int>::max()))
-        return cudaErrorInvalidValue;
-    gather_same_level_exchange_kernel
-        <<<static_cast<unsigned int>(block_count), threads, 0, stream>>>(
-            blocks, operations, operation_count, field_count, work, scratch);
-    cudaError_t result = cudaGetLastError();
+    const auto result = launch_same_level_exchange_gather(
+        blocks, operations, operation_count, field_count, phase_cells,
+        scratch, stream);
     if (result != cudaSuccess) return result;
-    scatter_same_level_exchange_kernel
-        <<<static_cast<unsigned int>(block_count), threads, 0, stream>>>(
-            blocks, operations, operation_count, field_count, work, scratch);
-    return cudaGetLastError();
+    return launch_same_level_exchange_scatter(
+        blocks, operations, operation_count, field_count, phase_cells,
+        scratch, stream);
 }
 
 } // namespace arch::cuda

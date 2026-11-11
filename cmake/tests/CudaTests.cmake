@@ -61,6 +61,20 @@ function(arch_configure_generated_cuda_test target custom_id)
     endif()
 endfunction()
 
+# Host staging uses production header kernels and the existing build contract.
+if(ARCH_ENABLE_MPI)
+    add_executable(arch_cuda_mpi_staging
+        tests/cuda/amr/test_cuda_mpi_staging.cu
+        tests/cuda/amr/CudaMpiStagingPlan.cpp)
+    arch_configure_cuda_math_test(arch_cuda_mpi_staging)
+    target_link_libraries(arch_cuda_mpi_staging PRIVATE arch_build_contract CUDA::cudart)
+    add_test(NAME mpi_cuda_staging_2
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_cuda_mpi_staging> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(mpi_cuda_staging_2 PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 180 PROCESSORS 2 LABELS "mpi;cuda")
+endif()
+
 # Generated-network mathematical and trajectory witnesses.
 foreach(custom_id IN LISTS ARCH_CUSTOM_CUDA_IDS)
     set(custom_test "arch_cuda_generated_math_${custom_id}")
