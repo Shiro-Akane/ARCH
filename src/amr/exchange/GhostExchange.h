@@ -21,6 +21,11 @@
 #include <array>
 #include <bit>
 #include <cmath>
+#include <climits>
+#include <exception>
+#include <limits>
+#include <set>
+#include <tuple>
 #include <memory>
 #include <map>
 #include <span>
@@ -28,6 +33,7 @@
 #include <vector>
 
 #include "amr/exchange/CoarseFineCellPlan.h"
+#include "amr/exchange/CoarseFineHostExecution.h"
 #include "amr/exchange/CoordinateSeamPlan.h"
 #include "amr/exchange/ExchangePlan.h"
 #include "amr/storage/Block.h"
@@ -104,8 +110,14 @@ public:
                     throw std::invalid_argument("exchange cache has invalid neighbor count");
                 key.push_back(static_cast<std::uint64_t>(neighbor.count));
                 key.push_back(static_cast<std::uint64_t>(neighbor.level_diff));
-                for (const auto id : neighbor.ids)
-                    key.push_back(static_cast<std::uint64_t>(id));
+                for (const auto& endpoint : neighbor.blocks)
+                    key.insert(key.end(), {static_cast<std::uint64_t>(endpoint.pool_index),
+                                           static_cast<std::uint64_t>(endpoint.owner_rank),
+                                           endpoint.handle.uid.value, endpoint.handle.epoch.value,
+                                           static_cast<std::uint64_t>(endpoint.logical.dimension),
+                                           static_cast<std::uint64_t>(endpoint.logical.level),
+                                           endpoint.logical.logical_x1, endpoint.logical.logical_x2,
+                                           endpoint.logical.logical_x3});
             }
         }
         // Exact equality avoids a fingerprint collision becoming a cache hit.
@@ -202,10 +214,16 @@ public:
                         block.face_neighbors[face];
                     if (neighbors.count == 0 || neighbors.level_diff != 0)
                         continue;
-                    if (neighbors.count != 1 || neighbors.ids[0] < 0)
+                    if (neighbors.count != 1)
                         throw std::invalid_argument(
                             "same-level face has invalid neighbor cardinality");
-                    const auto found = active_index.find(neighbors.ids[0]);
+                    (void)neighbor_endpoint(neighbors.blocks[0], *pool, active_index, handles, dim,
+                                            tree->PartitionRank(), tree->PartitionSize());
+                    // Local copy plans omit remote endpoints consumed by the
+                    // existing MPI X executor; remote storage is never invented.
+                    if (neighbors.blocks[0].owner_rank != tree->PartitionRank())
+                        continue;
+                    const auto found = active_index.find(neighbors.blocks[0].pool_index);
                     if (found == active_index.end())
                         throw std::invalid_argument(
                             "same-level neighbor is not active");
@@ -251,88 +269,33 @@ public:
         CoarseFineTransferPlan plan{};
         plan.dimension = dim;
         plan.scope = {0, handles.front().epoch, handles.front().epoch};
-        const auto append_fields = [&](const Block& source,
-                                       const Block& destination,
-                                       std::size_t source_index,
-                                       std::size_t destination_index,
-                                       int face, RefinementRule rule,
-                                       const LogicalAmrBox& source_box,
-                                       const LogicalAmrBox& destination_box) {
-            const AmrEndpoint source_endpoint{
-                logical_key(source, dim), handles[source_index]};
-            const AmrEndpoint destination_endpoint{
-                logical_key(destination, dim), handles[destination_index]};
-            const int species = destination.fluid_state.GetNumSpecies();
-            if (source.fluid_state.GetNumSpecies() != species)
-                throw std::invalid_argument(
-                    "coarse-fine blocks have inconsistent species counts");
-            const auto append = [&](AmrField field, int component) {
-                plan.operations.push_back({
-                    0, source_endpoint, destination_endpoint,
-                    source_box, destination_box,
-                    static_cast<AmrAxis>(face / 2),
-                    static_cast<AmrSide>(face % 2), field, component,
-                    rule, 1.0, 1.0});
-            };
-            append(AmrField::Rho, -1);
-            append(AmrField::MomU, -1);
-            append(AmrField::MomV, -1);
-            append(AmrField::MomW, -1);
-            append(AmrField::Energy, -1);
-            append(AmrField::EnucRate, -1);
-            for (int component = 0; component < species; ++component)
-                append(AmrField::Species, component);
-        };
 
         for (std::size_t destination_index = 0;
              destination_index < active_blocks.size(); ++destination_index) {
-            const Block& destination = pool->GetBlock(
-                active_blocks[destination_index]);
+            const Block& destination = pool->GetBlock(active_blocks[destination_index]);
             for (int face = 0; face < 2 * dim; ++face) {
-                const Block::FaceNeighbors& neighbors =
-                    destination.face_neighbors[face];
+                const auto& neighbors = destination.face_neighbors[face];
                 if (neighbors.count == 0 || neighbors.level_diff == 0)
                     continue;
-                if (neighbors.level_diff == -1) {
-                    if (neighbors.count != 1 || neighbors.ids[0] < 0)
+                const int expected = neighbors.level_diff == -1 ? 1 : 1 << (dim - 1);
+                if ((neighbors.level_diff != -1 && neighbors.level_diff != 1) ||
+                    neighbors.count != expected)
+                    throw std::invalid_argument("coarse-fine face has invalid cardinality");
+                for (int index = 0; index < neighbors.count; ++index) {
+                    const auto& descriptor = neighbors.blocks[index];
+                    const auto source =
+                        neighbor_endpoint(descriptor, *pool, active_index, handles, dim,
+                                          tree->PartitionRank(), tree->PartitionSize());
+                    if (source.logical.level != destination.level + neighbors.level_diff)
+                        throw std::invalid_argument("coarse-fine endpoint level drifted");
+                    if (descriptor.owner_rank == tree->PartitionRank() &&
+                        pool->GetBlock(descriptor.pool_index).fluid_state.GetNumSpecies() !=
+                            destination.fluid_state.GetNumSpecies())
                         throw std::invalid_argument(
-                            "fine block has invalid coarse neighbor");
-                    const auto found = active_index.find(neighbors.ids[0]);
-                    if (found == active_index.end())
-                        throw std::invalid_argument(
-                            "coarse ghost source is not active");
-                    const Block& source = pool->GetBlock(neighbors.ids[0]);
-                    const auto boxes = coarse_injection_boxes(
-                        destination, face, dim);
-                    append_fields(
-                        source, destination, found->second,
-                        destination_index, face,
-                        RefinementRule::CoarseGhostInjection,
-                        boxes.first, boxes.second);
-                } else if (neighbors.level_diff == 1) {
-                    for (int neighbor = 0; neighbor < neighbors.count;
-                         ++neighbor) {
-                        if (neighbors.ids[neighbor] < 0)
-                            throw std::invalid_argument(
-                                "coarse block has invalid fine neighbor");
-                        const auto found = active_index.find(
-                            neighbors.ids[neighbor]);
-                        if (found == active_index.end())
-                            throw std::invalid_argument(
-                                "fine ghost source is not active");
-                        const Block& source = pool->GetBlock(
-                            neighbors.ids[neighbor]);
-                        const auto boxes = fine_average_boxes(
-                            source, face, dim);
-                        append_fields(
-                            source, destination, found->second,
-                            destination_index, face,
-                            RefinementRule::FineGhostAverage,
-                            boxes.first, boxes.second);
-                    }
-                } else {
-                    throw std::invalid_argument(
-                        "coarse-fine neighbor level difference is invalid");
+                            "coarse-fine blocks have inconsistent species counts");
+                    append_coarse_fine_face(
+                        plan, source, {logical_key(destination, dim), handles[destination_index]},
+                        face, destination.fluid_state.GetNumSpecies());
                 }
             }
         }
@@ -340,275 +303,54 @@ public:
         return plan;
     }
 
-    void ExecuteCoarseFinePlan(
-        const CoarseFineTransferPlan& plan,
-        const std::shared_ptr<MemoryPool>& pool,
-        const std::shared_ptr<AmrTree>& tree, int dim,
-        FluidState Block::* state_ptr,
-        std::span<const BlockHandle> handles)
-    {
-        const auto& active_blocks = tree->GetActiveBlocks();
-        if (state_ptr == nullptr || plan.dimension != dim
-            || handles.size() != active_blocks.size())
-            throw std::invalid_argument(
-                "coarse-fine Host execution view mismatch");
-
-        struct CompiledTransfer {
-            int source_id = -1;
-            int destination_id = -1;
-            int destination_cell = -1;
-            std::array<int, 8> source_cells{};
-            std::array<int, 6> slope_cells{};
-            std::array<double, 3> fine_position{};
-            std::array<double, 8> source_measures{};
-            std::array<double, 8> source_moment_measures{};
-            std::uint8_t source_count = 0;
-            double source_measure_sum = 0.0;
-            double source_moment_measure_sum = 0.0;
-            RefinementRule rule = RefinementRule::CoarseGhostInjection;
-        };
-        std::map<LogicalBlockKey, std::size_t> active_index;
-        int species_count = -1;
-        for (std::size_t index = 0; index < active_blocks.size(); ++index) {
-            const Block& block = pool->GetBlock(active_blocks[index]);
-            if (!active_index.emplace(logical_key(block, dim), index).second)
-                throw std::invalid_argument(
-                    "coarse-fine Host view has duplicate logical block");
-            if (!is_valid(handles[index])
-                || handles[index].epoch != plan.scope.from_epoch)
-                throw std::invalid_argument(
-                    "coarse-fine Host view has stale handle");
-            const int block_species = (block.*state_ptr).GetNumSpecies();
-            if (species_count >= 0 && block_species != species_count)
-                throw std::invalid_argument(
-                    "coarse-fine Host species count mismatch");
-            species_count = block_species;
+    void ExecuteCoarseFinePlan(const CoarseFineTransferPlan& plan,
+                               const std::shared_ptr<MemoryPool>& pool,
+                               const std::shared_ptr<AmrTree>& tree, int dim,
+                               FluidState Block::* state_ptr,
+                               std::span<const BlockHandle> handles) {
+        if (tree && tree->PartitionSize() > 1) {
+            ExecuteRemoteCoarseFinePlan(plan, pool, tree, dim, state_ptr, handles);
+            return;
         }
-        if (species_count < 0)
-            throw std::invalid_argument(
-                "coarse-fine Host execution requires active blocks");
-
-        const CoarseFineCellPlan cell_plan =
-            compile_coarse_fine_cell_plan(plan, species_count);
-        const auto cell_index = [](const Grid& grid,
-                                   const LogicalAmrCell& cell) {
-            const std::array<std::int64_t, 3> absolute{
-                static_cast<std::int64_t>(grid.Is()) + cell[0],
-                static_cast<std::int64_t>(grid.Js()) + cell[1],
-                static_cast<std::int64_t>(grid.Ks()) + cell[2]};
-            if (absolute[0] < 0 || absolute[0] >= grid.GetTotalX()
-                || absolute[1] < 0 || absolute[1] >= grid.GetTotalY()
-                || absolute[2] < 0 || absolute[2] >= grid.GetTotalZ())
-                throw std::out_of_range(
-                    "coarse-fine cell is outside Host block layout");
-            return grid.GetIndex(
-                static_cast<int>(absolute[0]),
-                static_cast<int>(absolute[1]),
-                static_cast<int>(absolute[2]));
-        };
-
-        std::vector<CompiledTransfer> compiled;
-        compiled.reserve(cell_plan.transfers.size());
-        for (const CoarseFineCellTransfer& transfer : cell_plan.transfers) {
-            const auto source = active_index.find(transfer.source.logical);
-            const auto destination = active_index.find(
-                transfer.destination.logical);
-            if (source == active_index.end()
-                || destination == active_index.end()
-                || handles[source->second] != transfer.source.handle
-                || handles[destination->second]
-                    != transfer.destination.handle)
-                throw std::invalid_argument(
-                    "coarse-fine logical endpoint is stale");
-            const Block& source_block = pool->GetBlock(
-                active_blocks[source->second]);
-            const Block& destination_block = pool->GetBlock(
-                active_blocks[destination->second]);
-            if ((source_block.*state_ptr).GetNumSpecies() != species_count
-                || (destination_block.*state_ptr).GetNumSpecies()
-                    != species_count)
-                throw std::invalid_argument(
-                    "coarse-fine Host species count mismatch");
-            CompiledTransfer lowered{};
-            lowered.source_id = active_blocks[source->second];
-            lowered.destination_id = active_blocks[destination->second];
-            lowered.destination_cell = cell_index(
-                destination_block.grid, transfer.destination_cell);
-            lowered.source_count = transfer.source_count;
-            lowered.fine_position = transfer.fine_position;
-            lowered.rule = transfer.rule;
-            const bool angular_momentum =
-                source_block.grid.geometry == "cylindrical" && dim == 2
-                && transfer.rule == RefinementRule::FineGhostAverage;
-            if (lowered.source_count == 0
-                || lowered.source_count > lowered.source_cells.size())
-                throw std::invalid_argument(
-                    "coarse-fine Host source count is invalid");
-            for (std::size_t cell = 0; cell < lowered.source_count; ++cell) {
-                lowered.source_cells[cell] = cell_index(
-                    source_block.grid, transfer.source_cells[cell]);
-                const LogicalAmrCell& logical =
-                    transfer.source_cells[cell];
-
-                // Cartesian fine cells have one common measure, so unit
-                // weights preserve the existing arithmetic.  Curvilinear
-                // restriction must use physical cell volumes.
-                double measure = 1.0;
-                if (source_block.grid.geometry != "cartesian") {
-                    measure = GridMetrics::CellVolume(
-                        GridMetrics::make_geometry_view(source_block.grid),
-                        source_block.grid.Is() + logical[0],
-                        source_block.grid.Js() + logical[1],
-                        source_block.grid.Ks() + logical[2]);
-                }
-                if (!std::isfinite(measure) || measure <= 0.0)
-                    throw std::invalid_argument(
-                        "coarse-fine Host source measure is invalid");
-                lowered.source_measures[cell] = measure;
-                lowered.source_measure_sum += measure;
-                if (angular_momentum) {
-                    const double moment =
-                        GridMetrics::AngularMomentumVolumeMoment(
-                            GridMetrics::make_geometry_view(source_block.grid),
-                            source_block.grid.Is() + logical[0],
-                            source_block.grid.Js() + logical[1],
-                            source_block.grid.Ks() + logical[2]);
-                    if (!std::isfinite(moment) || moment <= 0.0)
-                        throw std::invalid_argument(
-                            "coarse-fine Host source moment is invalid");
-                    lowered.source_moment_measures[cell] = moment;
-                    lowered.source_moment_measure_sum += moment;
-                }
-            }
-            if (lowered.rule == RefinementRule::CoarseGhostInjection) {
-                for (std::size_t cell = 0;
-                     cell < lowered.slope_cells.size(); ++cell)
-                    lowered.slope_cells[cell] = cell_index(
-                        source_block.grid, transfer.slope_cells[cell]);
-            }
-            if (!std::isfinite(lowered.source_measure_sum)
-                || lowered.source_measure_sum <= 0.0)
-                throw std::invalid_argument(
-                    "coarse-fine Host source measure sum is invalid");
-            if (angular_momentum
-                && (!std::isfinite(lowered.source_moment_measure_sum)
-                    || lowered.source_moment_measure_sum <= 0.0))
-                throw std::invalid_argument(
-                    "coarse-fine Host source moment sum is invalid");
-
-            compiled.push_back(lowered);
+        if (!pool || !tree || !state_ptr || dim < 1 || dim > 3 || plan.dimension != dim)
+            throw std::invalid_argument("coarse-fine Host execution view mismatch");
+        const auto& active = tree->GetActiveBlocks();
+        if (active.empty() || handles.size() != active.size())
+            throw std::invalid_argument("coarse-fine Host execution requires committed blocks");
+        const int species = (pool->GetBlock(active.front()).*state_ptr).GetNumSpecies();
+        std::map<AmrEndpoint, int> local;
+        std::set<LogicalBlockKey> logical_blocks;
+        for (std::size_t i = 0; i < active.size(); ++i) {
+            const auto& block = pool->GetBlock(active[i]);
+            coarse_fine_host::validate_state(block, state_ptr, species);
+            if (!logical_blocks.insert(logical_key(block, dim)).second)
+                throw std::invalid_argument("coarse-fine Host view has duplicate logical block");
+            if (!is_valid(handles[i]) || handles[i].epoch != plan.scope.from_epoch ||
+                !local.emplace(AmrEndpoint{logical_key(block, dim), handles[i]}, active[i]).second)
+                throw std::invalid_argument("coarse-fine Host view has stale or duplicate handle");
         }
-
-        struct GatheredTransfer {
-            std::array<double, 6> fields{};
-            std::vector<double> mass_fractions;
-        };
-        std::vector<GatheredTransfer> gathered;
-        gathered.reserve(compiled.size());
-
-        // Gather the complete plan before scattering.  Besides matching the
-        // CUDA two-kernel execution, this prevents the fine-to-coarse route
-        // from overwriting a coarse stencil needed by its reciprocal
-        // coarse-to-fine route.
-
-        for (const CompiledTransfer& transfer : compiled) {
-            const FluidState& source =
-                pool->GetBlock(transfer.source_id).*state_ptr;
-            const prolongation_math::CompositionStencilView stencil{
-                source.rho.data(), source.mass_fractions.data(),
-                source.rho.size(), transfer.source_cells[0],
-                transfer.slope_cells.data(), plan.dimension, species_count};
-            const auto transfer_field = [&](const std::vector<double>& field,
-                                            bool moment_measure) {
-                if (transfer.rule == RefinementRule::CoarseGhostInjection)
-                    return prolongation_math::reconstruct_field(
-                        stencil, field.data(),
-                        transfer.fine_position.data());
-                const auto& measures = moment_measure
-                    ? transfer.source_moment_measures
-                    : transfer.source_measures;
-                const double measure_sum = moment_measure
-                    ? transfer.source_moment_measure_sum
-                    : transfer.source_measure_sum;
-                double integral = 0.0;
-                for (std::size_t cell = 0;
-                     cell < transfer.source_count; ++cell)
-                    integral += restriction_math::weighted_conserved_value(
-                        field[transfer.source_cells[cell]], measures[cell]);
-                return restriction_math::restricted_average(
-                    integral, measure_sum);
-            };
-            double density_integral = 0.0;
-            for (std::size_t cell = 0;
-                 cell < transfer.source_count; ++cell)
-                density_integral +=
-                    restriction_math::weighted_conserved_value(
-                        source.rho[transfer.source_cells[cell]],
-                        transfer.source_measures[cell]);
-            GatheredTransfer values{};
-            const bool angular_momentum =
-                transfer.rule == RefinementRule::FineGhostAverage
-                && transfer.source_moment_measure_sum > 0.0;
-            values.fields = {
-                transfer_field(source.rho, false),
-                transfer_field(source.mom_u, false),
-                transfer_field(source.mom_v, false),
-                transfer_field(source.mom_w, angular_momentum),
-                transfer_field(source.eng, false),
-                transfer_field(source.enuc_rate, false)};
-            values.mass_fractions.resize(
-                static_cast<std::size_t>(species_count));
-            if (transfer.rule == RefinementRule::CoarseGhostInjection) {
-                const double fine_density = values.fields[0];
-                const int closure_species =
-                    prolongation_math::composition_closure_species(stencil);
-                const auto family =
-                    prolongation_math::classify_composition_family(stencil, closure_species);
-                if (family == prolongation_math::CompositionFamily::InvalidDensity)
-                    throw std::runtime_error(
-                        prolongation_math::invalid_prolongation_density_message());
-                for (int species = 0; species < species_count; ++species)
-                    values.mass_fractions[species] =
-                        prolongation_math::reconstruct_mass_fraction(
-                            stencil, family, fine_density, species,
-                            transfer.fine_position.data(), closure_species);
-            } else {
-                for (int species = 0; species < species_count; ++species) {
-                    double species_density_integral = 0.0;
-                    for (std::size_t cell = 0;
-                         cell < transfer.source_count; ++cell) {
-                        const int source_cell = transfer.source_cells[cell];
-                        species_density_integral +=
-                            restriction_math::weighted_species_density(
-                                source.rho[source_cell],
-                                source.X(species, source_cell),
-                                transfer.source_measures[cell]);
-                    }
-                    values.mass_fractions[species] =
-                        restriction_math::restricted_mass_fraction(
-                            species_density_integral, density_integral);
-                }
-            }
-            gathered.push_back(std::move(values));
+        const auto cells = compile_coarse_fine_cell_plan(plan, species);
+        std::vector<std::pair<int, int>> destinations;
+        destinations.reserve(cells.transfers.size());
+        for (const auto& transfer : cells.transfers) {
+            const auto source = local.find(transfer.source),
+                       destination = local.find(transfer.destination);
+            if (source == local.end() || destination == local.end())
+                throw std::invalid_argument("coarse-fine logical endpoint is stale");
+            destinations.emplace_back(
+                destination->second,
+                coarse_fine_host::cell_index(pool->GetBlock(destination->second).grid,
+                                             transfer.destination_cell));
         }
-
-        
-
-        for (std::size_t index = 0; index < compiled.size(); ++index) {
-            const CompiledTransfer& transfer = compiled[index];
-            const GatheredTransfer& values = gathered[index];
-            FluidState& destination =
-                pool->GetBlock(transfer.destination_id).*state_ptr;
-            destination.rho[transfer.destination_cell] = values.fields[0];
-            destination.mom_u[transfer.destination_cell] = values.fields[1];
-            destination.mom_v[transfer.destination_cell] = values.fields[2];
-            destination.mom_w[transfer.destination_cell] = values.fields[3];
-            destination.eng[transfer.destination_cell] = values.fields[4];
-            destination.enuc_rate[transfer.destination_cell] = values.fields[5];
-            for (int species = 0; species < species_count; ++species)
-                destination.X(species, transfer.destination_cell) =
-                    values.mass_fractions[species];
-        }
+        std::vector<coarse_fine_host::Values> gathered;
+        gathered.reserve(cells.transfers.size());
+        for (const auto& transfer : cells.transfers)
+            gathered.push_back(coarse_fine_host::gather(
+                transfer, pool->GetBlock(local.at(transfer.source)), state_ptr, dim, species));
+        // All allocation, geometry validation and arithmetic precede writes.
+        for (std::size_t i = 0; i < destinations.size(); ++i)
+            coarse_fine_host::scatter(pool->GetBlock(destinations[i].first).*state_ptr,
+                                      destinations[i].second, gathered[i]);
     }
 
     void ExecuteExchange(
@@ -659,7 +401,7 @@ public:
             for (const auto& plan : plans.same_level)
                 for (const auto& view : views)
                     exchange_detail::validate_host_view(plan, view);
-            ExchangeRemoteRootFaces(*tree, views, n_species);
+            ExchangeRemoteRootFaces(*tree, *pool, views, n_species);
         }
         host_compiled_.resize(plans.same_level.size()+plans.same_level_corners.size());
         std::vector<HostExchangeBlockView> level_views;
@@ -697,15 +439,724 @@ public:
         };
         for(std::size_t group=0;group<plans.same_level.size();++group)
             execute_level(plans.same_level[group],group,group);
-        ExecuteCoarseFinePlan(
-            plans.coarse_fine, pool, tree, dim, state_ptr, handles);
+        // The fixed-root MPI transport above has no coarse/fine work.
+        // Keep its established communication path free of empty AMR collectives.
+        if (tree->PartitionSize() == 1 || !plans.coarse_fine.operations.empty())
+            ExecuteCoarseFinePlan(plans.coarse_fine, pool, tree, dim, state_ptr, handles);
         for(std::size_t group=0;group<plans.same_level_corners.size();++group)
             execute_level(plans.same_level_corners[group],group,plans.same_level.size()+group);
 
         execute_coordinate_seam_plan(plans.coordinate_seam, pool, state_ptr);
     }
 
-private:
+    /** All ranks call after Host workers join. Reuses serial X/Y/Z recipes,
+     * coarse/fine faces and 2-D corner completion. Only compact topology is
+     * global; fields stay on their owners. Failure leaves ghosts invalid:
+     * completed earlier sweeps are not rolled back. Active cells are untouched.
+     */
+    void ExecuteDistributedExchange(const std::shared_ptr<MemoryPool>& pool,
+                                    const std::shared_ptr<AmrTree>& tree, int dim,
+                                    FluidState Block::* slot,
+                                    std::span<const BlockHandle> handles) {
+        // A serial reference inside WORLD must not participate.
+        if (tree && tree->PartitionSize() == 1) {
+            ExecuteExchange(pool, tree, dim, slot, handles);
+            return;
+        }
+#if ARCH_MPI_ENABLED
+        const auto [rank, size] = RequireMpiWorld();
+        struct Transfer {
+            int source = -1, destination = -1, from = -1, to = -1;
+            LogicalExchangeBox source_box{}, destination_box{};
+            std::size_t send = 0, receive = 0;
+        };
+        struct Sweep {
+            std::vector<int> send_counts, receive_counts, send_offsets, receive_offsets;
+            std::vector<Transfer> transfers;
+            std::vector<std::uint64_t> send, receive;
+        };
+        std::array<Sweep, 6> sweeps;
+        std::vector<HostExchangeBlockView> views;
+        std::map<AmrEndpoint, int> local;
+        CoarseFineTransferPlan coarse_fine;
+        int species = 0;
+        // Endpoint plus six (endpoint, owner) same-level descriptors.
+        constexpr int words_per_block = 7 + 6 * 8;
+        std::vector<std::uint64_t> words, global;
+        std::vector<int> counts, offsets;
+        std::array<std::uint64_t, 18> signature{}, minimum{}, maximum{};
+        const auto encode = [](auto& out, const AmrEndpoint& e) {
+            out.insert(out.end(), {static_cast<std::uint64_t>(e.logical.dimension),
+                                   static_cast<std::uint64_t>(e.logical.level),
+                                   e.logical.logical_x1, e.logical.logical_x2, e.logical.logical_x3,
+                                   e.handle.uid.value, e.handle.epoch.value});
+        };
+        PrepareMpi([&] {
+            if (!pool || !tree || dim < 1 || dim > 3 || tree->PartitionRank() != rank ||
+                tree->PartitionSize() != size || tree->GetRootGridDim() != dim)
+                throw std::invalid_argument("distributed exchange communicator/topology mismatch");
+            const int state_slot = slot == &Block::fluid_state     ? 0
+                                   : slot == &Block::state_next    ? 1
+                                   : slot == &Block::state_scratch ? 2
+                                                                   : -1;
+            if (state_slot < 0)
+                throw std::invalid_argument("distributed exchange invalid state slot");
+            const auto& active = tree->GetActiveBlocks();
+            if (active.empty() || handles.size() != active.size())
+                throw std::invalid_argument(
+                    "distributed exchange requires nonempty committed storage");
+            if (active.size() > static_cast<std::size_t>(INT_MAX / words_per_block))
+                throw std::overflow_error("distributed exchange topology exceeds INT_MAX");
+            species = (pool->GetBlock(active.front()).*slot).GetNumSpecies();
+            if (species < 0 || species > INT_MAX - 6)
+                throw std::invalid_argument("distributed exchange invalid species extent");
+            const auto& root = tree->GetRootGrid();
+            if (root.geometry != "cartesian")
+                throw std::invalid_argument("distributed exchange requires Cartesian geometry");
+            signature = {2,
+                         static_cast<std::uint64_t>(dim),
+                         static_cast<std::uint64_t>(species),
+                         static_cast<std::uint64_t>(state_slot),
+                         handles.front().epoch.value,
+                         BLOCK_NX,
+                         BLOCK_NY,
+                         BLOCK_NZ,
+                         MAX_NG,
+                         static_cast<std::uint64_t>(root.nblockx1),
+                         static_cast<std::uint64_t>(root.nblockx2),
+                         static_cast<std::uint64_t>(root.nblockx3),
+                         std::bit_cast<std::uint64_t>(root.x1_min),
+                         std::bit_cast<std::uint64_t>(root.x1_max),
+                         std::bit_cast<std::uint64_t>(root.x2_min),
+                         std::bit_cast<std::uint64_t>(root.x2_max),
+                         std::bit_cast<std::uint64_t>(root.x3_min),
+                         std::bit_cast<std::uint64_t>(root.x3_max)};
+            std::map<int, std::size_t> indices;
+            for (std::size_t i = 0; i < active.size(); ++i)
+                if (!indices.emplace(active[i], i).second)
+                    throw std::invalid_argument("distributed exchange duplicate local storage");
+            views.reserve(active.size());
+            for (std::size_t i = 0; i < active.size(); ++i) {
+                auto& b = pool->GetBlock(active[i]);
+                b.RequireLogicalGeometryIdentity(root);
+                coarse_fine_host::validate_state(b, slot, species);
+                const AmrEndpoint endpoint{logical_key(b, dim), handles[i]};
+                if (!is_valid(handles[i]) || handles[i].epoch != handles.front().epoch ||
+                    !local.emplace(endpoint, static_cast<int>(i)).second)
+                    throw std::invalid_argument(
+                        "distributed exchange stale/duplicate local endpoint");
+                encode(words, endpoint);
+                for (int face = 0; face < 6; ++face) {
+                    const auto& n = b.face_neighbors[face];
+                    if (n.count < 0 || n.count > 4 || (face >= 2 * dim && n.count))
+                        throw std::invalid_argument("distributed exchange invalid neighbor count");
+                    if (n.count && n.level_diff == 0) {
+                        if (n.count != 1)
+                            throw std::invalid_argument(
+                                "distributed exchange same-level cardinality");
+                        const auto e = neighbor_endpoint(n.blocks[0], *pool, indices, handles, dim,
+                                                         rank, size);
+                        if (e.logical.level != b.level)
+                            throw std::invalid_argument(
+                                "distributed exchange neighbor level drifted");
+                        encode(words, e);
+                        words.push_back(n.blocks[0].owner_rank);
+                    } else
+                        words.insert(words.end(), 8, 0);
+                }
+                auto& state = b.*slot;
+                views.push_back({endpoint.logical,
+                                 endpoint.handle,
+                                 {dim,
+                                  {b.grid.Is(), b.grid.Js(), b.grid.Ks()},
+                                  {b.grid.GetTotalX(), b.grid.GetTotalY(), b.grid.GetTotalZ()},
+                                  {1, b.grid.stride_y, b.grid.stride_z},
+                                  b.grid.GetTotalSize()},
+                                 {state.rho.data(), state.mom_u.data(), state.mom_v.data(),
+                                  state.mom_w.data(), state.eng.data(), state.enuc_rate.data()},
+                                 species ? state.mass_fractions.data() : nullptr,
+                                 species,
+                                 b.grid.GetTotalSize()});
+            }
+            coarse_fine = BuildCoarseFinePlan(pool, tree, dim, handles);
+            counts.resize(size);
+        });
+        CheckMpi(MPI_Allreduce(signature.data(), minimum.data(), signature.size(), MPI_UINT64_T,
+                               MPI_MIN, MPI_COMM_WORLD));
+        CheckMpi(MPI_Allreduce(signature.data(), maximum.data(), signature.size(), MPI_UINT64_T,
+                               MPI_MAX, MPI_COMM_WORLD));
+        if (minimum != maximum)
+            throw std::invalid_argument("distributed exchange rank identity/layout/slot mismatch");
+        const int count = static_cast<int>(words.size());
+        CheckMpi(MPI_Allgather(&count, 1, MPI_INT, counts.data(), 1, MPI_INT, MPI_COMM_WORLD));
+        PrepareMpi([&] {
+            for (int n : counts)
+                if (n <= 0 || n % words_per_block)
+                    throw std::invalid_argument("distributed exchange truncated topology");
+            global.resize(MpiOffsets(counts, offsets));
+        });
+        CheckMpi(MPI_Allgatherv(words.data(), count, MPI_UINT64_T, global.data(), counts.data(),
+                                offsets.data(), MPI_UINT64_T, MPI_COMM_WORLD));
+        int has_coarse_fine = !coarse_fine.operations.empty(), any_coarse_fine = 0;
+        CheckMpi(
+            MPI_Allreduce(&has_coarse_fine, &any_coarse_fine, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD));
+        PrepareMpi([&] {
+            const auto decode = [&](std::size_t at) {
+                const auto* w = global.data() + at;
+                if (w[0] != static_cast<std::uint64_t>(dim) || w[1] > 31 || w[2] > UINT32_MAX ||
+                    w[3] > UINT32_MAX || w[4] > UINT32_MAX || !w[5] ||
+                    w[6] != handles.front().epoch.value)
+                    throw std::invalid_argument("distributed exchange invalid endpoint encoding");
+                return AmrEndpoint{{dim, static_cast<int>(w[1]), static_cast<std::uint32_t>(w[2]),
+                                    static_cast<std::uint32_t>(w[3]),
+                                    static_cast<std::uint32_t>(w[4])},
+                                   {{w[5]}, {w[6]}}};
+            };
+            std::map<AmrEndpoint, int> owners;
+            std::map<int, std::vector<SameLevelTopologyEntry>> levels;
+            std::map<LogicalBlockKey, std::size_t> entry_indices;
+            std::set<BlockHandle> identities;
+            for (int peer = 0; peer < size; ++peer) {
+                const auto end = static_cast<std::size_t>(offsets[peer]) + counts[peer];
+                for (std::size_t at = offsets[peer]; at < end; at += words_per_block) {
+                    const auto e = decode(at);
+                    auto& entries = levels[e.logical.level];
+                    if (!entry_indices.emplace(e.logical, entries.size()).second ||
+                        !identities.insert(e.handle).second || !owners.emplace(e, peer).second)
+                        throw std::invalid_argument(
+                            "distributed exchange duplicate global endpoint");
+                    entries.push_back({e.logical, e.handle, {}});
+                }
+            }
+            for (int peer = 0; peer < size; ++peer) {
+                const auto end = static_cast<std::size_t>(offsets[peer]) + counts[peer];
+                for (std::size_t at = offsets[peer]; at < end; at += words_per_block) {
+                    const auto e = decode(at);
+                    auto& entry = levels.at(e.logical.level).at(entry_indices.at(e.logical));
+                    for (int face = 0; face < 6; ++face) {
+                        const auto n = at + 7 + face * 8;
+                        if (!global[n + 5])
+                            continue;
+                        const auto neighbor = decode(n);
+                        if (face >= 2 * dim || neighbor.logical.level != e.logical.level ||
+                            global[n + 7] >= static_cast<std::uint64_t>(size) ||
+                            owners.at(neighbor) != static_cast<int>(global[n + 7]))
+                            throw std::invalid_argument(
+                                "distributed exchange neighbor owner mismatch");
+                        entry.neighbors[face] = neighbor.logical;
+                    }
+                }
+            }
+            for (auto& sweep : sweeps) {
+                sweep.send_counts.assign(size, 0);
+                sweep.receive_counts.assign(size, 0);
+            }
+            const auto append = [&](const SameLevelExchangePlan& plan, int first_sweep) {
+                for (const auto& operation : plan.operations) {
+                    const AmrEndpoint source{operation.source.logical, operation.source.handle};
+                    const AmrEndpoint destination{operation.destination.logical,
+                                                  operation.destination.handle};
+                    const int from = owners.at(source), to = owners.at(destination);
+                    if (from != rank && to != rank)
+                        continue;
+                    auto& sweep = sweeps[first_sweep + static_cast<int>(operation.phase)];
+                    const auto cells =
+                        exchange_detail::checked_product(operation.source_box.extent);
+                    if (cells > static_cast<std::uint64_t>(INT_MAX / (6 + species)))
+                        throw std::overflow_error("distributed exchange face exceeds INT_MAX");
+                    const int values = static_cast<int>(cells) * (6 + species);
+                    Transfer transfer;
+                    transfer.from = from;
+                    transfer.to = to;
+                    transfer.source_box = operation.source_box;
+                    transfer.destination_box = operation.destination_box;
+                    const auto bind = [&](const AmrEndpoint& endpoint,
+                                          const LogicalExchangeBox& box) {
+                        const int index = local.at(endpoint);
+                        exchange_detail::validate_host_view(plan, views[index]);
+                        exchange_detail::for_each_box_cell(box, [&](const auto& cell,
+                                                                    std::uint64_t) {
+                            (void)exchange_detail::flatten_host_exchange(views[index].layout, cell);
+                        });
+                        return index;
+                    };
+                    if (from == rank) {
+                        transfer.source = bind(source, operation.source_box);
+                        transfer.send = sweep.send_counts[to];
+                        if (values > INT_MAX - sweep.send_counts[to])
+                            throw std::overflow_error(
+                                "distributed exchange peer send exceeds INT_MAX");
+                        sweep.send_counts[to] += values;
+                    }
+                    if (to == rank) {
+                        transfer.destination = bind(destination, operation.destination_box);
+                        transfer.receive = sweep.receive_counts[from];
+                        if (values > INT_MAX - sweep.receive_counts[from])
+                            throw std::overflow_error(
+                                "distributed exchange peer receive exceeds INT_MAX");
+                        sweep.receive_counts[from] += values;
+                    }
+                    sweep.transfers.push_back(transfer);
+                }
+            };
+            for (const auto& [level, entries] : levels) {
+                (void)level;
+                const auto plan = make_same_level_exchange_plan(
+                    entries, dim, {BLOCK_NX, dim >= 2 ? BLOCK_NY : 1, dim == 3 ? BLOCK_NZ : 1},
+                    MAX_NG, handles.front().epoch);
+                append(plan, 0);
+                if (dim == 2 && any_coarse_fine)
+                    append(make_same_level_corner_completion_plan(plan), 3);
+            }
+            for (auto& sweep : sweeps) {
+                sweep.send.resize(MpiOffsets(sweep.send_counts, sweep.send_offsets));
+                sweep.receive.resize(MpiOffsets(sweep.receive_counts, sweep.receive_offsets));
+                for (auto& transfer : sweep.transfers) {
+                    if (transfer.source >= 0)
+                        transfer.send += sweep.send_offsets[transfer.to];
+                    if (transfer.destination >= 0)
+                        transfer.receive += sweep.receive_offsets[transfer.from];
+                }
+            }
+        });
+        const auto execute = [&](Sweep& sweep) {
+            // All allocation/index checks precede the first sweep; metadata and
+            // borrowed storage remain fixed until the entire exchange returns.
+            for (const auto& transfer : sweep.transfers)
+                if (transfer.source >= 0) {
+                    const auto& view = views[transfer.source];
+                    exchange_detail::for_each_box_cell(
+                        transfer.source_box, [&](const auto& cell, std::uint64_t n) {
+                            const auto index =
+                                exchange_detail::flatten_host_exchange(view.layout, cell);
+                            for (int field = 0; field < 6 + species; ++field)
+                                sweep.send[transfer.send + n * (6 + species) + field] =
+                                    std::bit_cast<std::uint64_t>(
+                                        exchange_detail::host_exchange_field(view, field)[index]);
+                        });
+                }
+            CheckMpi(MPI_Alltoallv(sweep.send.data(), sweep.send_counts.data(),
+                                   sweep.send_offsets.data(), MPI_UINT64_T, sweep.receive.data(),
+                                   sweep.receive_counts.data(), sweep.receive_offsets.data(),
+                                   MPI_UINT64_T, MPI_COMM_WORLD));
+            for (const auto& transfer : sweep.transfers)
+                if (transfer.destination >= 0) {
+                    const auto& view = views[transfer.destination];
+                    exchange_detail::for_each_box_cell(
+                        transfer.destination_box, [&](const auto& cell, std::uint64_t n) {
+                            const auto index =
+                                exchange_detail::flatten_host_exchange(view.layout, cell);
+                            for (int field = 0; field < 6 + species; ++field)
+                                exchange_detail::host_exchange_field(view, field)[index] =
+                                    std::bit_cast<double>(sweep.receive[transfer.receive +
+                                                                        n * (6 + species) + field]);
+                        });
+                }
+        };
+        for (int axis = 0; axis < dim; ++axis)
+            execute(sweeps[axis]);
+        // Empty-work ranks participate; local plan emptiness cannot select collectives.
+        ExecuteRemoteCoarseFinePlan(coarse_fine, pool, tree, dim, slot, handles);
+        if (dim == 2 && any_coarse_fine)
+            for (int axis = 0; axis < dim; ++axis)
+                execute(sweeps[3 + axis]);
+#else
+        (void)pool;
+        (void)dim;
+        (void)slot;
+        (void)handles;
+        throw std::logic_error("distributed exchange requires ARCH_ENABLE_MPI=ON");
+#endif
+    }
+
+  private:
+#if ARCH_MPI_ENABLED
+    static void CheckMpi(int code) {
+        if (code != MPI_SUCCESS) {
+            MPI_Abort(MPI_COMM_WORLD, code);
+            throw std::runtime_error("ghost MPI transport failed");
+        }
+    }
+    static std::pair<int, int> RequireMpiWorld() {
+        int initialized = 0;
+        CheckMpi(MPI_Initialized(&initialized));
+        if (!initialized)
+            throw std::logic_error("ghost MPI is not initialized");
+        int main_thread = 0, thread_level = 0, rank = 0, size = 0;
+        CheckMpi(MPI_Is_thread_main(&main_thread));
+        CheckMpi(MPI_Query_thread(&thread_level));
+        if (!main_thread || thread_level < MPI_THREAD_FUNNELED) {
+            MPI_Abort(MPI_COMM_WORLD, 1);
+            throw std::logic_error("ghost MPI requires the initializing thread");
+        }
+        CheckMpi(MPI_Comm_rank(MPI_COMM_WORLD, &rank));
+        CheckMpi(MPI_Comm_size(MPI_COMM_WORLD, &size));
+        return {rank, size};
+    }
+    template <class Action> static void PrepareMpi(Action&& action) {
+        std::exception_ptr error;
+        try {
+            action();
+        } catch (...) {
+            error = std::current_exception();
+        }
+        int failed = error ? 1 : 0, any_failed = 0;
+        CheckMpi(MPI_Allreduce(&failed, &any_failed, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD));
+        if (any_failed) {
+            if (error)
+                std::rethrow_exception(error);
+            throw std::runtime_error("ghost MPI peer rejected preparation");
+        }
+    }
+    static int MpiOffsets(const std::vector<int>& counts, std::vector<int>& offsets) {
+        offsets.resize(counts.size());
+        int total = 0;
+        for (std::size_t i = 0; i < counts.size(); ++i) {
+            if (counts[i] < 0 || counts[i] > INT_MAX - total)
+                throw std::overflow_error("ghost MPI count exceeds INT_MAX");
+            offsets[i] = total;
+            total += counts[i];
+        }
+        return total;
+    }
+#endif
+    /** Collective CPU Cartesian face transfer; every rank enters on the MPI
+     * initializing thread after Host workers join. Requests contain topology
+     * only. The source owner runs the native gather and returns final ghost
+     * values. Nothing is scattered until every rank has validated its reply.
+     */
+    void ExecuteRemoteCoarseFinePlan(const CoarseFineTransferPlan& plan,
+                                     const std::shared_ptr<MemoryPool>& pool,
+                                     const std::shared_ptr<AmrTree>& tree, int dim,
+                                     FluidState Block::* slot,
+                                     std::span<const BlockHandle> handles) {
+#if ARCH_MPI_ENABLED
+        const auto [rank, size] = RequireMpiWorld();
+        const auto check = CheckMpi;
+        const auto phase = [](auto&& action) {
+            PrepareMpi(std::forward<decltype(action)>(action));
+        };
+        struct Query {
+            AmrEndpoint source, destination;
+            int face;
+        };
+      constexpr int query_words = 15; // Two explicit 7-word endpoints and a face.
+      int species = 0;
+      std::array<std::uint64_t, 18> signature{}, minimum{}, maximum{};
+      std::map<AmrEndpoint, int> local, owners;
+      CoarseFineCellPlan cells;
+      std::vector<std::pair<int, int>> destinations;
+      std::vector<coarse_fine_host::Values> gathered;
+      std::vector<bool> ready;
+      std::vector<std::vector<Query>> queries;
+      std::vector<std::vector<std::size_t>> reply_indices;
+      std::vector<int> send_counts, recv_counts, send_offsets, recv_offsets;
+      std::vector<std::uint64_t> requests, incoming;
+      const auto face_cells = [&](const Query& query) {
+          CoarseFineTransferPlan face{};
+          face.dimension = dim;
+          face.scope = plan.scope;
+          append_coarse_fine_face(face, query.source, query.destination, query.face, species);
+          finalize_amr_plan(face);
+          return compile_coarse_fine_cell_plan(face, species);
+      };
+      const auto offsets = MpiOffsets;
+      const auto encode = [](std::vector<std::uint64_t>& words, const AmrEndpoint& endpoint) {
+          const auto& k = endpoint.logical;
+          words.insert(words.end(),
+                       {static_cast<std::uint64_t>(k.dimension),
+                        static_cast<std::uint64_t>(k.level), k.logical_x1, k.logical_x2,
+                        k.logical_x3, endpoint.handle.uid.value, endpoint.handle.epoch.value});
+      };
+      phase([&] {
+          if (!pool || !tree || dim < 1 || dim > 3 || plan.dimension != dim ||
+              tree->PartitionRank() != rank || tree->PartitionSize() != size)
+              throw std::invalid_argument("coarse-fine MPI topology/communicator mismatch");
+          const int state_slot = slot == &Block::fluid_state     ? 0
+                                 : slot == &Block::state_next    ? 1
+                                 : slot == &Block::state_scratch ? 2
+                                                                 : -1;
+          if (state_slot < 0)
+              throw std::invalid_argument("coarse-fine MPI state slot is invalid");
+          const auto& active = tree->GetActiveBlocks();
+          if (active.empty() || handles.size() != active.size())
+              throw std::invalid_argument(
+                  "coarse-fine MPI requires nonempty committed local storage");
+          species = (pool->GetBlock(active.front()).*slot).GetNumSpecies();
+          if (species < 0 || species > std::numeric_limits<int>::max() - 6)
+              throw std::invalid_argument("coarse-fine MPI species extent is invalid");
+          const auto& root = tree->GetRootGrid();
+          if (root.geometry != "cartesian")
+              throw std::invalid_argument("coarse-fine MPI requires Cartesian geometry");
+          signature = {1,
+                       static_cast<std::uint64_t>(dim),
+                       static_cast<std::uint64_t>(species),
+                       static_cast<std::uint64_t>(state_slot),
+                       plan.scope.from_epoch.value,
+                       BLOCK_NX,
+                       BLOCK_NY,
+                       BLOCK_NZ,
+                       MAX_NG,
+                       static_cast<std::uint64_t>(root.nblockx1),
+                       static_cast<std::uint64_t>(root.nblockx2),
+                       static_cast<std::uint64_t>(root.nblockx3),
+                       std::bit_cast<std::uint64_t>(root.x1_min),
+                       std::bit_cast<std::uint64_t>(root.x1_max),
+                       std::bit_cast<std::uint64_t>(root.x2_min),
+                       std::bit_cast<std::uint64_t>(root.x2_max),
+                       std::bit_cast<std::uint64_t>(root.x3_min),
+                       std::bit_cast<std::uint64_t>(root.x3_max)};
+          const auto owner = [&](const AmrEndpoint& endpoint, int value) {
+              if (value < 0 || value >= size || !is_valid(endpoint.handle) ||
+                  endpoint.handle.epoch != plan.scope.from_epoch)
+                  throw std::invalid_argument("coarse-fine MPI owner/epoch drifted");
+              const auto [it, inserted] = owners.emplace(endpoint, value);
+              if (!inserted && it->second != value)
+                  throw std::invalid_argument("coarse-fine MPI conflicting owners");
+          };
+          std::set<BlockHandle> unique_handles;
+          std::set<LogicalBlockKey> unique_logical;
+          for (std::size_t i = 0; i < active.size(); ++i) {
+              const auto& block = pool->GetBlock(active[i]);
+              block.RequireLogicalGeometryIdentity(root);
+              coarse_fine_host::validate_state(block, slot, species);
+              const AmrEndpoint endpoint{logical_key(block, dim), handles[i]};
+              owner(endpoint, rank);
+              if (!unique_logical.insert(endpoint.logical).second ||
+                  !unique_handles.insert(handles[i]).second ||
+                  !local.emplace(endpoint, active[i]).second)
+                  throw std::invalid_argument("coarse-fine MPI duplicate local endpoint");
+              for (const auto& face : block.face_neighbors) {
+                  if (face.count < 0 || face.count > 4)
+                      throw std::invalid_argument("coarse-fine MPI invalid neighbor count");
+                  for (int n = 0; n < face.count; ++n)
+                      owner({face.blocks[n].logical, face.blocks[n].handle},
+                            face.blocks[n].owner_rank);
+              }
+          }
+          const auto expected = BuildCoarseFinePlan(pool, tree, dim, handles);
+          validate_amr_plan(plan);
+          if (plan.scope != expected.scope || plan.operations != expected.operations)
+              throw std::invalid_argument("coarse-fine MPI plan differs from current topology");
+          cells = compile_coarse_fine_cell_plan(plan, species);
+          destinations.reserve(cells.transfers.size());
+          gathered.resize(cells.transfers.size());
+          ready.assign(cells.transfers.size(), false);
+          std::map<std::pair<AmrEndpoint, LogicalAmrCell>, std::size_t> cell_indices;
+          for (std::size_t i = 0; i < cells.transfers.size(); ++i) {
+              const auto& transfer = cells.transfers[i];
+              const int destination = local.at(transfer.destination);
+              destinations.emplace_back(
+                  destination, coarse_fine_host::cell_index(pool->GetBlock(destination).grid,
+                                                            transfer.destination_cell));
+              cell_indices.emplace(std::pair{transfer.destination, transfer.destination_cell}, i);
+              if (const auto found = local.find(transfer.source); found != local.end()) {
+                  gathered[i] = coarse_fine_host::gather(transfer, pool->GetBlock(found->second),
+                                                         slot, dim, species);
+                  ready[i] = true;
+              }
+          }
+          queries.resize(size);
+          reply_indices.resize(size);
+          send_counts.assign(size, 0);
+          recv_counts.resize(size);
+          for (const auto& operation : plan.operations) {
+              if (operation.field != AmrField::Rho || local.contains(operation.source))
+                  continue;
+              const int peer = owners.at(operation.source);
+              if (peer == rank)
+                  throw std::invalid_argument("coarse-fine MPI source lacks local storage");
+              Query query{operation.source, operation.destination,
+                          2 * static_cast<int>(operation.axis) + static_cast<int>(operation.side)};
+              queries[peer].push_back(query);
+              for (const auto& transfer : face_cells(query).transfers) {
+                  const auto i = cell_indices.at({transfer.destination, transfer.destination_cell});
+                  if (cells.transfers[i].source != transfer.source)
+                      throw std::invalid_argument("coarse-fine MPI reply mapping drifted");
+                  reply_indices[peer].push_back(i);
+              }
+          }
+          for (int peer = 0; peer < size; ++peer) {
+              if (queries[peer].size() >
+                  static_cast<std::size_t>(std::numeric_limits<int>::max() / query_words))
+                  throw std::overflow_error("coarse-fine MPI request count exceeds INT_MAX");
+              send_counts[peer] = static_cast<int>(queries[peer].size()) * query_words;
+          }
+          requests.reserve(offsets(send_counts, send_offsets));
+          for (const auto& peer_queries : queries)
+              for (const auto& query : peer_queries) {
+                  encode(requests, query.source);
+                  encode(requests, query.destination);
+                  requests.push_back(query.face);
+              }
+      });
+      check(MPI_Allreduce(signature.data(), minimum.data(), signature.size(), MPI_UINT64_T, MPI_MIN,
+                          MPI_COMM_WORLD));
+      check(MPI_Allreduce(signature.data(), maximum.data(), signature.size(), MPI_UINT64_T, MPI_MAX,
+                          MPI_COMM_WORLD));
+      if (minimum != maximum)
+          throw std::invalid_argument("coarse-fine MPI rank identity/layout/slot mismatch");
+      check(MPI_Alltoall(send_counts.data(), 1, MPI_INT, recv_counts.data(), 1, MPI_INT,
+                         MPI_COMM_WORLD));
+      phase([&] {
+          for (int count : recv_counts)
+              if (count % query_words)
+                  throw std::invalid_argument("coarse-fine MPI truncated face request");
+          incoming.resize(offsets(recv_counts, recv_offsets));
+      });
+      check(MPI_Alltoallv(requests.data(), send_counts.data(), send_offsets.data(), MPI_UINT64_T,
+                          incoming.data(), recv_counts.data(), recv_offsets.data(), MPI_UINT64_T,
+                          MPI_COMM_WORLD));
+      std::vector<double> replies, received;
+      std::vector<int> reply_send_counts, reply_recv_counts, reply_send_offsets, reply_recv_offsets;
+      phase([&] {
+          reply_send_counts.assign(size, 0);
+          reply_recv_counts.resize(size);
+          const auto decode = [&](std::size_t first) {
+              const auto* w = incoming.data() + first;
+              if (w[0] > 3 || w[1] > 31 || w[2] > UINT32_MAX || w[3] > UINT32_MAX ||
+                  w[4] > UINT32_MAX)
+                  throw std::invalid_argument("coarse-fine MPI invalid endpoint encoding");
+              return AmrEndpoint{
+                  {static_cast<int>(w[0]), static_cast<int>(w[1]), static_cast<std::uint32_t>(w[2]),
+                   static_cast<std::uint32_t>(w[3]), static_cast<std::uint32_t>(w[4])},
+                  {{w[5]}, {w[6]}}};
+          };
+          std::set<std::tuple<AmrEndpoint, AmrEndpoint, int>> unique;
+          for (int peer = 0; peer < size; ++peer) {
+              const auto start = replies.size();
+              const std::size_t end =
+                  static_cast<std::size_t>(recv_offsets[peer]) + recv_counts[peer];
+              for (std::size_t first = recv_offsets[peer]; first < end; first += query_words) {
+                  if (incoming[first + 14] >= static_cast<std::uint64_t>(2 * dim))
+                      throw std::invalid_argument("coarse-fine MPI invalid face");
+                  Query query{decode(first), decode(first + 7),
+                              static_cast<int>(incoming[first + 14])};
+                  if (!unique.emplace(query.source, query.destination, query.face).second ||
+                      owners.at(query.source) != rank || owners.at(query.destination) != peer)
+                      throw std::invalid_argument("coarse-fine MPI duplicate or misrouted request");
+                  const auto& source = pool->GetBlock(local.at(query.source));
+                  const auto& opposite = source.face_neighbors[query.face ^ 1];
+                  bool reciprocal = false;
+                  for (int n = 0; n < opposite.count; ++n) {
+                      const auto& neighbor = opposite.blocks[n];
+                      reciprocal |=
+                          AmrEndpoint{neighbor.logical, neighbor.handle} == query.destination;
+                  }
+                  if (!reciprocal)
+                      throw std::invalid_argument("coarse-fine MPI request is not a neighbor");
+                  for (const auto& transfer : face_cells(query).transfers) {
+                      const auto values =
+                          coarse_fine_host::gather(transfer, source, slot, dim, species);
+                      if (replies.size() >
+                          static_cast<std::size_t>(std::numeric_limits<int>::max() - (6 + species)))
+                          throw std::overflow_error("coarse-fine MPI reply exceeds INT_MAX");
+                      replies.insert(replies.end(), values.fields.begin(), values.fields.end());
+                      replies.insert(replies.end(), values.mass_fractions.begin(),
+                                     values.mass_fractions.end());
+                  }
+              }
+              reply_send_counts[peer] = static_cast<int>(replies.size() - start);
+          }
+          (void)offsets(reply_send_counts, reply_send_offsets);
+      });
+      check(MPI_Alltoall(reply_send_counts.data(), 1, MPI_INT, reply_recv_counts.data(), 1, MPI_INT,
+                         MPI_COMM_WORLD));
+      phase([&] {
+          for (int peer = 0; peer < size; ++peer) {
+              if (reply_indices[peer].size() >
+                      static_cast<std::size_t>(std::numeric_limits<int>::max() / (6 + species)) ||
+                  reply_recv_counts[peer] !=
+                      static_cast<int>(reply_indices[peer].size()) * (6 + species))
+                  throw std::invalid_argument("coarse-fine MPI reply extent differs from plan");
+          }
+          received.resize(offsets(reply_recv_counts, reply_recv_offsets));
+      });
+      check(MPI_Alltoallv(replies.data(), reply_send_counts.data(), reply_send_offsets.data(),
+                          MPI_DOUBLE, received.data(), reply_recv_counts.data(),
+                          reply_recv_offsets.data(), MPI_DOUBLE, MPI_COMM_WORLD));
+      phase([&] {
+          for (int peer = 0; peer < size; ++peer) {
+              std::size_t offset = reply_recv_offsets[peer];
+              for (const auto index : reply_indices[peer]) {
+                  if (ready[index])
+                      throw std::invalid_argument("coarse-fine MPI repeated destination");
+                  auto& values = gathered[index];
+                  std::copy_n(received.begin() + offset, 6, values.fields.begin());
+                  offset += 6;
+                  values.mass_fractions.assign(received.begin() + offset,
+                                               received.begin() + offset + species);
+                  offset += species;
+                  ready[index] = true;
+              }
+          }
+          if (std::find(ready.begin(), ready.end(), false) != ready.end())
+              throw std::invalid_argument("coarse-fine MPI missing destination");
+      });
+      for (std::size_t i = 0; i < destinations.size(); ++i)
+          coarse_fine_host::scatter(pool->GetBlock(destinations[i].first).*slot,
+                                    destinations[i].second, gathered[i]);
+#else
+      (void)plan;
+      (void)pool;
+      (void)tree;
+      (void)dim;
+      (void)slot;
+      (void)handles;
+      throw std::logic_error("distributed coarse-fine exchange requires ARCH_ENABLE_MPI=ON");
+#endif
+  }
+
+  static void append_coarse_fine_face(CoarseFineTransferPlan& plan, const AmrEndpoint& source,
+                                      const AmrEndpoint& destination, int face, int species) {
+      const int difference = source.logical.level - destination.logical.level;
+      if (face < 0 || face >= 2 * plan.dimension || (difference != -1 && difference != 1))
+          throw std::invalid_argument("coarse-fine face recipe has invalid topology");
+      const auto boxes = difference == -1
+                             ? coarse_injection_boxes(destination.logical, face, plan.dimension)
+                             : fine_average_boxes(source.logical, face, plan.dimension);
+      const auto rule = difference == -1 ? RefinementRule::CoarseGhostInjection
+                                         : RefinementRule::FineGhostAverage;
+      const auto append = [&](AmrField field, int component) {
+          plan.operations.push_back({0, source, destination, boxes.first, boxes.second,
+                                     static_cast<AmrAxis>(face / 2), static_cast<AmrSide>(face % 2),
+                                     field, component, rule, 1.0, 1.0});
+      };
+      append(AmrField::Rho, -1);
+      append(AmrField::MomU, -1);
+      append(AmrField::MomV, -1);
+      append(AmrField::MomW, -1);
+      append(AmrField::Energy, -1);
+      append(AmrField::EnucRate, -1);
+      for (int component = 0; component < species; ++component)
+          append(AmrField::Species, component);
+  }
+
+  static AmrEndpoint neighbor_endpoint(const BlockTopology& neighbor, const MemoryPool& pool,
+                                       const std::map<int, std::size_t>& active_index,
+                                       std::span<const BlockHandle> handles, int dim, int rank,
+                                       int rank_count) {
+      if (neighbor.logical.dimension != dim || neighbor.owner_rank < 0 ||
+          neighbor.owner_rank >= rank_count)
+          throw std::invalid_argument("invalid neighbor endpoint owner or dimension");
+      if (neighbor.owner_rank != rank) {
+          if (neighbor.pool_index != -1 || !is_valid(neighbor.handle) ||
+              neighbor.handle.epoch != handles.front().epoch)
+              throw std::invalid_argument("remote neighbor endpoint is stale or locally bound");
+          return {neighbor.logical, neighbor.handle};
+      }
+      const auto local = active_index.find(neighbor.pool_index);
+      if (local == active_index.end() ||
+          logical_key(pool.GetBlock(neighbor.pool_index), dim) != neighbor.logical)
+          throw std::invalid_argument("local neighbor endpoint binding drifted");
+      const auto handle = handles[local->second];
+      // Local tree construction precedes registry adoption; those descriptors
+      // acquire handles from this already-validated execution binding.
+      if (is_valid(neighbor.handle) && neighbor.handle != handle)
+          throw std::invalid_argument("local neighbor endpoint handle is stale");
+      return {neighbor.logical, handle};
+  }
+
     mutable std::vector<std::uint64_t> cached_key_;
     mutable std::vector<std::uint64_t> cache_probe_;
     mutable std::unique_ptr<CachedPlans> cached_plans_;
@@ -714,9 +1165,8 @@ private:
     std::size_t host_cache_builds_ = 0;
     HostExchangeWorkspace host_workspace_;
 
-    void ExchangeRemoteRootFaces(const AmrTree &tree, std::span<const HostExchangeBlockView> views,
-                                 int species)
-    {
+    void ExchangeRemoteRootFaces(const AmrTree& tree, const MemoryPool& pool,
+                                 std::span<const HostExchangeBlockView> views, int species) {
 #if ARCH_MPI_ENABLED
         const auto &grid = tree.GetRootGrid();
         const int dim = grid.dim;
@@ -730,8 +1180,10 @@ private:
         MPI_Comm_size(MPI_COMM_WORLD, &size);
         if (rank != tree.PartitionRank() || size != tree.PartitionSize())
             throw std::logic_error("MPI communicator differs from root partition");
-        const int lower = rank > 0 ? rank - 1 : (tree.PeriodicX() ? size - 1 : MPI_PROC_NULL);
-        const int upper = rank + 1 < size ? rank + 1 : (tree.PeriodicX() ? 0 : MPI_PROC_NULL);
+        const int expected_lower =
+            rank > 0 ? rank - 1 : (tree.PeriodicX() ? size - 1 : MPI_PROC_NULL);
+        const int expected_upper =
+            rank + 1 < size ? rank + 1 : (tree.PeriodicX() ? 0 : MPI_PROC_NULL);
         const std::array<std::int32_t, 3> extent{
             BLOCK_NX, dim >= 2 ? BLOCK_NY : 1, dim == 3 ? BLOCK_NZ : 1};
         const auto rows = static_cast<std::uint64_t>(std::max(1, grid.nblockx2));
@@ -768,6 +1220,37 @@ private:
         for (const auto &pair : boundary)
             if (!pair[0] || !pair[1])
                 throw std::logic_error("MPI exchange has missing boundary roots");
+        // Derive peers from the same neighbor descriptors used by plan
+        // construction. The current transport still requires fixed X slabs.
+        std::array<int, 2> peers{MPI_PROC_NULL, MPI_PROC_NULL};
+        for (const auto& pair : boundary) {
+            for (int side = 0; side < 2; ++side) {
+                const auto& key = pair[side]->logical;
+                const int id =
+                    tree.FindBlock(key.level, key.logical_x1, key.logical_x2, key.logical_x3);
+                if (id < 0)
+                    throw std::logic_error("MPI boundary view has no local block");
+                const auto& face = pool.GetBlock(id).face_neighbors[side];
+                const int expected = side ? expected_upper : expected_lower;
+                if (expected == MPI_PROC_NULL) {
+                    if (face.count != 0)
+                        throw std::logic_error("physical MPI boundary has a neighbor");
+                    continue;
+                }
+                if (face.count != 1 || face.level_diff != 0)
+                    throw std::logic_error("MPI root face needs a complete same-level neighbor");
+                const auto& peer = face.blocks[0];
+                const auto x = side ? (key.logical_x1 + 1) % static_cast<unsigned>(grid.nblockx1)
+                                    : (key.logical_x1 + grid.nblockx1 - 1) %
+                                          static_cast<unsigned>(grid.nblockx1);
+                if (peer.owner_rank != expected || peer.pool_index != -1 ||
+                    !is_valid(peer.handle) || peer.handle.epoch != pair[side]->handle.epoch ||
+                    peer.logical != LogicalBlockKey{dim, 0, x, key.logical_x2, key.logical_x3})
+                    throw std::logic_error("MPI root neighbor ownership or identity drifted");
+                peers[side] = peer.owner_rank;
+            }
+        }
+        const int lower = peers[0], upper = peers[1];
         // Reuse the existing executor's scratch, retaining no FluidState views.
         host_workspace_.values.resize(4 * count64);
         double *send_lower = host_workspace_.values.data();
@@ -825,6 +1308,7 @@ private:
         // phases then propagate these X halos into edges/corners in order.
 #else
         (void)tree;
+        (void)pool;
         (void)views;
         (void)species;
         throw std::logic_error("distributed exchange requires ARCH_ENABLE_MPI=ON");
@@ -844,8 +1328,7 @@ private:
     }
 
     static std::pair<LogicalAmrBox, LogicalAmrBox>
-    coarse_injection_boxes(const Block& fine, int face, int dim)
-    {
+    coarse_injection_boxes(const LogicalBlockKey& fine, int face, int dim) {
         const int normal = face / 2;
         const bool upper = (face & 1) != 0;
         const auto active = active_extents(dim);
@@ -877,9 +1360,8 @@ private:
         return {source, destination};
     }
 
-    static std::pair<LogicalAmrBox, LogicalAmrBox>
-    fine_average_boxes(const Block& fine, int face, int dim)
-    {
+    static std::pair<LogicalAmrBox, LogicalAmrBox> fine_average_boxes(const LogicalBlockKey& fine,
+                                                                      int face, int dim) {
         const int normal = face / 2;
         const bool upper = (face & 1) != 0;
         const auto active = active_extents(dim);
@@ -908,7 +1390,6 @@ private:
         }
         return {source, destination};
     }
-
 };
 
 } // namespace amr

@@ -18,48 +18,22 @@
 
 namespace amr {
 
-/** Gather and execute one already-indexed route without scanning the tree.
- * Workflow: validate original native route/storage; gather all scalar values;
- * optionally obtain Energy from the caller's same-stage receipt; apply the
- * original plan once; publish that receipt only after registration succeeds.
- * Flux input arrays remain immutable. This function adds no dt/RK/area factor.
- */
-template<typename EnergyReceipt=std::nullptr_t>
-inline void RegisterCoarseFineFluxes(
-    AMRControl& amr_ctrl, const AmrFluxTopologyPlan& topology,
-    int block_id, const Grid& grid, int direction,
-    const std::vector<FluidVector>& flux_buffer,
-    const std::vector<double>& species_flux_buffer,
-    int species_count, double stage_weight,
-    EnergyReceipt energy_receipt = nullptr)
-{
+/** Gather the existing route values without publishing a register or receipt. */
+template <typename EnergyReceipt = std::nullptr_t>
+inline std::vector<double> GatherCoarseFineFluxValues(
+    const AmrFluxTopologyPlan& topology, const AmrFluxRegistrationRoute& route, const Grid& grid,
+    const std::vector<FluidVector>& flux_buffer, const std::vector<double>& species_flux_buffer,
+    int species_count, double stage_weight, EnergyReceipt energy_receipt = nullptr) {
     const int total_size = grid.GetTotalSize();
-    if (direction < 0 || direction >= grid.dim || species_count < 0
-        || species_count != topology.species_count
-        || species_count != amr_ctrl.flux_register.GetNumSpecies()
-        || topology.dimension != grid.dim
-        || topology.epoch != amr_ctrl.ActiveHandles().front().epoch
-        || flux_buffer.size() != static_cast<std::size_t>(total_size)
-        || species_flux_buffer.size()
-            != static_cast<std::size_t>(species_count) * total_size
-        || !amr_plan_detail::is_finite_binary64(stage_weight))
-        throw std::invalid_argument("invalid coarse-fine flux inputs");
-
-    if (!topology.native_grids.empty() && !matches_amr_flux_geometry(
-            topology,*amr_ctrl.pool,amr_ctrl.tree->GetActiveBlocks(),
-            block_id))
-        throw std::invalid_argument("AMR face-flux native geometry drifted");
-    const Block& block = amr_ctrl.pool->GetBlock(block_id);
-    if (!flux_plan_detail::same_grid_contract(block.grid, grid)
-        || block.fluid_state.GetNumSpecies() != species_count)
-        throw std::invalid_argument("coarse-fine flux source layout drifted");
-    const auto* route = topology.find(block_id, direction);
-    if (route == nullptr || stage_weight == 0.0) return;
-
+    if (species_count < 0 || species_count != topology.species_count ||
+        flux_buffer.size() != static_cast<std::size_t>(total_size) ||
+        species_flux_buffer.size() != static_cast<std::size_t>(species_count) * total_size)
+        throw std::invalid_argument("invalid coarse-fine gather layout");
     std::vector<double> values;
-    values.reserve(route->plan.operations.size());
-    for (std::size_t operation_index=0;operation_index<route->plan.operations.size();++operation_index) {
-        const auto& operation=route->plan.operations[operation_index];
+    values.reserve(route.plan.operations.size());
+    for (std::size_t operation_index = 0; operation_index < route.plan.operations.size();
+         ++operation_index) {
+        const auto& operation = route.plan.operations[operation_index];
         const int flux_index = grid.GetIndex(
             grid.Is() + operation.source_box.first[0],
             grid.Js() + operation.source_box.first[1],
@@ -86,8 +60,10 @@ inline void RegisterCoarseFineFluxes(
             // register mutation; sign/area/RK/dt remain in the original plan.
             if constexpr(!std::is_same_v<EnergyReceipt,std::nullptr_t>)
                 values.push_back(energy_receipt ? energy_receipt->registered_energy(
-                    topology,*route,operation_index,flux_index,flux_buffer[flux_index].eng,
-                    flux_buffer[flux_index].rho,stage_weight) : flux_buffer[flux_index].eng);
+                                                      topology, route, operation_index, flux_index,
+                                                      flux_buffer[flux_index].eng,
+                                                      flux_buffer[flux_index].rho, stage_weight)
+                                                : flux_buffer[flux_index].eng);
             else values.push_back(flux_buffer[flux_index].eng);
             break;
         case AmrField::Species:
@@ -99,6 +75,59 @@ inline void RegisterCoarseFineFluxes(
             throw std::logic_error("ENUC appeared in a face-flux plan");
         }
     }
+    return values;
+}
+
+/** Gather and execute one already-indexed route without scanning the tree.
+ * Workflow: validate original native route/storage; gather all scalar values;
+ * optionally obtain Energy from the caller's same-stage receipt; apply the
+ * original plan once; publish that receipt only after registration succeeds.
+ * Flux input arrays remain immutable. This function adds no dt/RK/area factor.
+ */
+template <typename EnergyReceipt = std::nullptr_t>
+inline void RegisterCoarseFineFluxes(AMRControl& amr_ctrl, const AmrFluxTopologyPlan& topology,
+                                     int block_id, const Grid& grid, int direction,
+                                     const std::vector<FluidVector>& flux_buffer,
+                                     const std::vector<double>& species_flux_buffer,
+                                     int species_count, double stage_weight,
+                                     EnergyReceipt energy_receipt = nullptr) {
+    const int total_size = grid.GetTotalSize();
+    if (direction < 0 || direction >= grid.dim || species_count < 0 ||
+        species_count != topology.species_count ||
+        species_count != amr_ctrl.flux_register.GetNumSpecies() || topology.dimension != grid.dim ||
+        topology.epoch != amr_ctrl.ActiveHandles().front().epoch ||
+        flux_buffer.size() != static_cast<std::size_t>(total_size) ||
+        species_flux_buffer.size() != static_cast<std::size_t>(species_count) * total_size ||
+        !amr_plan_detail::is_finite_binary64(stage_weight))
+        throw std::invalid_argument("invalid coarse-fine flux inputs");
+
+    if (!topology.native_grids.empty() &&
+        !matches_amr_flux_geometry(topology, *amr_ctrl.pool, amr_ctrl.tree->GetActiveBlocks(),
+                                   block_id))
+        throw std::invalid_argument("AMR face-flux native geometry drifted");
+    const Block& block = amr_ctrl.pool->GetBlock(block_id);
+    if (!flux_plan_detail::same_grid_contract(block.grid, grid) ||
+        block.fluid_state.GetNumSpecies() != species_count)
+        throw std::invalid_argument("coarse-fine flux source layout drifted");
+    const auto* route = topology.find(block_id, direction);
+    if (route == nullptr || stage_weight == 0.0)
+        return;
+
+    if (topology.partition_size > 1) {
+        // A borrowed receipt can die with the patch adapter before collective
+        // registration. Reject it until a concrete owner provides a stage lease.
+        if constexpr (!std::is_same_v<EnergyReceipt, std::nullptr_t>)
+            if (energy_receipt)
+                throw std::logic_error("distributed EnergyReceipt requires a stage lifetime");
+        auto values = GatherCoarseFineFluxValues(topology, *route, grid, flux_buffer,
+                                                 species_flux_buffer, species_count, stage_weight);
+        amr_ctrl.flux_register.CaptureHostStageValues(topology, *route, std::move(values),
+                                                      stage_weight);
+        return;
+    }
+    auto values =
+        GatherCoarseFineFluxValues(topology, *route, grid, flux_buffer, species_flux_buffer,
+                                   species_count, stage_weight, energy_receipt);
     amr_ctrl.flux_register.ApplyRegistrationPlan(
         route->plan, values, topology.pool_lowering, stage_weight,topology.fingerprint);
     // Publish a route receipt only AFTER original registration truly succeeds.

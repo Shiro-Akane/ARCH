@@ -523,42 +523,60 @@ public:
         }
         failure.rethrow();
     }
-    void RippleCheck() {
-        bool changed = true;
-        while (changed) {
-            changed = false;
-            for (int block_id : active_blocks) {
-                Block& b = pool->GetBlock(block_id);
-                // Coarsening is kept at its current level until its group is
-                // verified below not to violate the 2:1 balance constraint.
-                int future_L = b.level + (b.refine_flag == 1 ? 1 : 0);
+    /** One original balance sweep; a distributed caller supplies temporary
+     * remote decisions and completes its collective outside this local method.
+     */
+    bool RippleSweep(int refinement_limit,
+        const std::function<int&(const BlockTopology&)>& remote_decision = {}) {
+        bool changed = false;
+        for (int block_id : active_blocks) {
+            Block& b = pool->GetBlock(block_id);
+            // Coarsening is kept at its current level until its group is
+            // verified below not to violate the 2:1 balance constraint.
+            int future_L = b.level + (b.refine_flag == 1 ? 1 : 0);
 
-                // Check all neighbors
-                for (int f = 0; f < 6; ++f) {
-                    if (b.face_neighbors[f].count == 0) continue;
-                    for (int n = 0; n < b.face_neighbors[f].count; ++n) {
-                        int n_id = b.face_neighbors[f].ids[n];
-                        Block& nb = pool->GetBlock(n_id);
-                        // Merging nb would lower it one more level.  If that
-                        // would leave a gap larger than one level, keep the
-                        // sibling group intact instead of refining the domain.
-                        if (nb.refine_flag == -1 && future_L > nb.level) {
-                            nb.refine_flag = 0;
+            // Check all neighbors
+            for (int f = 0; f < 6; ++f) {
+                if (b.face_neighbors[f].count == 0) continue;
+                for (int n = 0; n < b.face_neighbors[f].count; ++n) {
+                    const auto& neighbor = b.face_neighbors[f].blocks[n];
+                    if (neighbor.pool_index < 0 && !remote_decision) {
+                        // A local-only caller cannot converge remote decisions.
+                        // The level 0/1 boundary needs no remote promotion.
+                        if (b.refine_flag != 0
+                            && (refinement_limit > 1 || b.level > 1 || neighbor.logical.level > 1))
+                            throw std::logic_error(
+                                "distributed refinement above level one requires collective decision convergence");
+                        continue;
+                    }
+                    const int neighbor_level = neighbor.pool_index < 0
+                        ? neighbor.logical.level : pool->GetBlock(neighbor.pool_index).level;
+                    int& neighbor_flag = neighbor.pool_index < 0
+                        ? remote_decision(neighbor) : pool->GetBlock(neighbor.pool_index).refine_flag;
+                    // Merging nb would lower it one more level.  If that
+                    // would leave a gap larger than one level, keep the
+                    // sibling group intact instead of refining the domain.
+                    if (neighbor_flag == -1 && future_L > neighbor_level) {
+                        neighbor_flag = 0;
+                        changed = true;
+                    }
+                    int nb_future_L = neighbor_level + (neighbor_flag == 1 ? 1 : 0);
+
+                    // Refine the neighbor when the proposed levels would differ by more than one.
+                    if (future_L > nb_future_L + 1) {
+                        if (neighbor_flag != 1) {
+                            neighbor_flag = 1; // Enforce the 2:1 balance constraint.
                             changed = true;
-                        }
-                        int nb_future_L = nb.level + (nb.refine_flag == 1 ? 1 : 0);
-
-                        // Refine the neighbor when the proposed levels would differ by more than one.
-                        if (future_L > nb_future_L + 1) {
-                            if (nb.refine_flag != 1) {
-                                nb.refine_flag = 1; // Enforce the 2:1 balance constraint.
-                                changed = true;
-                            }
                         }
                     }
                 }
             }
         }
+        return changed;
+    }
+
+    void RippleCheck(int refinement_limit = kMaxRefinementLevel) {
+        while (RippleSweep(refinement_limit)) {}
     }
 
     using PreApplyRegridObserver = std::function<void(const AmrTree&)>;
@@ -578,9 +596,13 @@ public:
               config_(std::move(other.config_)),
               old_active_(std::move(other.old_active_)),
               proposed_active_(std::move(other.proposed_active_)),
-              allocated_(std::move(other.allocated_)),
+              reservation_(std::move(other.reservation_)),
+              required_slots_(other.required_slots_),
               retire_(std::move(other.retire_)),
               old_refinement_(std::move(other.old_refinement_)),
+              old_topology_(std::move(other.old_topology_)),
+              ownership_only_(other.ownership_only_),
+              relations_selected_(other.relations_selected_),
               refinements_(std::move(other.refinements_)),
               restrictions_(std::move(other.restrictions_)),
               old_handles_(std::move(other.old_handles_)),
@@ -638,12 +660,91 @@ public:
             return std::nullopt;
         }
 
+        /** Reserve/construct only after the caller has agreed all rank demands. */
+        void ConstructCandidates(const StagedAllocationObserver& allocation_observer = {})
+        {
+            require_owner();
+            if (reservation_ || ownership_only_ || !relations_selected_)
+                throw std::logic_error("regrid candidate storage already prepared");
+            const int num_children = 1 << owner_->root_grid.dim;
+            // Retired blocks remain live until publication: reserve the full
+            // temporary peak, including all children and restricted parents.
+            reservation_.emplace(owner_->pool->ReserveBlocks(required_slots_));
+            auto refinement = refinements_.begin();
+            auto restriction = restrictions_.begin();
+            // Preserve the original interleaved allocation order across relations.
+            for (const int block_id : old_active_) {
+                const Block& block = owner_->pool->GetBlock(block_id);
+                if (refinement != refinements_.end()
+                    && refinement->parent == block_id) {
+                    auto& relation = *refinement++;
+                    for (int child_index = 0; child_index < num_children;
+                         ++child_index) {
+                        const int child_id = reservation_->AllocateBlock();
+                        if (allocation_observer)
+                            allocation_observer(*owner_, child_id);
+                        Block& child = owner_->pool->GetBlock(child_id);
+                        child.level = block.level + 1;
+                        child.logical_x1 = (block.logical_x1 << 1)
+                            + ((child_index & 1) ? 1 : 0);
+                        child.logical_x2 = (block.logical_x2 << 1)
+                            + ((owner_->root_grid.dim >= 2 && (child_index & 2)) ? 1 : 0);
+                        child.logical_x3 = (block.logical_x3 << 1)
+                            + ((owner_->root_grid.dim == 3 && (child_index & 4)) ? 1 : 0);
+                        child.morton_code = encodeMorton(
+                            child.level, child.logical_x1,
+                            child.logical_x2, child.logical_x3);
+                        child.InitGeometry(
+                            owner_->root_grid, owner_->root_dx1, owner_->root_dx2, owner_->root_dx3);
+                        const int species = block.fluid_state.GetNumSpecies();
+                        child.fluid_state.InitSpecies(species);
+                        child.state_next.InitSpecies(species);
+                        child.state_scratch.InitSpecies(species);
+                        relation.children.push_back(child_id);
+                        proposed_active_.push_back(child_id);
+                    }
+                } else if (restriction != restrictions_.end()
+                           && restriction->children.front() == block_id) {
+                    const int parent_id = reservation_->AllocateBlock();
+                    if (allocation_observer) allocation_observer(*owner_, parent_id);
+                    Block& parent = owner_->pool->GetBlock(parent_id);
+                    parent.level = block.level - 1;
+                    parent.logical_x1 = block.logical_x1 >> 1;
+                    parent.logical_x2 = block.logical_x2 >> 1;
+                    parent.logical_x3 = block.logical_x3 >> 1;
+                    parent.morton_code = encodeMorton(
+                        parent.level, parent.logical_x1,
+                        parent.logical_x2, parent.logical_x3);
+                    parent.InitGeometry(
+                        owner_->root_grid, owner_->root_dx1, owner_->root_dx2, owner_->root_dx3);
+                    const int species = block.fluid_state.GetNumSpecies();
+                    parent.fluid_state.InitSpecies(species);
+                    parent.state_next.InitSpecies(species);
+                    parent.state_scratch.InitSpecies(species);
+                    restriction->parent = parent_id;
+                    ++restriction;
+                    proposed_active_.push_back(parent_id);
+                }
+            }
+            std::sort(proposed_active_.begin(),
+                      proposed_active_.end(),
+                      [this](int lhs, int rhs) {
+                          return owner_->pool->GetBlock(lhs).morton_code
+                              < owner_->pool->GetBlock(rhs).morton_code;
+                      });
+        }
+
+        std::size_t required_slots() const noexcept { return required_slots_; }
+        std::size_t proposed_leaf_count() const noexcept {
+            return old_active_.size()-retire_.size()+required_slots_;
+        }
+
         void BuildMigrationPlans(std::span<const BlockHandle> old_handles,
                                  std::span<const BlockHandle> proposed_handles,
                                  const AmrPlanScope& scope)
         {
             require_owner();
-            if (!changed_ || plans_built_ || old_handles.size() != old_active_.size()
+            if (ownership_only_ || !reservation_ || plans_built_ || old_handles.size() != old_active_.size()
                 || proposed_handles.size() != proposed_active_.size()
                 || scope.transaction_id == 0
                 || scope.from_epoch == scope.to_epoch)
@@ -693,12 +794,21 @@ public:
             migration_complete_ = true;
         }
 
-        void ActivateForFinalization()
+        void ActivateForFinalization(std::span<const BlockTopology> global = {})
         {
             require_owner();
-            if (!changed_ || !migration_complete_ || activated_ || published_)
+            if (!migration_complete_ || activated_ || published_)
                 throw std::logic_error("staged AMR topology is not activatable");
-            activate_topology();
+            activate_topology(global);
+        }
+
+        /** All native fields have arrived in unpublished original-pool slots. */
+        void CompleteOwnershipMigration()
+        {
+            require_owner();
+            if (!ownership_only_ || migration_complete_ || activated_)
+                throw std::logic_error("ownership migration is not completable");
+            migration_complete_ = true;
         }
 
         // A device executor needs the proposed neighbor geometry before its
@@ -738,17 +848,30 @@ public:
             validate_amr_plan(restriction_);
         }
 
-        void activate_topology()
+        void restore_topology_noexcept() noexcept
         {
             owner_->active_blocks.swap(proposed_active_);
+            for (const auto& saved : old_topology_) {
+                auto& block = owner_->pool->GetBlock(saved.id);
+                block.active_index = saved.active_index;
+                for (int face = 0; face < 6; ++face) {
+                    block.face_neighbors[face] = saved.faces[face];
+                    block.grid.amr_coarse_fine_face[face] = saved.coarse_fine[face];
+                }
+            }
+            activated_ = false;
+        }
+
+        void activate_topology(std::span<const BlockTopology> global = {})
+        {
+            owner_->active_blocks.swap(proposed_active_);
+            activated_ = true;
             try {
                 owner_->SortActiveBlocks();
-                owner_->UpdateNeighbors(config_);
-                activated_ = true;
+                if (global.empty()) owner_->UpdateNeighbors(config_);
+                else owner_->UpdateNeighbors(config_, global);
             } catch (...) {
-                owner_->active_blocks.swap(proposed_active_);
-                owner_->SortActiveBlocks();
-                owner_->UpdateNeighbors(config_);
+                restore_topology_noexcept();
                 throw;
             }
         }
@@ -758,6 +881,7 @@ public:
         {
             if (owner_ == nullptr || !activated_ || !migration_complete_ || published_)
                 std::terminate();
+            reservation_->CommitNoexcept();
             published_ = true;
         }
 
@@ -765,6 +889,7 @@ public:
         {
             if (owner_ == nullptr || changed_ || published_)
                 std::terminate();
+            reservation_->CommitNoexcept();
             published_ = true;
         }
 
@@ -781,7 +906,6 @@ public:
                 std::terminate();
             for (const int id : retire_) owner_->pool->FreeBlock(id);
             retire_.clear();
-            allocated_.clear();
             retired_released_ = true;
         }
 
@@ -793,6 +917,12 @@ public:
         struct RefinementSnapshot {
             int id = -1;
             int refine_flag = 0;
+        };
+        // Fixed-size native metadata only; rollback never reconstructs adjacency.
+        struct TopologySnapshot {
+            int id = -1, active_index = -1;
+            std::array<Block::FaceNeighbors, 6> faces{};
+            std::array<bool, 6> coarse_fine{};
         };
         struct RefinementRelation {
             int parent = -1;
@@ -807,9 +937,18 @@ public:
             : owner_(&owner), config_(config), old_active_(owner.active_blocks)
         {
             old_refinement_.reserve(old_active_.size());
+            old_topology_.reserve(old_active_.size());
             for (const int id : old_active_) {
                 const Block& block = owner_->pool->GetBlock(id);
                 old_refinement_.push_back({id, block.refine_flag});
+                TopologySnapshot saved;
+                saved.id = id;
+                saved.active_index = block.active_index;
+                for (int face = 0; face < 6; ++face) {
+                    saved.faces[face] = block.face_neighbors[face];
+                    saved.coarse_fine[face] = block.grid.amr_coarse_fine_face[face];
+                }
+                old_topology_.push_back(saved);
             }
         }
 
@@ -907,18 +1046,12 @@ public:
         {
             if (owner_ == nullptr || published_) return;
             try {
-                if (activated_) {
-                    owner_->active_blocks.swap(proposed_active_);
-                    owner_->SortActiveBlocks();
-                    owner_->UpdateNeighbors(config_);
-                    activated_ = false;
-                }
-                for (const int id : allocated_) owner_->pool->FreeBlock(id);
+                if (activated_) restore_topology_noexcept();
+                reservation_.reset();
                 for (const auto& snapshot : old_refinement_) {
                     Block& block = owner_->pool->GetBlock(snapshot.id);
                     block.refine_flag = snapshot.refine_flag;
                 }
-                allocated_.clear();
                 owner_ = nullptr;
             } catch (...) {
                 std::terminate();
@@ -929,9 +1062,13 @@ public:
         SimConfig config_{};
         std::vector<int> old_active_;
         std::vector<int> proposed_active_;
-        std::vector<int> allocated_;
+        std::optional<MemoryPool::Reservation> reservation_;
+        std::size_t required_slots_ = 0;
         std::vector<int> retire_;
         std::vector<RefinementSnapshot> old_refinement_;
+        std::vector<TopologySnapshot> old_topology_;
+        bool ownership_only_ = false;
+        bool relations_selected_ = false;
         std::vector<RefinementRelation> refinements_;
         std::vector<RestrictionRelation> restrictions_;
         std::vector<BlockHandle> old_handles_;
@@ -947,12 +1084,67 @@ public:
     };
 
 public:
+    /** Stage owner-only storage changes in the same regrid lifetime.
+     * The caller validates global ownership and completes transport before activation.
+     * Old senders remain live until publication and the collective retirement fence.
+     */
+    PreparedRegrid PrepareLeafOwnership(const SimConfig& config,
+        std::span<const int> outgoing, std::span<const LogicalBlockKey> incoming,
+        int species)
+    {
+        PreparedRegrid prepared(*this, config);
+        prepared.ownership_only_ = true;
+        prepared.changed_ = true; // Global owner change includes unaffected ranks.
+        std::set<int> retiring;
+        std::set<LogicalBlockKey> keys;
+        for (int id : outgoing) {
+            if (std::find(active_blocks.begin(), active_blocks.end(), id) == active_blocks.end()
+                || !retiring.insert(id).second)
+                throw std::invalid_argument("ownership source is not a unique active leaf");
+            prepared.retire_.push_back(id);
+        }
+        for (int id : active_blocks) {
+            keys.insert(PreparedRegrid::logical_key(pool->GetBlock(id), root_grid.dim));
+            if (!retiring.contains(id)) prepared.proposed_active_.push_back(id);
+        }
+        for (const auto& key : incoming) {
+            if (key.dimension != root_grid.dim || key.level < 0
+                || key.level > config.amr.lrefinemax || key.level > kMaxRefinementLevel
+                || !keys.insert(key).second)
+                throw std::invalid_argument("invalid or duplicate incoming ownership leaf");
+            const std::array<std::uint32_t, 3> xyz{key.logical_x1,key.logical_x2,key.logical_x3};
+            const std::array<int, 3> roots{root_grid.nblockx1,root_grid.nblockx2,root_grid.nblockx3};
+            for (int axis=0;axis<3;++axis)
+                if ((axis>=root_grid.dim && xyz[axis]!=0)
+                    || xyz[axis] >= (static_cast<std::uint64_t>(std::max(1,roots[axis]))<<key.level))
+                    throw std::invalid_argument("incoming ownership leaf lies outside domain");
+        }
+        prepared.proposed_active_.reserve(prepared.proposed_active_.size()+incoming.size());
+        prepared.reservation_.emplace(pool->ReserveBlocks(incoming.size()));
+        for (const auto& key : incoming) {
+            const int id = prepared.reservation_->AllocateBlock();
+            auto& block = pool->GetBlock(id);
+            block.level = key.level;
+            block.logical_x1 = key.logical_x1;
+            block.logical_x2 = key.logical_x2;
+            block.logical_x3 = key.logical_x3;
+            block.morton_code = encodeMorton(key.level,key.logical_x1,key.logical_x2,key.logical_x3);
+            block.InitGeometry(root_grid,root_dx1,root_dx2,root_dx3);
+            block.fluid_state.InitSpecies(species);
+            block.state_next.InitSpecies(species);
+            block.state_scratch.InitSpecies(species);
+            prepared.proposed_active_.push_back(id);
+        }
+        std::sort(prepared.proposed_active_.begin(),prepared.proposed_active_.end(),
+            [&](int a,int b) {return pool->GetBlock(a).morton_code<pool->GetBlock(b).morton_code;});
+        return prepared;
+    }
+
     /** Prepare conservative topology/transfer relations without publication.
      */
-    PreparedRegrid PrepareRegrid(
+    PreparedRegrid SelectRegrid(
         const SimConfig& config,
         const PreApplyRegridObserver& observer = {},
-        const StagedAllocationObserver& allocation_observer = {},
         const std::function<void()>& evaluate_indicators = {},
         bool jeans_repair_only = false,
         const std::function<bool(const Block&,std::span<const int>)>& candidate_parent = {})
@@ -961,10 +1153,29 @@ public:
         if (evaluate_indicators) evaluate_indicators();
         else if (jeans_repair_only) EvaluateJeansRepair(config);
         else EvaluateRefinement(config);
-        RippleCheck();
+        RippleCheck(config.amr.lrefinemax);
         if (observer) observer(*this);
 
+        SelectRegridRelations(prepared,candidate_parent);
+        return prepared;
+    }
+
+    /** Capture accepted flags and topology before any local/remote decision work. */
+    PreparedRegrid BeginRegrid(const SimConfig& config) {
+        return PreparedRegrid(*this,config);
+    }
+
+    /** Finish the original relation selection after the caller's balance barrier. */
+    void SelectRegridRelations(PreparedRegrid& prepared,
+        const std::function<bool(const Block&,std::span<const int>)>& candidate_parent = {}) {
+        prepared.require_owner();
+        if(prepared.owner_!=this || prepared.ownership_only_ || prepared.relations_selected_)
+            throw std::logic_error("regrid relation selection requires a fresh snapshot");
+        prepared.relations_selected_=true;
+        const auto& config=prepared.config_;
         const int num_children = 1 << root_grid.dim;
+        std::size_t required_slots = 0;
+        // Select each relation once, before constructing any candidate storage.
         for (const int block_id : active_blocks) {
             Block& block = pool->GetBlock(block_id);
             if (block.refine_flag == 1) {
@@ -972,36 +1183,9 @@ public:
                 typename PreparedRegrid::RefinementRelation relation{};
                 relation.parent = block_id;
                 relation.children.reserve(num_children);
-                for (int child_index = 0; child_index < num_children;
-                     ++child_index) {
-                    PoolBlockAllocationGuard allocation(
-                        *pool, pool->AllocateBlock());
-                    const int child_id = allocation.id();
-                    if (allocation_observer)
-                        allocation_observer(*this, child_id);
-                    allocation.transfer_to(prepared.allocated_);
-                    Block& child = pool->GetBlock(child_id);
-                    child.level = block.level + 1;
-                    child.logical_x1 = (block.logical_x1 << 1)
-                        + ((child_index & 1) ? 1 : 0);
-                    child.logical_x2 = (block.logical_x2 << 1)
-                        + ((root_grid.dim >= 2 && (child_index & 2)) ? 1 : 0);
-                    child.logical_x3 = (block.logical_x3 << 1)
-                        + ((root_grid.dim == 3 && (child_index & 4)) ? 1 : 0);
-                    child.morton_code = encodeMorton(
-                        child.level, child.logical_x1,
-                        child.logical_x2, child.logical_x3);
-                    child.InitGeometry(
-                        root_grid, root_dx1, root_dx2, root_dx3);
-                    const int species = block.fluid_state.GetNumSpecies();
-                    child.fluid_state.InitSpecies(species);
-                    child.state_next.InitSpecies(species);
-                    child.state_scratch.InitSpecies(species);
-                    relation.children.push_back(child_id);
-                    prepared.proposed_active_.push_back(child_id);
-                }
                 prepared.refinements_.push_back(std::move(relation));
                 prepared.retire_.push_back(block_id);
+                required_slots += num_children;
             } else if (block.refine_flag == -1) {
                 const bool first = ((block.logical_x1 & 1) == 0)
                     && (root_grid.dim < 2 || (block.logical_x2 & 1) == 0)
@@ -1034,28 +1218,8 @@ public:
                 }
                 if (can_merge) {
                     prepared.changed_ = true;
-                    PoolBlockAllocationGuard allocation(
-                        *pool, pool->AllocateBlock());
-                    const int parent_id = allocation.id();
-                    if (allocation_observer)
-                        allocation_observer(*this, parent_id);
-                    allocation.transfer_to(prepared.allocated_);
-                    Block& parent = pool->GetBlock(parent_id);
-                    parent.level = block.level - 1;
-                    parent.logical_x1 = block.logical_x1 >> 1;
-                    parent.logical_x2 = block.logical_x2 >> 1;
-                    parent.logical_x3 = block.logical_x3 >> 1;
-                    parent.morton_code = encodeMorton(
-                        parent.level, parent.logical_x1,
-                        parent.logical_x2, parent.logical_x3);
-                    parent.InitGeometry(
-                        root_grid, root_dx1, root_dx2, root_dx3);
-                    const int species = block.fluid_state.GetNumSpecies();
-                    parent.fluid_state.InitSpecies(species);
-                    parent.state_next.InitSpecies(species);
-                    parent.state_scratch.InitSpecies(species);
-                    prepared.restrictions_.push_back({siblings, parent_id});
-                    prepared.proposed_active_.push_back(parent_id);
+                    prepared.restrictions_.push_back({siblings, -1});
+                    ++required_slots;
                     for (const int sibling : siblings) {
                         prepared.retire_.push_back(sibling);
                         pool->GetBlock(sibling).refine_flag = 2;
@@ -1067,12 +1231,19 @@ public:
                 prepared.proposed_active_.push_back(block_id);
             }
         }
-        std::sort(prepared.proposed_active_.begin(),
-                  prepared.proposed_active_.end(),
-                  [this](int lhs, int rhs) {
-                      return pool->GetBlock(lhs).morton_code
-                          < pool->GetBlock(rhs).morton_code;
-                  });
+        prepared.required_slots_=required_slots;
+    }
+
+    PreparedRegrid PrepareRegrid(
+        const SimConfig& config,
+        const PreApplyRegridObserver& observer = {},
+        const StagedAllocationObserver& allocation_observer = {},
+        const std::function<void()>& evaluate_indicators = {},
+        bool jeans_repair_only = false,
+        const std::function<bool(const Block&,std::span<const int>)>& candidate_parent = {})
+    {
+        auto prepared=SelectRegrid(config,observer,evaluate_indicators,jeans_repair_only,candidate_parent);
+        prepared.ConstructCandidates(allocation_observer);
         return prepared;
     }
 
@@ -1115,112 +1286,161 @@ public:
         return true;
     }
 
+    /** Refresh local topology during construction/regrid before UID publication. */
     void UpdateNeighbors(const SimConfig& config) {
-        const std::array<int, 3> root_extent = {
-            std::max(1, root_grid.nblockx1),
-            std::max(1, root_grid.nblockx2),
-            std::max(1, root_grid.nblockx3)
+        std::vector<BlockTopology> local;
+        local.reserve(active_blocks.size());
+        for (int id : active_blocks) {
+            const auto& block = pool->GetBlock(id);
+            local.push_back(
+                {{root_grid.dim, block.level, block.logical_x1, block.logical_x2, block.logical_x3},
+                 {},
+                 partition_rank_,
+                 id});
+        }
+        UpdateNeighborsImpl(config, local, false);
+    }
+
+    /** Bind the registry's complete leaf set without allocating remote fields.
+     * Validate every rank's face graph before replacing any local cache.
+     */
+    void UpdateNeighbors(const SimConfig& config, std::span<const BlockTopology> leaves) {
+        UpdateNeighborsImpl(config, leaves, true);
+    }
+
+  private:
+    void UpdateNeighborsImpl(const SimConfig& config, std::span<const BlockTopology> leaves,
+                             bool complete) {
+        const int dim = root_grid.dim;
+        if (dim < 1 || dim > 3)
+            throw std::invalid_argument("neighbor topology requires one to three dimensions");
+        const std::array<std::uint64_t, 3> roots{
+            static_cast<std::uint64_t>(std::max(1, root_grid.nblockx1)),
+            static_cast<std::uint64_t>(std::max(1, root_grid.nblockx2)),
+            static_cast<std::uint64_t>(std::max(1, root_grid.nblockx3))};
+        const std::array<bool, 3> periodic{
+            config.grid.x1l_boundary_type == "periodic" &&
+                config.grid.x1r_boundary_type == "periodic",
+            dim >= 2 && config.grid.x2l_boundary_type == "periodic" &&
+                config.grid.x2r_boundary_type == "periodic",
+            dim == 3 && config.grid.x3l_boundary_type == "periodic" &&
+                config.grid.x3r_boundary_type == "periodic"};
+        std::map<LogicalBlockKey, BlockTopology> ordered;
+        const std::set<int> active_slots(active_blocks.begin(), active_blocks.end());
+        std::set<int> local_slots;
+        std::set<BlockHandle> handles;
+        TopologyEpoch epoch{};
+        for (const auto& leaf : leaves) {
+            const auto& key = leaf.logical;
+            const bool local = leaf.owner_rank == partition_rank_;
+            if (key.dimension != dim || key.level < 0 || key.level >= 32 || leaf.owner_rank < 0 ||
+                leaf.owner_rank >= partition_size_ ||
+                (local ? leaf.pool_index < 0 : leaf.pool_index != -1) ||
+                !ordered.emplace(key, leaf).second)
+                throw std::invalid_argument("invalid or duplicate neighbor topology leaf");
+            const std::array<std::uint32_t, 3> xyz{key.logical_x1, key.logical_x2, key.logical_x3};
+            for (int axis = 0; axis < 3; ++axis)
+                if (xyz[axis] >= (roots[axis] << key.level) || (axis >= dim && xyz[axis] != 0))
+                    throw std::invalid_argument("neighbor leaf outside global domain");
+            if (complete) {
+                if (!is_valid(leaf.handle) || !handles.insert(leaf.handle).second ||
+                    (is_valid(epoch) && epoch != leaf.handle.epoch))
+                    throw std::invalid_argument("neighbor topology has stale or duplicate handles");
+                epoch = leaf.handle.epoch;
+            }
+            if (local) {
+                if (!local_slots.insert(leaf.pool_index).second ||
+                    !active_slots.contains(leaf.pool_index))
+                    throw std::invalid_argument("neighbor leaf has no unique local storage");
+                const auto& block = pool->GetBlock(leaf.pool_index);
+                if (key != LogicalBlockKey{dim, block.level, block.logical_x1, block.logical_x2,
+                                           block.logical_x3})
+                    throw std::invalid_argument("neighbor leaf local binding drifted");
+            }
+        }
+        if (local_slots.size() != active_blocks.size())
+            throw std::invalid_argument("neighbor topology omits local storage");
+        using Faces = std::array<Block::FaceNeighbors, 6>;
+        std::map<LogicalBlockKey, Faces> adjacency;
+        const auto find = [&](int level,
+                              const std::array<std::int64_t, 3>& xyz) -> const BlockTopology* {
+            if (level < 0 || level >= 32)
+                return nullptr;
+            for (auto coordinate : xyz)
+                if (coordinate < 0 || coordinate > std::numeric_limits<std::uint32_t>::max())
+                    return nullptr;
+            const LogicalBlockKey key{dim, level, static_cast<std::uint32_t>(xyz[0]),
+                                      static_cast<std::uint32_t>(xyz[1]),
+                                      static_cast<std::uint32_t>(xyz[2])};
+            const auto found = ordered.find(key);
+            return found == ordered.end() ? nullptr : &found->second;
         };
-        const std::array<bool, 3> periodic = {
-            config.grid.x1l_boundary_type == "periodic" && config.grid.x1r_boundary_type == "periodic",
-            root_grid.dim >= 2 && config.grid.x2l_boundary_type == "periodic" && config.grid.x2r_boundary_type == "periodic",
-            root_grid.dim == 3 && config.grid.x3l_boundary_type == "periodic" && config.grid.x3r_boundary_type == "periodic"
-        };
-
-        for (int block_id : active_blocks) {
-            Block& b = pool->GetBlock(block_id);
-            int offsets[6][3] = {
-                {-1, 0, 0}, {1, 0, 0},
-                {0, -1, 0}, {0, 1, 0},
-                {0, 0, -1}, {0, 0, 1}
-            };
-
-            for (int f = 0; f < 6; ++f) {
-                b.face_neighbors[f].count = 0;
-                b.face_neighbors[f].level_diff = 0;
-                b.grid.amr_coarse_fine_face[f] = false;
-
-                if (root_grid.dim < 2 && (f == 2 || f == 3)) continue;
-                if (root_grid.dim < 3 && (f == 4 || f == 5)) continue;
-
-                int nx = static_cast<int>(b.logical_x1) + offsets[f][0];
-                int ny = static_cast<int>(b.logical_x2) + offsets[f][1];
-                int nz = static_cast<int>(b.logical_x3) + offsets[f][2];
-
-                // Convert a face coordinate at this level to the equivalent
-                // periodic coordinate before every same/coarse/fine lookup.
-                // Without this, each edge patch applies a local boundary
-                // condition instead of exchanging with the patch across the
-                // global periodic seam, breaking flux conservation.
-                const int extent_x = root_extent[0] << b.level;
-                const int extent_y = root_extent[1] << b.level;
-                const int extent_z = root_extent[2] << b.level;
-                auto wrap_coordinate = [](int value, int extent, bool is_periodic, int& wrapped) {
-                    if (value >= 0 && value < extent) {
-                        wrapped = value;
-                        return true;
-                    }
-                    if (!is_periodic) return false;
-                    wrapped = value % extent;
-                    if (wrapped < 0) wrapped += extent;
-                    return true;
-                };
-                if (!wrap_coordinate(nx, extent_x, periodic[0], nx) ||
-                    !wrap_coordinate(ny, extent_y, periodic[1], ny) ||
-                    !wrap_coordinate(nz, extent_z, periodic[2], nz)) continue;
-
-                // 1. Try same level
-                int n_id = FindBlock(b.level, nx, ny, nz);
-                if (n_id != -1) {
-                    b.face_neighbors[f].ids[0] = n_id;
-                    b.face_neighbors[f].count = 1;
-                    b.face_neighbors[f].level_diff = 0;
+        for (const auto& [key, leaf] : ordered) {
+            (void)leaf;
+            auto& faces = adjacency[key];
+            for (int face = 0; face < 2 * dim; ++face) {
+                const int axis = face / 2;
+                std::array<std::int64_t, 3> xyz{key.logical_x1, key.logical_x2, key.logical_x3};
+                xyz[axis] += (face & 1) ? 1 : -1;
+                const auto extent = static_cast<std::int64_t>(roots[axis] << key.level);
+                if (xyz[axis] < 0 || xyz[axis] >= extent) {
+                    if (!periodic[axis])
+                        continue;
+                    xyz[axis] = (xyz[axis] + extent) % extent;
+                }
+                auto& neighbors = faces[face];
+                if (const auto* same = find(key.level, xyz)) {
+                    neighbors.blocks[0] = *same;
+                    neighbors.count = 1;
                     continue;
                 }
-
-                // 2. Try coarse level
-                int cx = nx >> 1;
-                int cy = ny >> 1;
-                int cz = nz >> 1;
-                n_id = FindBlock(b.level - 1, cx, cy, cz);
-                if (n_id != -1) {
-                    b.face_neighbors[f].ids[0] = n_id;
-                    b.face_neighbors[f].count = 1;
-                    b.face_neighbors[f].level_diff = -1;
-                    b.grid.amr_coarse_fine_face[f] = true;
+                std::array<std::int64_t, 3> coarse{xyz[0] >> 1, xyz[1] >> 1, xyz[2] >> 1};
+                if (const auto* parent = find(key.level - 1, coarse)) {
+                    neighbors.blocks[0] = *parent;
+                    neighbors.count = 1;
+                    neighbors.level_diff = -1;
                     continue;
                 }
-
-                // 3. Try fine level
-                int fx = nx << 1;
-                int fy = ny << 1;
-                int fz = nz << 1;
-
-                // A face can have up to 4 fine neighbors
-                int f_count = 0;
-                int dx_start = (f == 0) ? 1 : 0;
-                int dy_start = (f == 2) ? 1 : 0;
-                int dz_start = (f == 4) ? 1 : 0;
-
-                int len_x = (f == 0 || f == 1) ? 1 : 2;
-                int len_y = (f == 2 || f == 3) ? 1 : (root_grid.dim >= 2 ? 2 : 1);
-                int len_z = (f == 4 || f == 5) ? 1 : (root_grid.dim == 3 ? 2 : 1);
-
-                for (int dz = dz_start; dz < dz_start + len_z; ++dz) {
-                    for (int dy = dy_start; dy < dy_start + len_y; ++dy) {
-                        for (int dx = dx_start; dx < dx_start + len_x; ++dx) {
-                            n_id = FindBlock(b.level + 1, fx + dx, fy + dy, fz + dz);
-                            if (n_id != -1) {
-                                b.face_neighbors[f].ids[f_count++] = n_id;
-                            }
-                        }
+                const int starts[3]{face == 0 ? 1 : 0, face == 2 ? 1 : 0, face == 4 ? 1 : 0};
+                const int lengths[3]{axis == 0 ? 1 : 2, axis == 1 ? 1 : (dim >= 2 ? 2 : 1),
+                                     axis == 2 ? 1 : (dim == 3 ? 2 : 1)};
+                for (int z = starts[2]; z < starts[2] + lengths[2]; ++z)
+                    for (int y = starts[1]; y < starts[1] + lengths[1]; ++y)
+                        for (int x = starts[0]; x < starts[0] + lengths[0]; ++x)
+                            if (const auto* child =
+                                    find(key.level + 1,
+                                         {2 * xyz[0] + x, 2 * xyz[1] + y, 2 * xyz[2] + z}))
+                                neighbors.blocks[neighbors.count++] = *child;
+                if (neighbors.count)
+                    neighbors.level_diff = 1;
+                if (complete && neighbors.count != (1 << (dim - 1)))
+                    throw std::invalid_argument(
+                        "neighbor topology has a gap or violates face 2:1 balance");
+            }
+        }
+        if (complete) {
+            for (const auto& [key, faces] : adjacency)
+                for (int face = 0; face < 2 * dim; ++face) {
+                    const auto& neighbors = faces[face];
+                    for (int n = 0; n < neighbors.count; ++n) {
+                        const auto& back = adjacency.at(neighbors.blocks[n].logical)[face ^ 1];
+                        bool reciprocal = false;
+                        for (int b = 0; b < back.count; ++b)
+                            reciprocal |= back.blocks[b].logical == key;
+                        if (!reciprocal || back.level_diff != -neighbors.level_diff)
+                            throw std::invalid_argument("neighbor topology is not reciprocal");
                     }
                 }
-                if (f_count > 0) {
-                    b.face_neighbors[f].count = f_count;
-                    b.face_neighbors[f].level_diff = 1;
-                    b.grid.amr_coarse_fine_face[f] = true;
-                }
+        }
+        // All validation/allocation completes before changing existing caches.
+        for (const auto& [key, leaf] : ordered) {
+            if (leaf.owner_rank != partition_rank_)
+                continue;
+            auto& block = pool->GetBlock(leaf.pool_index);
+            const auto& faces = adjacency.at(key);
+            for (int face = 0; face < 6; ++face) {
+                block.face_neighbors[face] = faces[face];
+                block.grid.amr_coarse_fine_face[face] = faces[face].level_diff != 0;
             }
         }
     }

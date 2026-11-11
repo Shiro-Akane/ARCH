@@ -45,7 +45,17 @@ struct AmrFluxRegistrationRoute {
  * One immutable plan for a topology epoch.  Routes contain geometry only;
  * face-flux values and integrator stage weights are execution-time inputs.
  */
+struct AmrIncomingFluxRoute {
+    AmrEndpoint source{};
+    AmrAxis axis = AmrAxis::X;
+    FluxRegistrationPlan plan{};
+};
+
 struct AmrFluxTopologyPlan {
+    int partition_rank = 0, partition_size = 1;
+    std::map<AmrEndpoint, int> owners;
+    std::vector<AmrIncomingFluxRoute> incoming;
+
     int dimension = 0;
     int species_count = 0;
     TopologyEpoch epoch{};
@@ -153,12 +163,10 @@ struct CoarseFaceIndex {
     bool high = false;
 };
 
-inline CoarseFaceIndex coarse_face_index(
-    const Block& coarse, int normal_direction, int coarse_face, int face_cell)
-{
-    const int ny = coarse.grid.dim >= 2 ? BLOCK_NY : 1;
-    CoarseFaceIndex index{coarse.grid.Is(), coarse.grid.Js(), coarse.grid.Ks(),
-                          coarse_face % 2 == 1};
+inline CoarseFaceIndex coarse_face_index(const Grid& grid, int normal_direction, int coarse_face,
+                                         int face_cell) {
+    const int ny = grid.dim >= 2 ? BLOCK_NY : 1;
+    CoarseFaceIndex index{grid.Is(), grid.Js(), grid.Ks(), coarse_face % 2 == 1};
     if (normal_direction == 0) {
         index.j += face_cell % ny;
         index.k += face_cell / ny;
@@ -173,6 +181,11 @@ inline CoarseFaceIndex coarse_face_index(
         index.k += coarse_face % 2 == 0 ? 0 : BLOCK_NZ - 1;
     }
     return index;
+}
+
+inline CoarseFaceIndex coarse_face_index(const Block& coarse, int normal_direction, int coarse_face,
+                                         int face_cell) {
+    return coarse_face_index(coarse.grid, normal_direction, coarse_face, face_cell);
 }
 
 inline double coarse_face_area(const Block& coarse, int normal_direction,
@@ -208,6 +221,110 @@ inline void append_fields(FluxRegistrationPlan& plan,
         append(AmrField::Species, species);
 }
 
+inline void append_registration_face(FluxRegistrationPlan& plan, const AmrEndpoint& source_endpoint,
+                                     const Grid& source_grid, const AmrEndpoint& coarse_endpoint,
+                                     const Grid* coarse_grid, int direction, int side,
+                                     int species_count) {
+    const int dimension = plan.dimension;
+    const int nx = BLOCK_NX, ny = dimension >= 2 ? BLOCK_NY : 1, nz = dimension == 3 ? BLOCK_NZ : 1;
+    for (int k = 0; k < nz; ++k) {
+        for (int j = 0; j < ny; ++j) {
+            for (int i = 0; i < nx; ++i) {
+                if ((direction == 0 && i != (side == 0 ? 0 : nx - 1)) ||
+                    (direction == 1 && j != (side == 0 ? 0 : ny - 1)) ||
+                    (direction == 2 && k != (side == 0 ? 0 : nz - 1)))
+                    continue;
+                const double fine_area = GridMetrics::FaceArea(
+                    GridMetrics::make_geometry_view(source_grid), direction, source_grid.Is() + i,
+                    source_grid.Js() + j, source_grid.Ks() + k, side == 1);
+                if (!amr_plan_detail::is_finite_binary64(fine_area) || fine_area <= 0.0)
+                    throw std::invalid_argument("invalid fine flux metric");
+                const LogicalAmrBox source_face{{i + (direction == 0 && side == 1 ? 1 : 0),
+                                                 j + (direction == 1 && side == 1 ? 1 : 0),
+                                                 k + (direction == 2 && side == 1 ? 1 : 0)},
+                                                {1, 1, 1}};
+
+                if (coarse_grid != nullptr) {
+                    int coarse_i = (source_endpoint.logical.logical_x1 & 1U) * (nx / 2) + i / 2;
+                    int coarse_j =
+                        dimension >= 2
+                            ? (source_endpoint.logical.logical_x2 & 1U) * (ny / 2) + j / 2
+                            : 0;
+                    int coarse_k =
+                        dimension == 3
+                            ? (source_endpoint.logical.logical_x3 & 1U) * (nz / 2) + k / 2
+                            : 0;
+                    int coarse_cell = 0;
+                    if (direction == 0)
+                        coarse_cell = coarse_k * ny + coarse_j;
+                    else if (direction == 1)
+                        coarse_cell = coarse_k * nx + coarse_i;
+                    else
+                        coarse_cell = coarse_j * nx + coarse_i;
+                    const int coarse_face = 2 * direction + (side == 0 ? 1 : 0);
+                    const auto coarse_location =
+                        coarse_face_index(*coarse_grid, direction, coarse_face, coarse_cell);
+                    const double coarse_area = GridMetrics::FaceArea(
+                        GridMetrics::make_geometry_view(*coarse_grid), direction, coarse_location.i,
+                        coarse_location.j, coarse_location.k, coarse_location.high);
+                    if (!amr_plan_detail::is_finite_binary64(coarse_area) || coarse_area <= 0.0)
+                        throw std::invalid_argument("invalid coarse flux metric");
+                    double moment_weight = std::numeric_limits<double>::quiet_NaN();
+                    if (dimension == 2 && source_grid.geometry == "cylindrical") {
+                        const double fine_moment = GridMetrics::AngularMomentumFaceMoment(
+                            GridMetrics::make_geometry_view(source_grid), direction,
+                            source_grid.Is() + i, source_grid.Js() + j, source_grid.Ks() + k,
+                            side == 1);
+                        const double coarse_moment = GridMetrics::AngularMomentumFaceMoment(
+                            GridMetrics::make_geometry_view(*coarse_grid), direction,
+                            coarse_location.i, coarse_location.j, coarse_location.k,
+                            coarse_location.high);
+                        if (!amr_plan_detail::is_finite_binary64(fine_moment) ||
+                            !amr_plan_detail::is_finite_binary64(coarse_moment) ||
+                            fine_moment <= 0.0 || coarse_moment <= 0.0)
+                            throw std::invalid_argument("invalid azimuthal face moment");
+                        moment_weight = fine_moment / coarse_moment;
+                    }
+                    if (direction == 0)
+                        coarse_i = coarse_face % 2 == 0 ? 0 : nx - 1;
+                    else if (direction == 1)
+                        coarse_j = coarse_face % 2 == 0 ? 0 : ny - 1;
+                    else
+                        coarse_k = coarse_face % 2 == 0 ? 0 : nz - 1;
+                    const AmrTransferOperation prototype{
+                        0,
+                        source_endpoint,
+                        coarse_endpoint,
+                        source_face,
+                        {{coarse_i, coarse_j, coarse_k}, {1, 1, 1}},
+                        static_cast<AmrAxis>(direction),
+                        static_cast<AmrSide>(coarse_face % 2),
+                        AmrField::Rho,
+                        -1,
+                        RefinementRule::FineFluxContribution,
+                        fine_area / coarse_area,
+                        1.0};
+                    append_fields(plan, prototype, species_count, moment_weight);
+                } else {
+                    const AmrTransferOperation prototype{0,
+                                                         source_endpoint,
+                                                         source_endpoint,
+                                                         source_face,
+                                                         {{i, j, k}, {1, 1, 1}},
+                                                         static_cast<AmrAxis>(direction),
+                                                         static_cast<AmrSide>(side),
+                                                         AmrField::Rho,
+                                                         -1,
+                                                         RefinementRule::CoarseFluxContribution,
+                                                         1.0,
+                                                         -1.0};
+                    append_fields(plan, prototype, species_count);
+                }
+            }
+        }
+    }
+}
+
 class Fingerprint {
 public:
     void u64(std::uint64_t value) noexcept
@@ -228,7 +345,21 @@ inline std::uint64_t compute_fingerprint(const AmrFluxTopologyPlan& plan)
     noexcept
 {
     Fingerprint hash;
-    hash.u64(3); // Native geometry snapshot identity.
+    hash.u64(4); // Geometry and local/remote route identity.
+    hash.u64(plan.partition_rank);
+    hash.u64(plan.partition_size);
+    for (const auto& [endpoint, owner] : plan.owners) {
+        hash.u64(endpoint.logical.dimension);
+        hash.u64(endpoint.logical.level);
+        hash.u64(endpoint.logical.logical_x1);
+        hash.u64(endpoint.logical.logical_x2);
+        hash.u64(endpoint.logical.logical_x3);
+        hash.u64(endpoint.handle.uid.value);
+        hash.u64(endpoint.handle.epoch.value);
+        hash.u64(owner);
+    }
+    for (const auto& route : plan.incoming)
+        hash.u64(route.plan.fingerprint);
     hash.u64(plan.native_grids.size());
     for (const auto& grid : plan.native_grids) {
         hash.u64(grid.geometry.size());
@@ -335,6 +466,24 @@ inline void validate_amr_flux_topology_plan(const AmrFluxTopologyPlan& plan)
                 throw std::invalid_argument("AMR flux route is not canonical");
         }
     }
+    if (plan.partition_rank < 0 || plan.partition_rank >= plan.partition_size)
+        throw std::invalid_argument("invalid AMR flux partition");
+    for (const auto& incoming : plan.incoming) {
+        validate_amr_plan(incoming.plan);
+        if (plan.partition_size == 1 || incoming.plan.operations.empty() ||
+            incoming.plan.dimension != plan.dimension ||
+            incoming.plan.scope.from_epoch != plan.epoch ||
+            incoming.plan.scope.to_epoch != plan.epoch)
+            throw std::invalid_argument("invalid incoming AMR flux route");
+        for (const auto& operation : incoming.plan.operations)
+            if (operation.source != incoming.source || operation.axis != incoming.axis ||
+                operation.rule != RefinementRule::FineFluxContribution ||
+                !plan.pool_lowering.contains(operation.destination) ||
+                !plan.owners.contains(operation.source) ||
+                plan.owners.at(operation.source) == plan.partition_rank ||
+                plan.owners.at(operation.destination) != plan.partition_rank)
+                throw std::invalid_argument("incoming AMR flux owner binding drifted");
+    }
     if (plan.fingerprint != flux_plan_detail::compute_fingerprint(plan))
         throw std::invalid_argument("AMR flux topology fingerprint mismatch");
 }
@@ -344,18 +493,24 @@ inline void validate_amr_flux_topology_plan(const AmrFluxTopologyPlan& plan)
  * Complexity is O(blocks * face cells); stage execution performs an indexed
  * route lookup and never scans the hierarchy.
  */
-inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
-    const MemoryPool& pool, std::span<const int> active_blocks,
-    std::span<const BlockHandle> active_handles, int dimension,
-    int species_count)
-{
+inline AmrFluxTopologyPlan build_amr_flux_topology_plan(const MemoryPool& pool,
+                                                        std::span<const int> active_blocks,
+                                                        std::span<const BlockHandle> active_handles,
+                                                        int dimension, int species_count,
+                                                        const Grid* root = nullptr, int rank = 0,
+                                                        int ranks = 1) {
     using namespace flux_plan_detail;
     if (dimension < 1 || dimension > 3 || species_count < 0
         || active_blocks.empty()
         || active_blocks.size() != active_handles.size())
         throw std::invalid_argument("invalid AMR flux topology inputs");
 
+    if (rank < 0 || rank >= ranks || ranks < 1 ||
+        (ranks > 1 && (!root || root->geometry != "cartesian")))
+        throw std::invalid_argument("distributed AMR flux requires Cartesian root identity");
     AmrFluxTopologyPlan result{};
+    result.partition_rank = rank;
+    result.partition_size = ranks;
     result.dimension = dimension;
     result.species_count = species_count;
     result.epoch = active_handles.front().epoch;
@@ -385,201 +540,107 @@ inline AmrFluxTopologyPlan build_amr_flux_topology_plan(
         result.native_grid_index.emplace(block_id,result.native_grids.size());
         result.native_grids.push_back(block.grid);
         result.active_endpoints.push_back(endpoint);
+        result.owners.emplace(endpoint, rank);
+        if (ranks > 1)
+            block.RequireLogicalGeometryIdentity(*root);
     }
 
-    const int nx = BLOCK_NX;
-    const int ny = dimension >= 2 ? BLOCK_NY : 1;
-    const int nz = dimension == 3 ? BLOCK_NZ : 1;
-    for (std::size_t block_index = 0;
-         block_index < active_blocks.size(); ++block_index) {
-        const int block_id = active_blocks[block_index];
-        const Block& block = pool.GetBlock(block_id);
-        const AmrEndpoint source_endpoint = result.active_endpoints[block_index];
+    const auto endpoint_for = [&](const BlockTopology& descriptor) {
+        AmrEndpoint endpoint{descriptor.logical, descriptor.handle};
+        if (descriptor.pool_index >= 0) {
+            const auto found = active_index.find(descriptor.pool_index);
+            if (found == active_index.end() || descriptor.owner_rank != rank ||
+                logical_key(pool.GetBlock(descriptor.pool_index), dimension) != descriptor.logical)
+                throw std::invalid_argument("AMR flux local neighbor binding drifted");
+            endpoint = result.active_endpoints[found->second];
+            if (is_valid(descriptor.handle) && descriptor.handle != endpoint.handle)
+                throw std::invalid_argument("AMR flux local neighbor handle drifted");
+        } else if (descriptor.owner_rank == rank || !root)
+            throw std::invalid_argument("AMR flux remote endpoint has no owner");
+        if (descriptor.owner_rank < 0 || descriptor.owner_rank >= ranks ||
+            !is_valid(endpoint.handle) || endpoint.handle.epoch != result.epoch)
+            throw std::invalid_argument("AMR flux remote owner/epoch drifted");
+        const auto [it, inserted] = result.owners.emplace(endpoint, descriptor.owner_rank);
+        if (!inserted && it->second != descriptor.owner_rank)
+            throw std::invalid_argument("AMR flux conflicting endpoint owners");
+        return endpoint;
+    };
+    const auto remote_grid = [&](const AmrEndpoint& endpoint) {
+        const auto& key = endpoint.logical;
+        if (!root || root->geometry != "cartesian" || key.dimension != dimension || key.level < 0 ||
+            key.level > kMaxRefinementLevel)
+            throw std::invalid_argument("AMR remote flux geometry is unsupported");
+        const std::array<int, 3> counts{root->nblockx1, root->nblockx2, root->nblockx3};
+        const std::array<std::uint32_t, 3> coord{key.logical_x1, key.logical_x2, key.logical_x3};
+        for (int axis = 0; axis < 3; ++axis)
+            if (counts[axis] < 0 || (axis < dimension && counts[axis] == 0) ||
+                (axis >= dimension && coord[axis] != 0) ||
+                coord[axis] >= (static_cast<std::uint64_t>(std::max(counts[axis], 1)) << key.level))
+                throw std::invalid_argument("AMR remote flux coordinate is outside root");
+        return Block::MakeLogicalGrid(
+            *root, key, (root->x1_max - root->x1_min) / (root->nblockx1 * BLOCK_NX),
+            root->nblockx2 > 0 ? (root->x2_max - root->x2_min) / (root->nblockx2 * BLOCK_NY) : 0.,
+            root->nblockx3 > 0 ? (root->x3_max - root->x3_min) / (root->nblockx3 * BLOCK_NZ) : 0.);
+    };
+    std::map<std::pair<AmrEndpoint, AmrAxis>, FluxRegistrationPlan> incoming;
+    for (std::size_t index = 0; index < active_blocks.size(); ++index) {
+        const int id = active_blocks[index];
+        const Block& block = pool.GetBlock(id);
+        const auto source = result.active_endpoints[index];
         for (int direction = 0; direction < dimension; ++direction) {
             AmrFluxRegistrationRoute route{};
-            route.key = {block_id, static_cast<AmrAxis>(direction)};
-            route.source = source_endpoint;
+            route.key = {id, static_cast<AmrAxis>(direction)};
+            route.source = source;
             route.plan.dimension = dimension;
             route.plan.scope = {0, result.epoch, result.epoch};
-
             for (int side = 0; side < 2; ++side) {
-                const int face = 2 * direction + side;
-                const auto& neighbours = block.face_neighbors[face];
-                if (neighbours.count == 0) {
-                    if (neighbours.level_diff != 0)
-                        throw std::invalid_argument(
-                            "empty AMR face has a refinement relation");
+                const auto& neighbors = block.face_neighbors[2 * direction + side];
+                if (neighbors.count < 0 || neighbors.count > 4)
+                    throw std::invalid_argument("AMR flux neighbor count invalid");
+                if (neighbors.count == 0) {
+                    if (neighbors.level_diff != 0)
+                        throw std::invalid_argument("empty AMR face has a refinement relation");
                     continue;
                 }
-                if (neighbours.level_diff == 0) continue;
-                if (neighbours.level_diff != -1
-                    && neighbours.level_diff != 1)
-                    throw std::invalid_argument(
-                        "invalid coarse-fine flux level relation");
-                if (neighbours.level_diff == -1
-                    && (neighbours.count != 1 || neighbours.ids[0] < 0))
-                    throw std::invalid_argument(
-                        "fine flux has no unique coarse endpoint");
-                if (neighbours.level_diff == 1) {
-                    const int expected = 1 << (dimension - 1);
-                    if (neighbours.count != expected)
-                        throw std::invalid_argument(
-                            "coarse flux has an incomplete fine face");
-                    for (int neighbour = 0;
-                         neighbour < neighbours.count; ++neighbour) {
-                        const auto found = active_index.find(
-                            neighbours.ids[neighbour]);
-                        if (found == active_index.end()
-                            || pool.GetBlock(neighbours.ids[neighbour]).level
-                                != block.level + 1)
-                            throw std::invalid_argument(
-                                "coarse flux fine endpoint drifted");
+                if (neighbors.level_diff == 0)
+                    continue;
+                const int expected = neighbors.level_diff == -1 ? 1 : 1 << (dimension - 1);
+                if ((neighbors.level_diff != -1 && neighbors.level_diff != 1) ||
+                    neighbors.count != expected)
+                    throw std::invalid_argument("AMR flux coarse-fine face is incomplete");
+                for (int n = 0; n < neighbors.count; ++n) {
+                    const auto& descriptor = neighbors.blocks[n];
+                    const auto neighbor = endpoint_for(descriptor);
+                    if (neighbor.logical.level != block.level + neighbors.level_diff)
+                        throw std::invalid_argument("AMR flux neighbor level drifted");
+                    // Only scalar/Grid topology is needed for remote metrics.
+                    const Grid geometry = descriptor.pool_index >= 0
+                                              ? pool.GetBlock(descriptor.pool_index).grid
+                                              : remote_grid(neighbor);
+                    if (neighbors.level_diff == -1)
+                        append_registration_face(route.plan, source, block.grid, neighbor,
+                                                 &geometry, direction, side, species_count);
+                    else if (descriptor.owner_rank != rank) {
+                        auto& receive = incoming[{neighbor, static_cast<AmrAxis>(direction)}];
+                        receive.dimension = dimension;
+                        receive.scope = route.plan.scope;
+                        append_registration_face(receive, neighbor, geometry, source, &block.grid,
+                                                 direction, side ^ 1, species_count);
                     }
                 }
-
-                for (int k = 0; k < nz; ++k) {
-                    for (int j = 0; j < ny; ++j) {
-                        for (int i = 0; i < nx; ++i) {
-                            if ((direction == 0
-                                    && i != (side == 0 ? 0 : nx - 1))
-                                || (direction == 1
-                                    && j != (side == 0 ? 0 : ny - 1))
-                                || (direction == 2
-                                    && k != (side == 0 ? 0 : nz - 1)))
-                                continue;
-                            const double fine_area = GridMetrics::FaceArea(
-                                GridMetrics::make_geometry_view(block.grid),
-                                direction, block.grid.Is() + i,
-                                block.grid.Js() + j, block.grid.Ks() + k,
-                                side == 1);
-                            if (!amr_plan_detail::is_finite_binary64(fine_area)
-                                || fine_area <= 0.0)
-                                throw std::invalid_argument(
-                                    "invalid fine flux metric");
-                            const LogicalAmrBox source_face{
-                                {i + (direction == 0 && side == 1 ? 1 : 0),
-                                 j + (direction == 1 && side == 1 ? 1 : 0),
-                                 k + (direction == 2 && side == 1 ? 1 : 0)},
-                                {1, 1, 1}};
-
-                            if (neighbours.level_diff == -1) {
-                                const int coarse_id = neighbours.ids[0];
-                                const auto coarse_index = active_index.find(
-                                    coarse_id);
-                                if (coarse_index == active_index.end())
-                                    throw std::invalid_argument(
-                                        "coarse flux destination is not active");
-                                const Block& coarse = pool.GetBlock(coarse_id);
-                                if (coarse.level + 1 != block.level)
-                                    throw std::invalid_argument(
-                                        "fine flux endpoint level drifted");
-                                int coarse_i =
-                                    (block.logical_x1 & 1U) * (nx / 2) + i / 2;
-                                int coarse_j = dimension >= 2
-                                    ? (block.logical_x2 & 1U) * (ny / 2) + j / 2
-                                    : 0;
-                                int coarse_k = dimension == 3
-                                    ? (block.logical_x3 & 1U) * (nz / 2) + k / 2
-                                    : 0;
-                                int coarse_cell = 0;
-                                if (direction == 0)
-                                    coarse_cell = coarse_k * ny + coarse_j;
-                                else if (direction == 1)
-                                    coarse_cell = coarse_k * nx + coarse_i;
-                                else
-                                    coarse_cell = coarse_j * nx + coarse_i;
-                                const int coarse_face =
-                                    2 * direction + (side == 0 ? 1 : 0);
-                                const auto coarse_location = coarse_face_index(
-                                    coarse, direction, coarse_face, coarse_cell);
-                                const double coarse_area =
-                                    GridMetrics::FaceArea(
-                                        GridMetrics::make_geometry_view(
-                                            coarse.grid),
-                                        direction, coarse_location.i,
-                                        coarse_location.j,
-                                        coarse_location.k,
-                                        coarse_location.high);
-                                if (!amr_plan_detail::is_finite_binary64(
-                                        coarse_area)
-                                    || coarse_area <= 0.0)
-                                    throw std::invalid_argument(
-                                        "invalid coarse flux metric");
-                                double moment_weight =
-                                    std::numeric_limits<double>::quiet_NaN();
-                                if (dimension == 2
-                                    && block.grid.geometry == "cylindrical") {
-                                    const double fine_moment =
-                                        GridMetrics::AngularMomentumFaceMoment(
-                                            GridMetrics::make_geometry_view(
-                                                block.grid),
-                                            direction, block.grid.Is() + i,
-                                            block.grid.Js() + j,
-                                            block.grid.Ks() + k, side == 1);
-                                    const double coarse_moment =
-                                        GridMetrics::AngularMomentumFaceMoment(
-                                            GridMetrics::make_geometry_view(
-                                                coarse.grid),
-                                            direction, coarse_location.i,
-                                            coarse_location.j,
-                                            coarse_location.k,
-                                            coarse_location.high);
-                                    if (!amr_plan_detail::is_finite_binary64(
-                                            fine_moment)
-                                        || !amr_plan_detail::is_finite_binary64(
-                                            coarse_moment)
-                                        || fine_moment <= 0.0
-                                        || coarse_moment <= 0.0)
-                                        throw std::invalid_argument(
-                                            "invalid azimuthal face moment");
-                                    moment_weight = fine_moment / coarse_moment;
-                                }
-                                if (direction == 0)
-                                    coarse_i = coarse_face % 2 == 0
-                                        ? 0 : nx - 1;
-                                else if (direction == 1)
-                                    coarse_j = coarse_face % 2 == 0
-                                        ? 0 : ny - 1;
-                                else
-                                    coarse_k = coarse_face % 2 == 0
-                                        ? 0 : nz - 1;
-                                const AmrEndpoint destination{
-                                    logical_key(coarse, dimension),
-                                    active_handles[coarse_index->second]};
-                                const AmrTransferOperation prototype{
-                                    0, source_endpoint, destination,
-                                    source_face,
-                                    {{coarse_i, coarse_j, coarse_k}, {1, 1, 1}},
-                                    static_cast<AmrAxis>(direction),
-                                    static_cast<AmrSide>(coarse_face % 2),
-                                    AmrField::Rho, -1,
-                                    RefinementRule::FineFluxContribution,
-                                    fine_area / coarse_area, 1.0};
-                                append_fields(
-                                    route.plan, prototype, species_count,
-                                    moment_weight);
-                            } else {
-                                const AmrTransferOperation prototype{
-                                    0, source_endpoint, source_endpoint,
-                                    source_face, {{i, j, k}, {1, 1, 1}},
-                                    static_cast<AmrAxis>(direction),
-                                    static_cast<AmrSide>(side),
-                                    AmrField::Rho, -1,
-                                    RefinementRule::CoarseFluxContribution,
-                                    1.0, -1.0};
-                                append_fields(
-                                    route.plan, prototype, species_count);
-                            }
-                        }
-                    }
-                }
+                if (neighbors.level_diff == 1)
+                    append_registration_face(route.plan, source, block.grid, {}, nullptr, direction,
+                                             side, species_count);
             }
-
             if (!route.plan.operations.empty()) {
                 finalize_amr_plan(route.plan);
                 result.routes.push_back(std::move(route));
             }
         }
+    }
+    for (auto& [key, plan] : incoming) {
+        finalize_amr_plan(plan);
+        result.incoming.push_back({key.first, key.second, std::move(plan)});
     }
 
     std::sort(result.routes.begin(), result.routes.end(),

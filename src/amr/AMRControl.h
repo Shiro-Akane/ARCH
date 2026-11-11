@@ -96,10 +96,9 @@ struct AMRControl {
             || cached->dimension != dimension
             || cached->epoch != handles.front().epoch
             || !matches_amr_flux_geometry(*cached,*pool,tree->GetActiveBlocks(),source_block)) {
-            cached = std::make_shared<const AmrFluxTopologyPlan>(
-                build_amr_flux_topology_plan(
-                    *pool, tree->GetActiveBlocks(), handles,
-                    dimension, species_count));
+            cached = std::make_shared<const AmrFluxTopologyPlan>(build_amr_flux_topology_plan(
+                *pool, tree->GetActiveBlocks(), handles, dimension, species_count,
+                &tree->GetRootGrid(), tree->PartitionRank(), tree->PartitionSize()));
             std::atomic_store_explicit(
                 &reflux_topology_plan_,
                 std::shared_ptr<const CachedRefluxPlan>{},
@@ -130,6 +129,65 @@ struct AMRControl {
         return cached->plan;
     }
 
+    /** Complete local Hydro work on the initializing thread before a collective.
+     * Call only from a consistently bound distributed Host lane, after OMP joins.
+     */
+    void CompleteDistributedHydroPhase(std::exception_ptr failure) const {
+#if ARCH_MPI_ENABLED
+        const auto [rank, size] = flux_mpi_detail::require_world();
+        flux_mpi_detail::prepare([&] {
+            if (!tree || size < 2 || tree->PartitionRank() != rank || tree->PartitionSize() != size)
+                throw std::invalid_argument("distributed Hydro communicator/topology mismatch");
+            if (failure)
+                std::rethrow_exception(failure);
+        });
+#else
+        (void)failure;
+        throw std::logic_error("distributed Hydro requires ARCH_ENABLE_MPI=ON");
+#endif
+    }
+
+    /** Run existing local patch work, then register all face values together.
+     * Allocation/gather/solver rejection is agreed before any rank enters the
+     * registration exchange. Failed captures are discarded without receipts.
+     */
+    template <class LocalSolve>
+    void ExecuteDistributedHydroStage(std::uint64_t stage, double weight, LocalSolve&& solve) {
+#if ARCH_MPI_ENABLED
+        const auto [rank, size] = flux_mpi_detail::require_world();
+        std::shared_ptr<const AmrFluxTopologyPlan> topology;
+        std::optional<FluxRegister::HostStageCapture> capture;
+        flux_mpi_detail::prepare([&] {
+            if (!tree || size < 2 || tree->PartitionRank() != rank ||
+                tree->PartitionSize() != size || !amr_plan_detail::is_finite_binary64(weight) ||
+                weight <= 0.)
+                throw std::invalid_argument("invalid distributed Hydro stage binding");
+            (void)RequireFluxTopologyPlan(flux_register.GetNumSpecies());
+            topology = FluxTopologyPlanLease();
+            capture.emplace(flux_register, *topology, weight);
+        });
+        flux_mpi_detail::prepare([&] {
+            std::forward<LocalSolve>(solve)();
+            if (FluxTopologyPlanLease() != topology)
+                throw std::invalid_argument("Host Hydro topology changed during stage");
+            (void)capture->complete_values();
+        });
+        flux_register.ApplyDistributedRegistrationStage(*pool, *tree, ActiveHandles(), *topology,
+                                                        capture->complete_values(), stage, weight);
+#else
+        (void)stage;
+        (void)weight;
+        (void)solve;
+        throw std::logic_error("distributed Hydro requires ARCH_ENABLE_MPI=ON");
+#endif
+    }
+
+    /** Explicit collective boundary; every rank calls after all stage registrations. */
+    void ApplyDistributedReflux(double dt, FluidState Block::* state_ptr,
+                                std::uint64_t completed_stages) {
+        flux_register.ExecuteDistributedReflux(pool, *tree, active_handles_, dt, state_ptr,
+                                               completed_stages);
+    }
 
     void ApplyReflux(double dt, FluidState Block::* state_ptr = &Block::fluid_state) {
         const auto& active_blocks = tree->GetActiveBlocks();
@@ -137,6 +195,10 @@ struct AMRControl {
             flux_register.GetNumSpecies());
         const auto& topology=RequireFluxTopologyPlan(
             flux_register.GetNumSpecies(),-1);
+        // Fixed-grid MPI still uses this legacy empty local operation. Mixed-level
+        // contributions must enter through the explicit all-rank boundary above.
+        if (tree->PartitionSize() > 1 && !topology.routes.empty())
+            throw std::invalid_argument("MPI reflux requires the collective stage boundary");
         flux_register.ValidateTopologyIdentity(topology.fingerprint);
         flux_register.ExecuteRefluxPlan(
             plan, pool, active_blocks, ActiveHandles(), state_ptr, dt);
