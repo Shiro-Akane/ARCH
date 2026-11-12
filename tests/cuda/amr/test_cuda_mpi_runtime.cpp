@@ -20,6 +20,7 @@
 #include <bit>
 #include <iostream>
 #include <cstdint>
+#include <cmath>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -32,6 +33,7 @@ using Side = state::ExecutionSide;
 constexpr std::array slots{Slot::Current, Slot::Next, Slot::Scratch};
 constexpr std::array members{&amr::Block::fluid_state, &amr::Block::state_next, &amr::Block::state_scratch};
 int rank = 0, checks = 0, rejections = 0;
+bool mixed = false;
 std::uint64_t boundary_h2d = 0, boundary_d2h = 0, observed_device_used = 0;
 void require(bool ok, const char* message) { if (!ok) throw std::runtime_error(message); }
 bool same(double a, double b) { return std::bit_cast<std::uint64_t>(a) == std::bit_cast<std::uint64_t>(b); }
@@ -47,9 +49,9 @@ std::array<std::vector<double>*,7> fields(FluidState& s) {
 SimConfig config_for(int dim, bool periodic) {
     SimConfig c{};
     c.grid.dim=dim;c.grid.geometry="cartesian";
-    c.grid.nblockx1=3;c.grid.nblockx2=dim>=2?2:0;c.grid.nblockx3=dim==3?2:0;
+    c.grid.nblockx1=mixed?2:3;c.grid.nblockx2=dim>=2?(mixed?1:2):0;c.grid.nblockx3=dim==3?2:0;
     c.grid.x1_min=0.;c.grid.x1_max=3.;c.grid.x2_min=0.;c.grid.x2_max=2.;c.grid.x3_min=0.;c.grid.x3_max=2.;
-    c.grid.amr_max_blocks=12;c.amr.lrefinemin=c.amr.lrefinemax=0;
+    c.grid.amr_max_blocks=12;c.amr.lrefinemin=0;c.amr.lrefinemax=mixed?1:0;
     const auto bc=periodic?"periodic":"outflow";
     c.grid.x1l_boundary_type=c.grid.x1r_boundary_type=bc;
     c.grid.x2l_boundary_type=c.grid.x2r_boundary_type=bc;
@@ -63,6 +65,53 @@ cuda::CudaLaunchConfig launch(const SimConfig& c) {
         TimeIntegratorId::Euler,EosId::Ideal,NetworkId::None,OdeSolverId::None,
         LinearSolverId::None,DiffusionIntegratorId::None},c);
 }
+void seed(amr::Block& b,int slot,int round);
+// Build the five-leaf case through the already accepted Host regrid transaction.
+// The fixed-root constructor and application preflight keep their existing gates.
+std::vector<amr::BlockHandle> initialize_tree(
+    amr::AMRControl& control,const SimConfig& config,int n,bool distributed) {
+    auto root=config;root.amr.lrefinemax=0;
+    control.tree->InitRootGrid(root,n);
+    if(!mixed)return {};
+    const int owner=distributed?rank:0, count=distributed?2:1;
+    topology::TopologyIdentityRegistry registry({2,{2,1,1},1},owner,count);
+    const auto observations=[&](std::span<const int> ids) {
+        std::vector<topology::TopologyObservation> local;
+        for(int id:ids) {
+            const auto& b=control.pool->GetBlock(id);
+            local.push_back({id,{2,b.level,b.logical_x1,b.logical_x2,b.logical_x3},owner});
+        }
+        return distributed?topology::collect_topology_observations(local,owner,count):local;
+    };
+    auto initial=registry.stage_adoption(observations(control.tree->GetActiveBlocks()));
+    const auto old_handles=initial.reconciliation().handles_in_observation_order;
+    registry.commit(std::move(initial));
+    for(int id:control.tree->GetActiveBlocks())for(int slot=0;slot<3;++slot)
+        seed(control.pool->GetBlock(id),slot,0);
+    auto prepared=control.tree->PrepareRegrid(config,{},{},[&] {
+        for(int id:control.tree->GetActiveBlocks())
+            control.pool->GetBlock(id).refine_flag=control.pool->GetBlock(id).logical_x1==1?1:0;
+    });
+    auto candidate=registry.stage_reconciliation(observations(prepared.proposed_active_blocks()));
+    const auto next=candidate.reconciliation().handles_in_observation_order;
+    if(prepared.topology_changed()) {
+        prepared.BuildMigrationPlans(old_handles,next,{1,registry.epoch(),candidate.reconciliation().epoch});
+        prepared.ExecuteMigration();prepared.ActivateForFinalization();
+        prepared.PublishNoexcept();prepared.ReleaseRetired();
+    } else prepared.PublishNoChangeNoexcept();
+    registry.commit(std::move(candidate));
+    control.tree->UpdateNeighbors(config,registry.blocks());
+    control.BindActiveHandles(next);
+    require(control.pool->GetNumActiveBlocks()==(distributed?(rank?4:1):5),
+        "five-leaf fixture allocated nonlocal storage");
+    return next;
+}
+bool field_equal(double actual,double expected,bool interpolated) {
+    if (!interpolated) return same(actual,expected);
+    // The unchanged native CUDA AMR test uses this Host/Device arithmetic gate.
+    return std::isfinite(actual)&&std::isfinite(expected)
+        &&std::abs(actual-expected)<=2.0e-13*std::max({1.0,std::abs(actual),std::abs(expected)});
+}
 void seed(amr::Block& b, int slot, int round) {
     auto& s=b.*members[slot];
     const double base=100000.*round+10000.*slot+1000.*b.logical_x1+100.*b.logical_x2+10.*b.logical_x3;
@@ -72,6 +121,21 @@ void seed(amr::Block& b, int slot, int round) {
         s.eng[i]=5.+base+i/64.;
         s.enuc_rate[i]=i%7==0?-0.:std::bit_cast<double>(std::uint64_t{0x7ff8000000000123});
         for(int k=0;k<s.GetNumSpecies();++k)s.X(k,i)=(k+1)/128.+i/1048576.;
+        if (mixed) {
+            // The topology transaction exercises physical admissibility too.
+            // Same-level copy sentinels above intentionally need no EOS validity.
+            s.rho[i]=2.+round/8.+slot/16.+b.level/32.+b.logical_x1/64.
+                +b.logical_x2/128.+i/65536.;
+            s.mom_u[i]=s.rho[i]/4.;s.mom_v[i]=-s.rho[i]/8.;s.mom_w[i]=s.rho[i]/16.;
+            s.eng[i]=8.+s.rho[i]/8.+slot/4.;
+            s.enuc_rate[i]=-0.25+slot/16.+i/1048576.;
+            double rest=0.;
+            for(int k=1;k<s.GetNumSpecies();++k) {
+                s.X(k,i)=0.5/s.GetNumSpecies()+(k%3)*(i%7)/1048576.;
+                rest+=s.X(k,i);
+            }
+            s.X(0,i)=1.-rest;
+        }
     }
 }
 // The independent serial oracle uses the original Host boundary recipe.
@@ -83,23 +147,26 @@ struct Reference {
     amr::AMRControl control;
     BCHandler bc;
     std::vector<amr::BlockHandle> handles;
+    std::array<bool,3> refreshed{};
     const SpeciesManager& populate(int n) {
         for(int i=0;i<n;++i)species.add_species("s"+std::to_string(i),1.,1.,1.4,1.);
         return species;
     }
     Reference(int dim,int n,bool periodic)
         :config(config_for(dim,periodic)),eos(1.4,populate(n)),control(12,dim),bc(config) {
-        bc.bind(eos,species);control.tree->InitRootGrid(config,n);
-        for(std::size_t i=0;i<control.tree->GetActiveBlocks().size();++i)
+        bc.bind(eos,species);handles=initialize_tree(control,config,n,false);
+        if(!mixed)for(std::size_t i=0;i<control.tree->GetActiveBlocks().size();++i)
             handles.push_back({{i+1},{1}});
         control.BindActiveHandles(handles);
     }
     void reset(int round) {
+        refreshed.fill(false);
         for(int id:control.tree->GetActiveBlocks())
             for(int s=0;s<3;++s)seed(control.pool->GetBlock(id),s,round);
     }
     void ensure_fluid_ghosts(Slot slot) {
         TimeIntegration::synchronize_domain_boundary(control,bc,members[static_cast<std::size_t>(slot)],handles);
+        refreshed[static_cast<std::size_t>(slot)]=true;
     }
 };
 struct Run {
@@ -116,7 +183,7 @@ struct Run {
     }
     amr::AMRControl& initialize_control(bool distributed,int n) {
         if(distributed)control.tree->SetRootPartition(rank,2);
-        control.tree->InitRootGrid(config,n);
+        initialize_tree(control,config,n,distributed);
         for(int id:control.tree->GetActiveBlocks())for(int s=0;s<3;++s)seed(control.pool->GetBlock(id),s,0);
         return control;
     }
@@ -133,6 +200,7 @@ struct Run {
             for(const auto& b:topology)bindings.push_back({b.block,b.handle,b.storage,b.physical_boundary,b.hydro_boundary});
             runtime.install_backend(cuda::make_cuda_backend(bindings,0,launch(config),species,eos));
             runtime.upload_initial_state();
+            if(!mixed)runtime.prepare_device_flux_plans();
         }
     }
     void reset(int round) {
@@ -166,7 +234,7 @@ struct Run {
         const auto& active=control.tree->GetActiveBlocks();
         for(std::size_t i=0;i<active.size();++i) {
             auto& b=control.pool->GetBlock(active[i]);
-            const auto id=oracle.control.tree->FindBlock(0,b.logical_x1,b.logical_x2,b.logical_x3);
+            const auto id=oracle.control.tree->FindBlock(b.level,b.logical_x1,b.logical_x2,b.logical_x3);
             require(id>=0,"serial oracle block missing");
             std::array<std::vector<int>,2> regions;
             for(int k=0;k<b.grid.GetTotalZ();++k)
@@ -188,7 +256,7 @@ struct Run {
                     const std::array want{expected.rho[cell],expected.mom_u[cell],expected.mom_v[cell],
                         expected.mom_w[cell],expected.eng[cell],expected.enuc_rate[cell]};
                     for(std::size_t field=0;field<got.size();++field) {
-                        if(!same(got[field],want[field])) {
+                        if(!field_equal(got[field],want[field],mixed&&r==1&&oracle.refreshed[s])) {
                             std::cerr<<"rank="<<rank<<" dim="<<config.grid.dim<<" slot="<<s
                                 <<" block="<<b.logical_x1<<","<<b.logical_x2<<","<<b.logical_x3
                                 <<" cell="<<cell<<" field="<<field
@@ -197,9 +265,13 @@ struct Run {
                             throw std::runtime_error("Runtime CUDA MPI field/ghost/untouched-slot bit mismatch");
                         }
                     }
-                    for(int k=0;k<species.count();++k)
-                        require(same(result.composition[j*species.count()+k],expected.X(k,cell)),
-                            "Runtime CUDA MPI species bit mismatch");
+                    for(int k=0;k<species.count();++k) {
+                        const double fraction=result.composition[j*species.count()+k];
+                        require(field_equal(fraction,expected.X(k,cell),mixed&&r==1&&oracle.refreshed[s]),
+                            "Runtime CUDA MPI species mismatch");
+                        if(mixed)require(std::isfinite(fraction)&&fraction>=0.&&fraction<=1.,
+                            "mixed-level exchange produced invalid composition");
+                    }
                 }
             }
         }
@@ -218,6 +290,12 @@ template<class Action> void rejected(Action&& action) {
 void run(int dim,int species,bool periodic) {
     Run actual(dim,species,periodic,true);
     Reference oracle(dim,species,periodic);
+    if(mixed) {
+        // Boundary readiness must not imply that remote reflux is supported.
+        rejected([&]{actual.runtime.prepare_device_flux_plans();});
+        rejected([&]{actual.runtime.backend()->clear_amr_flux_register(
+            {1000,state::CompletionState::Complete});});
+    }
     for(int repeat=1;repeat<=2;++repeat) {
         actual.reset(repeat);oracle.reset(repeat);
         for(auto slot:slots) {
@@ -282,10 +360,13 @@ void run(int dim,int species,bool periodic) {
     storage.source_version=version.value;
     storage.begin=[&]{for(auto h:runtime.handles())context.ledger.invalidate_ghost({h,Slot::Current},Side::Device);};
     storage.gather=[&](auto slices,auto packet){runtime.backend()->gather_exchange_packet(accesses,slices,packet);};
+    storage.gather_coarse_fine=[&](const auto& cells,auto packet){
+        runtime.backend()->gather_coarse_fine_packet(accesses,cells,packet);
+    };
     int phase=0;
     storage.scatter=[&](auto slices,auto packet){
         runtime.backend()->scatter_exchange_packet(accesses,slices,packet);
-        if(++phase==1&&rank==1)throw std::runtime_error("injected completed-scatter rejection");
+        if(++phase==(mixed?3:1)&&rank==1)throw std::runtime_error("injected completed-scatter rejection");
     };
     rejected([&]{actual.control.ghost_exchange.ExecuteDistributedExchange(actual.control.pool,
         actual.control.tree,dim,&amr::Block::fluid_state,runtime.handles(),&storage);});
@@ -293,23 +374,56 @@ void run(int dim,int species,bool periodic) {
         require(context.ledger.inspect({h,Slot::Current}).ghost.residency==state::StateResidency::Invalid,
             "failed distributed exchange exposed ghost completion");
     actual.refresh();actual.compare(oracle);
+    if (mixed) {
+        // Fail the actual source-owner gather with invalid Device density.
+        // Host mirrors stay poisoned: using them would fail every normal case too.
+        actual.reset(3);
+        if (rank==0) {
+            auto& b=actual.control.pool->GetBlock(actual.control.tree->GetActiveBlocks().front());
+            seed(b,0,3);
+            std::fill(b.fluid_state.rho.begin(),b.fluid_state.rho.end(),-1.);
+            runtime.backend()->enqueue_upload_slot(runtime.backend_access(0,Slot::Current),
+                Region::Interior,view(b.fluid_state));
+            runtime.backend()->quiesce();
+            for(auto* f:fields(b.fluid_state))std::fill(f->begin(),f->end(),-123456789.);
+        }
+        rejected([&]{actual.refresh();});
+        for(auto h:runtime.handles())
+            require(context.ledger.inspect({h,Slot::Current}).ghost.residency==state::StateResidency::Invalid,
+                "failed source gather published ghosts");
+        if(rank==0) {
+            const auto& b=actual.control.pool->GetBlock(actual.control.tree->GetActiveBlocks().front());
+            const int cell=b.grid.GetIndex(b.grid.Is(),b.grid.Js(),b.grid.Ks());
+            const auto sample=runtime.backend()->read_boundary_cells(
+                runtime.backend_access(0,Slot::Current),{&cell,1},Region::Interior);
+            require(same(sample.conserved.front().rho,-1.),"failed source gather changed interior");
+        }
+        actual.reset(4);oracle.reset(4);
+        for(auto slot:slots) {
+            oracle.ensure_fluid_ghosts(slot);actual.refresh(slot);actual.compare(oracle);
+        }
+    }
     runtime.materialize_current_for_host();
     for(int id:actual.control.tree->GetActiveBlocks()) {
         auto& block=actual.control.pool->GetBlock(id);
-        const auto ref=oracle.control.tree->FindBlock(0,block.logical_x1,block.logical_x2,block.logical_x3);
+        const auto ref=oracle.control.tree->FindBlock(block.level,block.logical_x1,block.logical_x2,block.logical_x3);
         const auto got=fields(block.fluid_state);
         const auto expected=fields(oracle.control.pool->GetBlock(ref).fluid_state);
         // The region transfer contract copies logical cells, never allocation padding.
         // Check every physical/ghost value and require poisoned Host padding to survive.
-        std::vector<bool> logical(block.grid.GetTotalSize(),false);
+        std::vector<bool> logical(block.grid.GetTotalSize(),false),ghost(logical.size(),false);
         for(int k=0;k<block.grid.GetTotalZ();++k)
             for(int j=0;j<block.grid.GetTotalY();++j)
-                for(int x=0;x<block.grid.GetTotalX();++x)
-                    logical[block.grid.GetIndex(x,j,k)]=true;
+                for(int x=0;x<block.grid.GetTotalX();++x) {
+                    const auto index=block.grid.GetIndex(x,j,k);
+                    logical[index]=true;
+                    ghost[index]=x<block.grid.Is()||x>=block.grid.Ie()
+                        ||j<block.grid.Js()||j>=block.grid.Je()||k<block.grid.Ks()||k>=block.grid.Ke();
+                }
         for(std::size_t field=0;field<got.size();++field)
             for(std::size_t cell=0;cell<got[field]->size();++cell) {
                 const double want=logical[cell%logical.size()]?(*expected[field])[cell]:-123456789.;
-                if(!same((*got[field])[cell],want)) {
+                if(!field_equal((*got[field])[cell],want,mixed&&ghost[cell%logical.size()])) {
                     std::cerr<<"rank="<<rank<<" dim="<<dim<<" field="<<field<<" offset="<<cell
                         <<" logical="<<logical[cell%logical.size()]<<std::endl;
                     throw std::runtime_error("Runtime materialization field/padding mismatch");
@@ -337,14 +451,17 @@ int main(int argc,char** argv) {
         int devices=0;const int local=cudaGetDeviceCount(&devices)==cudaSuccess&&devices>0?1:0;
         int ready=0;MPI_Allreduce(&local,&ready,1,MPI_INT,MPI_MIN,MPI_COMM_WORLD);
         if(!ready){if(!rank)std::cout<<"SKIP no CUDA device\n";MPI_Finalize();return 77;}
-        for(int dim:{1,2,3})for(int species:{1,4,37})for(bool periodic:{false,true})run(dim,species,periodic);
+        mixed=argc==2&&std::string(argv[1])=="--mixed";
+        if(mixed)for(int species:{1,4,37})for(bool periodic:{false,true})run(2,species,periodic);
+        else for(int dim:{1,2,3})for(int species:{1,4,37})for(bool periodic:{false,true})run(dim,species,periodic);
         std::array<std::uint64_t,3> traffic{boundary_h2d,boundary_d2h,observed_device_used};
         std::array<std::uint64_t,6> all{};
         MPI_Gather(traffic.data(),3,MPI_UINT64_T,all.data(),3,MPI_UINT64_T,0,MPI_COMM_WORLD);
         if(!rank)for(int r=0;r<2;++r)std::cout<<"boundary traffic rank="<<r
             <<" h2d_including_metadata="<<all[3*r]<<" d2h="<<all[3*r+1]
             <<" observed_device_used_including_test_and_contexts="<<all[3*r+2]<<std::endl;
-        if(!rank)std::cout<<"PASS CUDA MPI Runtime layouts=18 full_state_checks="<<checks
+        if(!rank)std::cout<<"PASS CUDA MPI Runtime mixed="<<mixed<<" layouts="<<(mixed?6:18)
+            <<" full_state_checks="<<checks
             <<" collective_rejections="<<rejections<<std::endl;
         MPI_Finalize();return 0;
     } catch(const std::exception& e) {

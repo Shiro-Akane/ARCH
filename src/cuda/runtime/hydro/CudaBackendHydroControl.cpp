@@ -829,14 +829,39 @@ void CudaBackend::Impl::execute_coarse_fine_exchange(
         throw std::invalid_argument(
             "invalid CUDA coarse-fine exchange contract");
     amr::validate_amr_plan(plan);
+    const auto& first = resolve(accesses.front());
+    const auto cells = amr::compile_coarse_fine_cell_plan(
+        plan, first.require_access(accesses.front()).n_species);
+    execute_coarse_fine_cells(accesses, cells, slot, resolve, false, {});
+}
 
+void CudaBackend::gather_coarse_fine_packet(
+    std::span<const backend::BackendStateAccess> accesses,
+    const amr::CoarseFineCellPlan& cells, std::span<double> outgoing)
+{
+    if (accesses.empty())
+        throw std::invalid_argument("CUDA coarse-fine packet requires local source bindings");
+    impl_->execute_coarse_fine_cells(accesses, cells, accesses.front().slot,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            return impl_->require_block(access);
+        }, true, outgoing);
+}
+
+void CudaBackend::Impl::execute_coarse_fine_cells(
+    std::span<const backend::BackendStateAccess> accesses,
+    const amr::CoarseFineCellPlan& cell_plan, state::StateSlot slot,
+    const BlockResolver& resolve, bool gather_only, std::span<double> outgoing)
+{
+    if (accesses.empty() || accesses.size() > static_cast<std::size_t>(INT_MAX)
+        || cell_plan.dimension < 1 || cell_plan.dimension > 3)
+        throw std::invalid_argument("invalid CUDA coarse-fine cell bindings");
     std::map<amr::BlockHandle, int> indices;
     std::vector<DeviceExchangeBlock> host_blocks;
     host_blocks.reserve(accesses.size());
     int species_count = -1;
     for (const backend::BackendStateAccess& access : accesses) {
         if (access.slot != slot
-            || access.block.epoch != plan.scope.from_epoch)
+            || access.block.epoch != cell_plan.scope.from_epoch)
             throw std::invalid_argument(
                 "stale CUDA coarse-fine exchange access");
         CudaBlockRuntime& block = resolve(access);
@@ -845,7 +870,7 @@ void CudaBackend::Impl::execute_coarse_fine_exchange(
             throw std::invalid_argument(
                 "duplicate CUDA coarse-fine exchange access");
         const DeviceStateView selected = block.require_access(access);
-        if (block.grid.dim != plan.dimension)
+        if (block.grid.dim != cell_plan.dimension)
             throw std::invalid_argument(
                 "CUDA coarse-fine exchange dimension mismatch");
         if (species_count >= 0 && selected.n_species != species_count)
@@ -854,18 +879,22 @@ void CudaBackend::Impl::execute_coarse_fine_exchange(
         species_count = selected.n_species;
         host_blocks.push_back({selected, block.grid});
     }
-    if (species_count < 0)
+    if (species_count < 0 || species_count > INT_MAX - 6)
         throw std::invalid_argument(
-            "CUDA coarse-fine exchange requires blocks");
+            "CUDA coarse-fine exchange species extent is invalid");
 
-    const amr::CoarseFineCellPlan cell_plan =
-        amr::compile_coarse_fine_cell_plan(plan, species_count);
+    if (cell_plan.species_count != species_count)
+        throw std::invalid_argument("CUDA coarse-fine packet species mismatch");
     if (cell_plan.transfers.size()
         > static_cast<std::size_t>(std::numeric_limits<int>::max()))
         throw std::overflow_error(
             "CUDA coarse-fine transfer count overflow");
     const std::uint64_t field_count = static_cast<std::uint64_t>(
         6 + species_count);
+    if (gather_only && (outgoing.size() > static_cast<std::size_t>(INT_MAX)
+        || cell_plan.transfers.size() > outgoing.size() / field_count
+        || outgoing.size() != cell_plan.transfers.size() * field_count))
+        throw std::invalid_argument("CUDA coarse-fine packet extent mismatch");
     if (field_count < 6
         || field_count > static_cast<std::uint64_t>(
             std::numeric_limits<int>::max()))
@@ -895,15 +924,24 @@ void CudaBackend::Impl::execute_coarse_fine_exchange(
          : cell_plan.transfers) {
         const auto source = indices.find(transfer.source.handle);
         const auto destination = indices.find(transfer.destination.handle);
-        if (source == indices.end() || destination == indices.end())
+        if (source == indices.end() || (!gather_only && destination == indices.end())
+            || transfer.source.handle.epoch != cell_plan.scope.from_epoch
+            || transfer.destination.handle.epoch != cell_plan.scope.from_epoch)
             throw std::invalid_argument(
                 "CUDA coarse-fine endpoint is missing");
         DeviceCoarseFineTransfer lowered{};
         lowered.source_block = source->second;
-        lowered.destination_block = destination->second;
-        lowered.destination_cell = cell_index(
-            host_blocks[destination->second].grid,
-            transfer.destination_cell);
+        // A source-side packet must never resolve or allocate remote storage.
+        lowered.destination_block = -1;
+        if (!gather_only) {
+            lowered.destination_block = destination->second;
+            lowered.destination_cell = cell_index(
+                host_blocks[destination->second].grid, transfer.destination_cell);
+        }
+        const bool injection = transfer.rule == amr::RefinementRule::CoarseGhostInjection;
+        if ((!injection && transfer.rule != amr::RefinementRule::FineGhostAverage)
+            || transfer.source_count != (injection ? 1 : (1 << cell_plan.dimension)))
+            throw std::invalid_argument("CUDA coarse-fine source recipe is invalid");
         lowered.source_count = transfer.source_count;
         if (transfer.rule == amr::RefinementRule::CoarseGhostInjection) {
             lowered.prolongation_dimension = static_cast<std::uint8_t>(
@@ -991,16 +1029,22 @@ void CudaBackend::Impl::execute_coarse_fine_exchange(
                        device_blocks.get(), device_transfers.get(),
                        static_cast<int>(host_transfers.size()),
                        static_cast<int>(field_count), scratch.get(),
-                       exchange_status.get(), stream.get()),
+                       exchange_status.get(), stream.get(), gather_only),
                    "launch CUDA coarse-fine exchange");
     
     check_cuda(cudaMemcpyAsync(
                    &status, exchange_status.get(), sizeof(int),
                    cudaMemcpyDeviceToHost, stream.get()),
                "download CUDA coarse-fine exchange status");
+    if (gather_only) {
+        check_cuda(cudaMemcpyAsync(outgoing.data(), scratch.get(),
+            outgoing.size_bytes(), cudaMemcpyDeviceToHost, stream.get()),
+            "download CUDA coarse-fine packet");
+        runtime_counters.bytes_d2h += outgoing.size_bytes();
+    }
     checked_quiesce("synchronize CUDA coarse_fine exchange");
     work_guard.completed = true;
-    runtime_counters.kernel_count += 2;
+    runtime_counters.kernel_count += gather_only ? 1 : 2;
     runtime_counters.bytes_d2h += sizeof(int);
     if (status != 0)
         throw std::runtime_error(

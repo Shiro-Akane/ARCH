@@ -57,3 +57,5 @@ Non-default transcripts identify those controls and retain the same three ODE
 methods and numerical budgets. Completed production checks and separate
 experimental-provider capacity results are indexed in the
 [HPC-CUDA campaign summary](../../validation/backend/results/hpc-cuda-optimization/README.md).
+
+The mpi_cuda_mixed_2 mode of [the Runtime witness](amr/test_cuda_mpi_runtime.cpp) covers a two-rank, five-leaf Cartesian ghost exchange. It retains the original CUDA AMR arithmetic tolerance and rejects unqualified distributed flux/reflux preparation. It does not validate a GPU Hydro macrostep.

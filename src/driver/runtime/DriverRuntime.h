@@ -99,6 +99,8 @@ public:
     std::vector<backend::BackendTopologyBinding> prepare_backend_bindings();
     void install_backend(std::unique_ptr<backend::ComputeBackend>);
     void upload_initial_state();
+    /** Bind numerical-stage flux/reflux resources after storage upload succeeds. */
+    void prepare_device_flux_plans();
 
     scheduler::StageExecutionContext stage_context();
     /** Native static mixed-level Host lane; application preflight remains separate. */

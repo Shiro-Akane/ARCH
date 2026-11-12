@@ -626,6 +626,7 @@ void start_compute_backend(DriverRuntime& runtime, const EosPolicy& eos,
         order.record(dispatch::StartupEvent::Constructed);
         order.record(dispatch::StartupEvent::Allocated);
         runtime.upload_initial_state();
+        runtime.prepare_device_flux_plans();
 #else
         throw std::logic_error("CUDA backend is unavailable");
 #endif

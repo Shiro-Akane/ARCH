@@ -121,6 +121,7 @@ void run_jeans_runtime_lease()
     runtime.install_backend(arch::cuda::make_cuda_backend(bindings,0,
         launch_config(config),species,eos));
     runtime.upload_initial_state();
+    runtime.prepare_device_flux_plans();
     const auto initial=runtime.evaluate_current_jeans_resolution();
     require(initial.size()==2,"Runtime JENS initial extent mismatch");
     auto context=runtime.stage_context();
@@ -241,6 +242,7 @@ void run_jeans_runtime_transactions(int dimension,bool capacity_failure=false,bo
     runtime.install_backend(arch::cuda::make_cuda_backend(bindings,0,
         launch_config(config),species,eos));
     runtime.upload_initial_state();
+    runtime.prepare_device_flux_plans();
     const auto root_minima=runtime.evaluate_current_jeans_resolution();
     require(root_minima.size()==4 && root_minima.front()<160. && root_minima.front()>64.,
         "frozen uniform geometry did not bracket the requested target");

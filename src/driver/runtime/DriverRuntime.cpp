@@ -626,7 +626,7 @@ void DriverRuntime::install_backend(std::unique_ptr<backend::ComputeBackend> bac
     compute_backend = std::move(backend);
 }
 
-/** Upload only accepted Current and bind the original immutable transport plans. */
+/** Upload only accepted Current; numerical-stage plans have their own preparation boundary. */
 void DriverRuntime::upload_initial_state()
 {
     const auto& active = amr_ctrl.tree->GetActiveBlocks();
@@ -639,6 +639,16 @@ void DriverRuntime::upload_initial_state()
             arch::state::PendingTransferPhase::PendingH2D, 0,
             arch::backend::BackendOperation::InitialUpload);
     }
+}
+
+void DriverRuntime::prepare_device_flux_plans()
+{
+    if (!compute_backend)
+        throw std::logic_error("Device flux preparation requires an installed backend");
+    // The committed global registry gives every rank the same support boundary.
+    // Ghost transport readiness alone cannot authorize a numerical macrostep.
+    if (distributed_hydro_topology())
+        throw std::logic_error("distributed Device flux/reflux preparation is not yet available");
     compute_backend->prepare_amr_flux_plan(
         amr_ctrl.RequireFluxTopologyPlan(specs.count()),
         amr_ctrl.RequireRefluxTopologyPlan(specs.count()));

@@ -152,7 +152,7 @@ __global__ void scatter_coarse_fine_exchange_kernel(
 inline cudaError_t launch_coarse_fine_exchange(
     const DeviceExchangeBlock* blocks,
     const DeviceCoarseFineTransfer* transfers, int transfer_count,
-    int field_count, double* scratch, int* status, cudaStream_t stream)
+    int field_count, double* scratch, int* status, cudaStream_t stream, bool gather_only)
 {
     if (transfer_count == 0) return cudaSuccess;
     if (blocks == nullptr || transfers == nullptr || scratch == nullptr
@@ -173,7 +173,7 @@ inline cudaError_t launch_coarse_fine_exchange(
         <<<static_cast<unsigned int>(block_count), threads, 0, stream>>>(
             blocks, transfers, field_count, work, scratch, status);
     result = cudaGetLastError();
-    if (result != cudaSuccess) return result;
+    if (result != cudaSuccess || gather_only) return result;
     scatter_coarse_fine_exchange_kernel
         <<<static_cast<unsigned int>(block_count), threads, 0, stream>>>(
             blocks, transfers, field_count, work, scratch, status);

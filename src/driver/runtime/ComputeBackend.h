@@ -36,7 +36,7 @@
 #include <vector>
 
 namespace Physical::Gravity { class GravityExecution; class IGravityPolicy; }
-namespace amr { struct AmrFluxTopologyPlan; struct Block; struct CoordinateSeamPlan; }
+namespace amr { struct CoarseFineCellPlan; struct AmrFluxTopologyPlan; struct Block; struct CoordinateSeamPlan; }
 namespace arch::boundary { class BoundaryPlan; }
 
 namespace arch::backend {
@@ -298,6 +298,12 @@ public:
     virtual void scatter_exchange_packet(std::span<const BackendStateAccess>,
         std::span<const amr::ExchangePacketSlice>, std::span<const std::uint64_t>) {
         throw std::logic_error("backend exchange packet scatter is unavailable");
+    }
+
+    /** Evaluate the existing coarse/fine recipe on local source storage only. */
+    virtual void gather_coarse_fine_packet(std::span<const BackendStateAccess>,
+        const amr::CoarseFineCellPlan&, std::span<double>) {
+        throw std::logic_error("backend coarse-fine packet gather is unavailable");
     }
 
     /** Explicit candidate namespace only; unsupported backends never fall back. */

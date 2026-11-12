@@ -625,6 +625,7 @@ void curved_runtime(const char* geometry,double inner,int roots,int steps,
         runtime.install_backend(cuda::make_cuda_backend(bindings,0,
             cuda::make_cuda_launch_config(plan,config),species,eos));
         runtime.upload_initial_state();
+        runtime.prepare_device_flux_plans();
 #else
         throw std::runtime_error("Device conservation fixture requires a CUDA build");
 #endif

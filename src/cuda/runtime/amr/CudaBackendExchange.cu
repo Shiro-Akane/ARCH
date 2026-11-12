@@ -121,10 +121,10 @@ cudaError_t launch_cuda_backend_exchange_phase(
 cudaError_t launch_cuda_backend_coarse_fine_exchange(
     const DeviceExchangeBlock* blocks,
     const DeviceCoarseFineTransfer* transfers, int transfer_count,
-    int field_count, double* scratch, int* status, cudaStream_t stream)
+    int field_count, double* scratch, int* status, cudaStream_t stream, bool gather_only)
 {
     return launch_coarse_fine_exchange(
-        blocks, transfers, transfer_count, field_count, scratch, status, stream);
+        blocks, transfers, transfer_count, field_count, scratch, status, stream, gather_only);
 }
 
 cudaError_t launch_cuda_backend_boundary_plan(

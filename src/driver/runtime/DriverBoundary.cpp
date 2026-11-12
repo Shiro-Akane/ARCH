@@ -90,6 +90,9 @@ state::CompletionToken DriverRuntime::execute_device_boundary_domain(
             storage.scatter = [&](auto slices, auto packet) {
                 compute_backend->scatter_exchange_packet(accesses, slices, packet);
             };
+            storage.gather_coarse_fine = [&](const auto& cells, auto packet) {
+                compute_backend->gather_coarse_fine_packet(accesses, cells, packet);
+            };
         } catch (...) { failure = std::current_exception(); }
         amr::GhostExchange::CompleteDistributedPhase(failure);
         amr_ctrl.ghost_exchange.ExecuteDistributedExchange(

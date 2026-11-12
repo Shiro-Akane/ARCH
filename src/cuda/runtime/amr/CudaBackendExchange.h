@@ -88,7 +88,7 @@ cudaError_t launch_cuda_backend_exchange_phase(
 cudaError_t launch_cuda_backend_coarse_fine_exchange(
     const DeviceExchangeBlock* blocks,
     const DeviceCoarseFineTransfer* transfers, int transfer_count,
-    int field_count, double* scratch, int* status, cudaStream_t stream);
+    int field_count, double* scratch, int* status, cudaStream_t stream, bool gather_only);
 
 cudaError_t launch_cuda_backend_boundary_plan(
     DeviceStateView state, const DeviceBoundaryTransfer* device_transfers,

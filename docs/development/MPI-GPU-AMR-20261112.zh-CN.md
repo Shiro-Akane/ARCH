@@ -90,7 +90,7 @@ DriverRuntime 使用现有 ledger 和 scheduler 完成边界发布。缓存查�
 版本、slot、epoch 必须一致；completion token 属于各 rank 的本地时钟，不能因
 不等量分块的上传次数不同而要求其数值相等。
 
-当前路径只接受 Cartesian 同层边界。mixed-level 在任何 storage 回调前共同拒绝；
+G1 提交 9f655aac 当时只接受 Cartesian 同层边界。mixed-level 在任何 storage 回调前共同拒绝；
 用户边界、GPU Hydro 宏步、reflux、设备迁移与应用开放仍由后续阶段单独验证。
 GPU MPI 和 MPI-AMR 的 ExecutionPreflight 门槛未改。
 
@@ -152,7 +152,7 @@ CPU Release/Debug、MPI ON/OFF 共 56 项相关 CTest 通过且无跳过；
 没有 compute-sanitizer 结果，也未构建/开放完整 CUDA MPI 应用。
 新提交 CI 在推送后单独触发，最终状态保存在同一证据目录。
 
-## G2 的具体入口
+## G2 的实施顺序
 
 G1 完成后，先在原 ExecuteRemoteCoarseFinePlan 的请求/回复流程接入设备存储。
 源 owner 使用现有 CoarseFineCellPlan 及 CUDA coarse/fine gather 生成最终 ghost
@@ -163,7 +163,62 @@ restriction 和守恒配方，不需要给本 rank 建立远端设备块，也�
 reflux 与 Euler、RK2、RK3 的完整宏步。设备端单侧失败必须在下一次通信前共同
 退出，失败恢复保留已接受的 interior、拓扑、池及 CUDA store。随后才将 Host
 迁移/同胞合并事务接到 CUDA StoreTransaction，并处理接收容量与退休事件。
-这些是后续工作，当前增量不宣称已执行。
+下节记录 ghost 交换的落实；完整宏步与迁移另行验收。
+
+## G2-1：跨 rank GPU 粗细 ghost 交换（2026-11-13）
+
+本增量使用原 ExecuteRemoteCoarseFinePlan 的请求/回复、owner 校验和完整性检查。
+本地 donor 与远端请求的 donor 都通过原 CoarseFineCellPlan 及 CUDA gather 计算，
+完成后回传紧凑的 6+species 字段包。目的 owner 在全部回复通过检查后，
+复用 G1 的 scatter 写 ghost，再执行原二维角点补齐顺序。只为本 rank 分配字段。
+
+原 CUDA coarse/fine lowering 由本地完整交换和源端 gather 共用；launcher 的
+gather-only 参数必须显式传入。共享数学库及 CUDA 数值 kernel 主体逐字核对未变，
+插值、限制、composition closure、几何权重和错误阈值均沿用原实现。
+
+原 upload_initial_state 同时承担字段上传和 flux/reflux 准备，会把远端通量依赖
+带进独立边界测试。现将通量准备明确为 prepare_device_flux_plans；完整应用及
+原有测试仍在上传之后立即调用它，顺序不变。原全局拓扑 registry 让每 rank
+在有细化块时一致拒绝尚未支持的分布式 Device flux/reflux 准备，
+避免某个 rank 因本地通量计划为空而误认为已经就绪。边界测试单独验收状态上传
+与 ghost 操作，并检查 flux/reflux 仍不可用；没有开放应用预检。
+
+新增 mpi_cuda_mixed_2 与同层见证共用原 Runtime 测试文件，五叶网格先通过
+已验收的 Host 细化事务构造。rank 0 持有一个 coarse leaf，rank 1 持有四个 fine leaf；
+覆盖二维 Cartesian、species 1/4/37、outflow/periodic，共六种组合。
+每种构建共每 rank 102 次全状态对照和 41 次双 rank 拒绝检查，
+包括三个槽、非对称缓存、写入完成后单侧拒绝、源端无效密度、恢复重试、
+Host materialization 与 padding。Host 镜像覆盖为哨兵，禁止从旧 Host 字段取得答案。
+
+同层、active cell、未刷新槽、padding 继续逐位比较；
+粗细 ghost 运算使用已有 test_cuda_amr_exchange 的 2e-13 相对尺度门槛，
+另检查 species 有限且位于 [0,1]，没有放宽原门槛。
+这是边界操作验收，不是守恒时间演化或 GPU Hydro 宏步验收。
+
+失败记录保留在 /home/ubuntu/projects/ARCH-mpi-evidence-gpu-mixed-20261113：
+固定根网格构造限制、测试父状态不满足物理可接受性、初始上传耦合远端通量绑定、
+rank 间通量就绪状态不一致，以及源端调用遗漏 gather-only 参数。
+最后一项曾使旧 scatter 访问无效目的索引；修正为显式参数后重新执行完整实机矩阵。
+这些失败没有通过删检查、放宽数值门槛或修改公式解决。
+
+Release 与 Debug 的 GPU MPI、原 CUDA AMR exchange/regrid 共 10 项 CTest 通过且无跳过。
+CPU Release/Debug × MPI ON/OFF 的 coarse/fine、exchange 与生命周期回归共 24 项通过；
+629 项 tooling 通过且无跳过。CUDA OFF 或 MPI OFF 不注册新增 GPU MPI 用例。
+
+G1 基线 9f655aac 的双方 CI 已在本轮核对全部成功：
+[朋友仓库](https://github.com/Shiro-Akane/ARCH/actions/runs/43177651764)、
+[自有仓库](https://github.com/Arsenic-er/ARCH/actions/runs/43177664080)。
+G2-1 新提交另行触发 CI，不沿用该结果。
+
+源码、JUnit、二进制、通信字节与最终回归结果见
+[本增量结构化摘要](../../validation/backend/results/mpi-gpu-mixed-20261113/summary.json)。
+同一 GPU 上另有实验，本轮时长及 cudaMemGetInfo 总量不代表独占性能或本项目峰值。
+数据和构建保留在服务器；本增量没有进行额外文件清理。
+
+下一步 G2-2 接原通量捕获、跨 owner register 汇总和 reflux 提交：
+先确保缺包/重复包/错误 owner/单侧计算失败不能提交，再分别验收
+Euler/RK2/RK3 的跨 rank GPU 宏步。之后才进行设备迁移、重网格与输出/重启。
+本次尚未执行这些步骤，完整 GPU MPI/AMR 应用仍未开放。
 
 ## 服务器资源与恢复
 

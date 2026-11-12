@@ -452,13 +452,14 @@ public:
 
     /** Storage callbacks borrow the existing packet; they own neither topology
      * nor transport. Completion is synchronous, including exceptional exits.
-     * The first device consumer is Cartesian same-level exchange only.
+     * Device consumers reuse Cartesian same-level and coarse/fine recipes.
      */
     struct DistributedStorage {
         std::uint64_t source_version = 0;
         std::function<void()> begin;
         std::function<void(std::span<const ExchangePacketSlice>, std::span<std::uint64_t>)> gather;
         std::function<void(std::span<const ExchangePacketSlice>, std::span<const std::uint64_t>)> scatter;
+        std::function<void(const CoarseFineCellPlan&, std::span<double>)> gather_coarse_fine;
     };
 
     /** Agree local boundary failures before a peer can enter its next collective. */
@@ -663,8 +664,8 @@ public:
         CheckMpi(
             MPI_Allreduce(&has_coarse_fine, &any_coarse_fine, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD));
         PrepareMpi([&] {
-            if (storage && any_coarse_fine)
-                throw std::invalid_argument("distributed device coarse-fine exchange is not yet available");
+            if (storage && any_coarse_fine && !storage->gather_coarse_fine)
+                throw std::invalid_argument("distributed storage lacks coarse-fine gather");
             const auto decode = [&](std::size_t at) {
                 const auto* w = global.data() + at;
                 if (w[0] != static_cast<std::uint64_t>(dim) || w[1] > 31 || w[2] > UINT32_MAX ||
@@ -827,7 +828,8 @@ public:
         for (int axis = 0; axis < dim; ++axis)
             execute(sweeps[axis]);
         // Empty-work ranks participate; local plan emptiness cannot select collectives.
-        if (!storage) ExecuteRemoteCoarseFinePlan(coarse_fine, pool, tree, dim, slot, handles);
+        if (!storage || any_coarse_fine)
+            ExecuteRemoteCoarseFinePlan(coarse_fine, pool, tree, dim, slot, handles, storage);
         if (dim == 2 && any_coarse_fine)
             for (int axis = 0; axis < dim; ++axis)
                 execute(sweeps[3 + axis]);
@@ -901,7 +903,8 @@ public:
                                      const std::shared_ptr<MemoryPool>& pool,
                                      const std::shared_ptr<AmrTree>& tree, int dim,
                                      FluidState Block::* slot,
-                                     std::span<const BlockHandle> handles) {
+                                     std::span<const BlockHandle> handles,
+                                      const DistributedStorage* storage = nullptr) {
 #if ARCH_MPI_ENABLED
         const auto [rank, size] = RequireMpiWorld();
         const auto check = CheckMpi;
@@ -916,7 +919,9 @@ public:
       int species = 0;
       std::array<std::uint64_t, 18> signature{}, minimum{}, maximum{};
       std::map<AmrEndpoint, int> local, owners;
-      CoarseFineCellPlan cells;
+      CoarseFineCellPlan cells, local_cells, reply_cells;
+      std::vector<std::size_t> local_indices;
+      std::array<std::uint64_t, 2> storage_identity{}, storage_min{}, storage_max{};
       std::vector<std::pair<int, int>> destinations;
       std::vector<coarse_fine_host::Values> gathered;
       std::vector<bool> ready;
@@ -960,7 +965,10 @@ public:
           const auto& root = tree->GetRootGrid();
           if (root.geometry != "cartesian")
               throw std::invalid_argument("coarse-fine MPI requires Cartesian geometry");
-          signature = {1,
+          if (storage && (!storage->source_version || !storage->gather_coarse_fine || !storage->scatter))
+              throw std::invalid_argument("coarse-fine MPI storage contract is incomplete");
+          storage_identity = {storage ? 1ULL : 0ULL, storage ? storage->source_version : 0ULL};
+          signature = {4,
                        static_cast<std::uint64_t>(dim),
                        static_cast<std::uint64_t>(species),
                        static_cast<std::uint64_t>(state_slot),
@@ -1011,6 +1019,9 @@ public:
           if (plan.scope != expected.scope || plan.operations != expected.operations)
               throw std::invalid_argument("coarse-fine MPI plan differs from current topology");
           cells = compile_coarse_fine_cell_plan(plan, species);
+          local_cells.dimension = reply_cells.dimension = dim;
+          local_cells.species_count = reply_cells.species_count = species;
+          local_cells.scope = reply_cells.scope = cells.scope;
           destinations.reserve(cells.transfers.size());
           gathered.resize(cells.transfers.size());
           ready.assign(cells.transfers.size(), false);
@@ -1023,9 +1034,14 @@ public:
                                                             transfer.destination_cell));
               cell_indices.emplace(std::pair{transfer.destination, transfer.destination_cell}, i);
               if (const auto found = local.find(transfer.source); found != local.end()) {
-                  gathered[i] = coarse_fine_host::gather(transfer, pool->GetBlock(found->second),
-                                                         slot, dim, species);
-                  ready[i] = true;
+                  if (storage) {
+                      local_cells.transfers.push_back(transfer);
+                      local_indices.push_back(i);
+                  } else {
+                      gathered[i] = coarse_fine_host::gather(transfer, pool->GetBlock(found->second),
+                                                             slot, dim, species);
+                      ready[i] = true;
+                  }
               }
           }
           queries.resize(size);
@@ -1068,6 +1084,12 @@ public:
                           MPI_COMM_WORLD));
       if (minimum != maximum)
           throw std::invalid_argument("coarse-fine MPI rank identity/layout/slot mismatch");
+      check(MPI_Allreduce(storage_identity.data(), storage_min.data(), 2, MPI_UINT64_T,
+                          MPI_MIN, MPI_COMM_WORLD));
+      check(MPI_Allreduce(storage_identity.data(), storage_max.data(), 2, MPI_UINT64_T,
+                          MPI_MAX, MPI_COMM_WORLD));
+      if (storage_min != storage_max)
+          throw std::invalid_argument("coarse-fine MPI storage/version mismatch");
       check(MPI_Alltoall(send_counts.data(), 1, MPI_INT, recv_counts.data(), 1, MPI_INT,
                          MPI_COMM_WORLD));
       phase([&] {
@@ -1118,19 +1140,40 @@ public:
                   if (!reciprocal)
                       throw std::invalid_argument("coarse-fine MPI request is not a neighbor");
                   for (const auto& transfer : face_cells(query).transfers) {
-                      const auto values =
-                          coarse_fine_host::gather(transfer, source, slot, dim, species);
                       if (replies.size() >
                           static_cast<std::size_t>(std::numeric_limits<int>::max() - (6 + species)))
                           throw std::overflow_error("coarse-fine MPI reply exceeds INT_MAX");
-                      replies.insert(replies.end(), values.fields.begin(), values.fields.end());
-                      replies.insert(replies.end(), values.mass_fractions.begin(),
-                                     values.mass_fractions.end());
+                      if (storage) {
+                          reply_cells.transfers.push_back(transfer);
+                          replies.resize(replies.size() + 6 + species);
+                      } else {
+                          const auto values =
+                              coarse_fine_host::gather(transfer, source, slot, dim, species);
+                          replies.insert(replies.end(), values.fields.begin(), values.fields.end());
+                          replies.insert(replies.end(), values.mass_fractions.begin(),
+                                         values.mass_fractions.end());
+                      }
                   }
               }
               reply_send_counts[peer] = static_cast<int>(replies.size() - start);
           }
           (void)offsets(reply_send_counts, reply_send_offsets);
+          if (storage) {
+              if (local_indices.size() > static_cast<std::size_t>(INT_MAX / (6 + species)))
+                  throw std::overflow_error("coarse-fine local packet exceeds INT_MAX");
+              std::vector<double> local_values(local_indices.size() * (6 + species));
+              // Both gathers finish before any destination scatter. Even empty-work
+              // ranks enter these same phases; only source owners evaluate stencils.
+              storage->gather_coarse_fine(local_cells, local_values);
+              for (std::size_t at = 0; at < local_indices.size(); ++at) {
+                  const auto index = local_indices[at];
+                  const auto first = local_values.begin() + at * (6 + species);
+                  std::copy_n(first, 6, gathered[index].fields.begin());
+                  gathered[index].mass_fractions.assign(first + 6, first + 6 + species);
+                  ready[index] = true;
+              }
+              storage->gather_coarse_fine(reply_cells, replies);
+          }
       });
       check(MPI_Alltoall(reply_send_counts.data(), 1, MPI_INT, reply_recv_counts.data(), 1, MPI_INT,
                          MPI_COMM_WORLD));
@@ -1165,7 +1208,25 @@ public:
           if (std::find(ready.begin(), ready.end(), false) != ready.end())
               throw std::invalid_argument("coarse-fine MPI missing destination");
       });
-      for (std::size_t i = 0; i < destinations.size(); ++i)
+      if (storage) phase([&] {
+          if (destinations.size() > static_cast<std::size_t>(INT_MAX / (6 + species)))
+              throw std::overflow_error("coarse-fine destination packet exceeds INT_MAX");
+          std::vector<ExchangePacketSlice> slices;
+          std::vector<std::uint64_t> packet;
+          slices.reserve(destinations.size());
+          packet.reserve(destinations.size() * (6 + species));
+          for (std::size_t i = 0; i < destinations.size(); ++i) {
+              const auto& transfer = cells.transfers[i];
+              slices.push_back({transfer.destination.handle,
+                  {transfer.destination_cell, {1, 1, 1}}, packet.size()});
+              for (const double value : gathered[i].fields)
+                  packet.push_back(std::bit_cast<std::uint64_t>(value));
+              for (const double value : gathered[i].mass_fractions)
+                  packet.push_back(std::bit_cast<std::uint64_t>(value));
+          }
+          storage->scatter(slices, packet);
+      });
+      else for (std::size_t i = 0; i < destinations.size(); ++i)
           coarse_fine_host::scatter(pool->GetBlock(destinations[i].first).*slot,
                                     destinations[i].second, gathered[i]);
 #else
@@ -1175,6 +1236,7 @@ public:
       (void)dim;
       (void)slot;
       (void)handles;
+      (void)storage;
       throw std::logic_error("distributed coarse-fine exchange requires ARCH_ENABLE_MPI=ON");
 #endif
   }

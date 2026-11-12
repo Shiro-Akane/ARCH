@@ -397,6 +397,9 @@ struct CudaBackend::Impl {
         const BlockResolver&);
     // One lowering/execution path serves active slots and the unpublished
     // regrid namespace; only the validated storage resolver differs.
+    void execute_coarse_fine_cells(std::span<const backend::BackendStateAccess>,
+        const amr::CoarseFineCellPlan&, state::StateSlot, const BlockResolver&,
+        bool gather_only, std::span<double> outgoing);
     void exchange_packet(std::span<const backend::BackendStateAccess>,
         std::span<const amr::ExchangePacketSlice>, std::span<std::uint64_t> outgoing,
         std::span<const std::uint64_t> incoming, bool gather);
