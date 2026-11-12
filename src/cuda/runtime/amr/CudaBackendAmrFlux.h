@@ -33,6 +33,10 @@ struct CudaAmrFluxDirectionRouteView {
     const amr::AmrFluxRegistrationTerm* device_terms = nullptr;
     int term_count = 0;
     unsigned int source_face_mask = 0;
+    // Distributed registration captures raw local faces; the Host protocol
+    // remains the single authority for stage/owner/recipe acceptance.
+    int capture_face_cells = 0;
+    bool capture_only = false;
 };
 
 struct CudaAmrFluxLaunchResult {

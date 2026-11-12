@@ -595,7 +595,7 @@ std::array<CudaAmrFluxDirectionRouteView, 3> make_cuda_amr_route_views(
     for (int direction = 0; direction < plan->dimension; ++direction) {
         const auto* route = plan->find_route(source, direction);
         if (route == nullptr) continue;
-        unsigned int source_faces = 0;
+        unsigned int source_faces = route->capture_face_mask;
         for (const auto& target : route->compiled.targets) {
             if (target.source_face < 0 || target.source_face >= 6)
                 throw std::invalid_argument(
@@ -610,7 +610,10 @@ std::array<CudaAmrFluxDirectionRouteView, 3> make_cuda_amr_route_views(
             static_cast<int>(route->compiled.targets.size()),
             route->terms.get(),
             static_cast<int>(route->compiled.terms.size()),
-            source_faces};
+            source_faces,
+            plan->distributed ? amr::flux_plan_detail::face_cell_count(
+                plan->dimension, static_cast<amr::AmrAxis>(direction)) : 0,
+            plan->distributed};
     }
     return result;
 }
@@ -652,6 +655,9 @@ std::unique_ptr<CudaAmrFluxPlanRuntime> make_cuda_amr_flux_plan_runtime(
     result->reflux_fingerprint = reflux.fingerprint;
     result->dimension = topology.dimension;
     result->species_count = topology.species_count;
+    result->distributed = topology.partition_size > 1;
+    if (result->distributed && cache_initial_operator)
+        throw std::invalid_argument("distributed CUDA flux capture requires Hydro without RKL caching");
     result->runtime_blocks.reserve(topology.active_endpoints.size());
     result->host_blocks.reserve(topology.active_endpoints.size());
     std::vector<amr::AmrFluxEndpointBinding> bindings;
@@ -687,11 +693,63 @@ std::unique_ptr<CudaAmrFluxPlanRuntime> make_cuda_amr_flux_plan_runtime(
                 runtime.grid.ks, runtime.grid.ke}});
     }
 
-    const auto compiled = amr::compile_amr_flux_topology_plan(
-        topology, bindings);
-    result->surface_requirements =
-        amr::build_amr_flux_surface_requirements(
-            compiled, cache_initial_operator);
+    result->compiled_reflux = amr::compile_amr_reflux_plan(
+        reflux, bindings, topology.species_count);
+    amr::AmrCompiledFluxTopologyPlan compiled;
+    if (!result->distributed) {
+        compiled = amr::compile_amr_flux_topology_plan(topology, bindings);
+        result->surface_requirements =
+            amr::build_amr_flux_surface_requirements(compiled, cache_initial_operator);
+    } else {
+        const auto indexed = amr::flux_execution_detail::index_bindings(
+            bindings, topology.dimension, topology.species_count);
+        std::map<std::pair<int, int>, amr::AmrFluxSurfaceRequirement> surfaces;
+        const auto need = [&](int block, int face, amr::AmrFluxSurfaceRole role) {
+            auto& req = surfaces[{block, face}];
+            req.block = block; req.face = face;
+            req.cell_count = amr::flux_plan_detail::face_cell_count(
+                topology.dimension, static_cast<amr::AmrAxis>(face / 2));
+            req.species_count = topology.species_count;
+            req.roles |= static_cast<std::uint8_t>(role);
+        };
+        for (const auto& logical : topology.routes) {
+            const auto& source = amr::flux_execution_detail::require_binding(indexed, logical.source);
+            if (topology.owners.at(logical.source) != topology.partition_rank
+                || result->runtime_blocks[source.runtime_index]->grid.geometry
+                    != static_cast<int>(GridMetrics::Geometry::Cartesian))
+                throw std::invalid_argument("distributed CUDA flux source must be local Cartesian");
+            amr::AmrCompiledFluxRegistrationRoute route;
+            route.source_block = source.runtime_index;
+            route.source_direction = amr::axis_value(logical.key.axis);
+            route.species_count = topology.species_count;
+            route.logical_fingerprint = logical.plan.fingerprint;
+            for (const auto& op : logical.plan.operations) {
+                if (op.source != logical.source || op.axis != logical.key.axis)
+                    throw std::invalid_argument("CUDA flux capture source route drifted");
+                const int face = amr::flux_execution_detail::checked_source_face(
+                    source.grid, op.source_box, op.axis);
+                need(source.runtime_index, face, amr::AmrFluxSurfaceRole::InitialOperatorCache);
+            }
+            compiled.routes.push_back(std::move(route));
+        }
+        for (const auto& target : result->compiled_reflux.targets)
+            for (int n = 0; n < target.contribution_count; ++n)
+                need(target.block,
+                    result->compiled_reflux.contributions[target.first_contribution + n].register_face,
+                    amr::AmrFluxSurfaceRole::Register);
+        for (const auto& [key, requirement] : surfaces) {
+            (void)key;
+            auto& runtime = *result->runtime_blocks[requirement.block];
+            if ((requirement.roles & static_cast<std::uint8_t>(
+                    amr::AmrFluxSurfaceRole::InitialOperatorCache))
+                && !valid_amr_flux_surface(runtime.amr_initial_flux[requirement.face].view()))
+                runtime.amr_initial_flux[requirement.face].allocate(
+                    requirement.cell_count, requirement.species_count);
+            result->host_blocks[requirement.block].initial_flux[requirement.face] =
+                runtime.amr_initial_flux[requirement.face].view();
+            result->surface_requirements.push_back(requirement);
+        }
+    }
     for (const auto& requirement : result->surface_requirements) {
         if (requirement.block < 0
             || requirement.block
@@ -727,7 +785,7 @@ std::unique_ptr<CudaAmrFluxPlanRuntime> make_cuda_amr_flux_plan_runtime(
     result->routes.reserve(compiled.routes.size());
     for (std::size_t index = 0; index < compiled.routes.size(); ++index) {
         const auto& lowered = compiled.routes[index];
-        if (lowered.targets.empty() || lowered.terms.empty())
+        if (!result->distributed && (lowered.targets.empty() || lowered.terms.empty()))
             throw std::invalid_argument("CUDA AMR flux route is empty");
         auto route = std::make_unique<CudaAmrFluxRouteStorage>();
         route->source = topology.routes[index].source.handle;
@@ -735,8 +793,27 @@ std::unique_ptr<CudaAmrFluxPlanRuntime> make_cuda_amr_flux_plan_runtime(
             == amr::AmrAxis::X ? 0
             : (topology.routes[index].key.axis == amr::AmrAxis::Y ? 1 : 2);
         route->compiled = lowered;
-        route->targets.allocate(lowered.targets.size());
-        route->terms.allocate(lowered.terms.size());
+        if (result->distributed) {
+            const auto& grid = bindings[lowered.source_block].grid;
+            for (const auto& op : topology.routes[index].plan.operations) {
+                const int face = amr::flux_execution_detail::checked_source_face(
+                    grid, op.source_box, op.axis);
+                const int cell = amr::flux_execution_detail::checked_surface_cell(
+                    grid, op.source_box, op.axis);
+                const int field = op.field == amr::AmrField::Species ? 5 + op.component
+                    : static_cast<int>(op.field);
+                if ((op.field != amr::AmrField::Species && (field < 0 || field >= 5))
+                    || (op.field == amr::AmrField::Species
+                        && (op.component < 0 || op.component >= topology.species_count)))
+                    throw std::invalid_argument("invalid CUDA flux capture field");
+                const int cells = amr::flux_plan_detail::face_cell_count(topology.dimension, op.axis);
+                route->capture_offsets.push_back({face, field * cells + cell});
+                route->capture_face_mask |= 1U << face;
+            }
+        } else {
+            route->targets.allocate(lowered.targets.size());
+            route->terms.allocate(lowered.terms.size());
+        }
         if (!result->route_index.emplace(
                 std::pair{route->source, route->direction},
                 result->routes.size()).second)
@@ -744,8 +821,6 @@ std::unique_ptr<CudaAmrFluxPlanRuntime> make_cuda_amr_flux_plan_runtime(
         result->routes.push_back(std::move(route));
     }
 
-    result->compiled_reflux = amr::compile_amr_reflux_plan(
-        reflux, bindings, topology.species_count);
     if (!result->compiled_reflux.targets.empty()) {
         if (result->compiled_reflux.contributions.empty())
             throw std::invalid_argument("CUDA AMR reflux has no contributions");
@@ -766,6 +841,7 @@ std::unique_ptr<CudaAmrFluxPlanRuntime> make_cuda_amr_flux_plan_runtime(
                    stream, counters,
                "upload CUDA AMR flux block views");
     for (const auto& route : result->routes) {
+        if (result->distributed) continue;
         enqueue_cuda_metadata_upload(
                        route->targets.get(), route->compiled.targets.data(),
                        route->compiled.targets.size()

@@ -1,0 +1,363 @@
+{
+  "stage": "G2-2a native CUDA source-face capture, existing MPI flux registration, and CUDA reflux",
+  "status": "locally_validated_operator_stage_only",
+  "base_commit": "a786735ba13221a5e4dbab2a9b6a23490e8ebc65",
+  "upstream_main": "2e05e66e3b09e3890488fb872cd842b1885f71e4",
+  "branch": "MPI/gpu-amr-integration",
+  "hardware": {
+    "host": "gpu-273312",
+    "gpu": "NVIDIA H100-20C",
+    "ranks": 2,
+    "visible_devices": 1,
+    "exclusive_device_or_performance_measurement": false,
+    "multi_gpu_validated": false,
+    "multi_node_validated": false
+  },
+  "scope": {
+    "dimension": 2,
+    "geometry": "cartesian",
+    "levels": [
+      0,
+      1
+    ],
+    "leaves": 5,
+    "rank_leaf_counts": [
+      1,
+      4
+    ],
+    "species": [
+      1,
+      4,
+      37
+    ],
+    "boundaries": [
+      "outflow",
+      "periodic"
+    ],
+    "layouts_per_build": 6,
+    "stage_evaluation": "original HLLC/PCM Euler operator repeatedly evaluated on fixed Current; not RK time evolution",
+    "registration_weights": [
+      0,
+      0.5,
+      0.16666666666666666,
+      0.6666666666666666
+    ],
+    "weighted_stages_per_build": 24,
+    "flux_reflux_checks_per_rank_per_build": 54,
+    "collective_rejections_per_build": 198,
+    "oracle": "original Host HLLC/PCM raw flux, existing Host FluxRegister arithmetic and Host reflux; poisoned Host mirrors until independent final reflux oracle setup",
+    "comparison": "existing abs(a-b) <= 2e-13*max(1,abs(a),abs(b)); finite; ENUC, untouched slots and ghosts bitwise",
+    "integration": "original face-surface capture kernel -> compact D2H -> original FluxRegister MPI stage and owner validation -> coarse-owner compact H2D -> original CUDA reflux kernel",
+    "failure_contract": [
+      "one-sided missing Hydro binding collectively rejects; Current unchanged",
+      "missing/nonfinite payload, wrong owner, duplicate registration reject",
+      "stale or repeated capture rejects",
+      "incomplete stage upload and stale upload receipt reject",
+      "mixed Host/Device reflux entry rejects before callbacks",
+      "one-sided rejection after completed upload but before reflux prevents completion publication",
+      "failed callback does not imply restoration of already-written Device state",
+      "replayed reflux rejects"
+    ],
+    "application_preflight_opened": false,
+    "runtime_distributed_flux_prepare_opened": false,
+    "gpu_hydro_macrostep_validated": false,
+    "gpu_migration_regrid_validated": false,
+    "native_gpu_reflux_operator_validated": true
+  },
+  "native_ctest": {
+    "tests_across_two_builds": 12,
+    "runs": [
+      {
+        "mode": "release",
+        "scope": "runtime",
+        "junit": {
+          "file": "release-runtime-junit.xml",
+          "sha256": "6525345f2b90b302b17a901ff8a26930017899384d00f7dad32c4e60c140164a",
+          "tests": 4,
+          "failures": 0,
+          "skipped": 0,
+          "names": [
+            "mpi_cuda_runtime_2",
+            "mpi_cuda_mixed_2",
+            "mpi_cuda_flux_2",
+            "mpi_cuda_staging_2"
+          ]
+        },
+        "status_file": "release-runtime-status.json",
+        "binaries": {
+          "arch_cuda_mpi_runtime": "bd6f3ab3da3c5d27f586df60f194d707f3197742adab9c38f03e258f686eb141",
+          "arch_cuda_mpi_staging": "0bdef685763525a6015849b5b45b7ddce7946b7612c569a201d535e6245baa1e"
+        },
+        "markers": [
+          "PASS CUDA MPI Runtime mixed=0 layouts=18 full_state_checks=252 collective_rejections=59",
+          "PASS CUDA MPI Runtime mixed=1 layouts=6 full_state_checks=102 collective_rejections=41",
+          "PASS CUDA MPI flux layouts=6 weighted_stages=24 flux_reflux_checks=54 collective_rejections=198"
+        ]
+      },
+      {
+        "mode": "release",
+        "scope": "regression",
+        "junit": {
+          "file": "release-regression-junit.xml",
+          "sha256": "70c04e834891f1d715b31362f4a7d39308778e892123ea00444e5360afba1918",
+          "tests": 2,
+          "failures": 0,
+          "skipped": 0,
+          "names": [
+            "cuda_regrid_transaction",
+            "cuda_amr_exchange"
+          ]
+        },
+        "status_file": "release-regression-status.json",
+        "binaries": {
+          "arch_cuda_amr_exchange": "7e2dd8e397bea00465464c9ce359600d8cad21583da3bc55cb2ccfffc8e00040",
+          "arch_cuda_regrid_transaction": "c1d78268c81b148459367417e8f2772423773b87ddfb5d800b7f32bd4006c6c2"
+        }
+      },
+      {
+        "mode": "debug",
+        "scope": "runtime",
+        "junit": {
+          "file": "debug-runtime-junit.xml",
+          "sha256": "52a01b9ccb853de3e1f7aaf2d45a27cff51cc43a69237d10f6b5df47b4171fa0",
+          "tests": 4,
+          "failures": 0,
+          "skipped": 0,
+          "names": [
+            "mpi_cuda_runtime_2",
+            "mpi_cuda_mixed_2",
+            "mpi_cuda_flux_2",
+            "mpi_cuda_staging_2"
+          ]
+        },
+        "status_file": "debug-runtime-status.json",
+        "binaries": {
+          "arch_cuda_mpi_runtime": "f80ceb2b4b43d8caa1bc17e150ff8c2f0b51f057ac10212c7c6385c880bad645",
+          "arch_cuda_mpi_staging": "e8641b82c4305fefa0954885f295984cb4f27cacec879c4fdbbd234c33d6f969"
+        },
+        "markers": [
+          "PASS CUDA MPI Runtime mixed=0 layouts=18 full_state_checks=252 collective_rejections=59",
+          "PASS CUDA MPI Runtime mixed=1 layouts=6 full_state_checks=102 collective_rejections=41",
+          "PASS CUDA MPI flux layouts=6 weighted_stages=24 flux_reflux_checks=54 collective_rejections=198"
+        ]
+      },
+      {
+        "mode": "debug",
+        "scope": "regression",
+        "junit": {
+          "file": "debug-regression-junit.xml",
+          "sha256": "77b1a0072aee828d7a8f25d12e10a5913eb4a695c99aaaca563735186fc7dcb8",
+          "tests": 2,
+          "failures": 0,
+          "skipped": 0,
+          "names": [
+            "cuda_regrid_transaction",
+            "cuda_amr_exchange"
+          ]
+        },
+        "status_file": "debug-regression-status.json",
+        "binaries": {
+          "arch_cuda_amr_exchange": "b1f1fe68541fdd5f21e098ce3db3d890aace96506dacb4ff2b18e82063fa7db1",
+          "arch_cuda_regrid_transaction": "d979a2e586601fcf395672a695d3bf5f1f256c1a3776546a73dda0accd205bfb"
+        }
+      }
+    ]
+  },
+  "cpu_regression": {
+    "tests_across_four_builds": 18,
+    "builds": [
+      {
+        "build": "build-gpu-release",
+        "junit": {
+          "file": "build-gpu-release-junit.xml",
+          "sha256": "c542ec98ea2aa942417a04a54703d85137c5ffabf6fda4c7a8fd76b731e7599b",
+          "tests": 6,
+          "failures": 0,
+          "skipped": 0,
+          "names": [
+            "amr_flux_surface_plan",
+            "flux_reflux_exchange",
+            "mpi_flux_reflux_exchange_2",
+            "distributed_hydro_stage",
+            "mpi_distributed_hydro_stage_2_omp1",
+            "mpi_distributed_hydro_stage_2_omp2"
+          ]
+        }
+      },
+      {
+        "build": "build-gpu-release-serial",
+        "junit": {
+          "file": "build-gpu-release-serial-junit.xml",
+          "sha256": "39ce5c3b777dd8d6ef87058b0554b9f6564116f5a1b661ac3f1b41b0bfd85f4f",
+          "tests": 3,
+          "failures": 0,
+          "skipped": 0,
+          "names": [
+            "amr_flux_surface_plan",
+            "flux_reflux_exchange",
+            "distributed_hydro_stage"
+          ]
+        }
+      },
+      {
+        "build": "build-gpu-debug",
+        "junit": {
+          "file": "build-gpu-debug-junit.xml",
+          "sha256": "589d53a5b5a61e2aa0a2c35efccd327947db41b5cc0abde4b05bd47e1f9b44df",
+          "tests": 6,
+          "failures": 0,
+          "skipped": 0,
+          "names": [
+            "amr_flux_surface_plan",
+            "flux_reflux_exchange",
+            "mpi_flux_reflux_exchange_2",
+            "distributed_hydro_stage",
+            "mpi_distributed_hydro_stage_2_omp1",
+            "mpi_distributed_hydro_stage_2_omp2"
+          ]
+        }
+      },
+      {
+        "build": "build-gpu-debug-serial",
+        "junit": {
+          "file": "build-gpu-debug-serial-junit.xml",
+          "sha256": "8161aec080f621e307d9b0dd247feaf4d0a2b6353fd02d3bf635ebe002ba2b91",
+          "tests": 3,
+          "failures": 0,
+          "skipped": 0,
+          "names": [
+            "amr_flux_surface_plan",
+            "flux_reflux_exchange",
+            "distributed_hydro_stage"
+          ]
+        }
+      }
+    ]
+  },
+  "tooling": {
+    "passed": 629,
+    "skipped": 0,
+    "exit": 0
+  },
+  "static_checks": [
+    {
+      "check": "audit_architecture",
+      "exit": 0
+    },
+    {
+      "check": "check_documentation",
+      "exit": 0
+    }
+  ],
+  "conditional_registration": {
+    "build-mpi-cuda-serial-check": {
+      "exit": 0,
+      "output": "Internal ctest changing into directory: /home/ubuntu/projects/ARCH-mpi/build-mpi-cuda-serial-check\nTest project /home/ubuntu/projects/ARCH-mpi/build-mpi-cuda-serial-check\n\nTotal Tests: 0\n"
+    },
+    "build-gpu-release": {
+      "exit": 0,
+      "output": "Internal ctest changing into directory: /home/ubuntu/projects/ARCH-mpi/build-gpu-release\nTest project /home/ubuntu/projects/ARCH-mpi/build-gpu-release\n\nTotal Tests: 0\n"
+    },
+    "build-gpu-release-serial": {
+      "exit": 0,
+      "output": "Internal ctest changing into directory: /home/ubuntu/projects/ARCH-mpi/build-gpu-release-serial\nTest project /home/ubuntu/projects/ARCH-mpi/build-gpu-release-serial\n\nTotal Tests: 0\n"
+    },
+    "build-mpi-cuda-release": {
+      "exit": 0,
+      "output": "Internal ctest changing into directory: /home/ubuntu/projects/ARCH-mpi/build-mpi-cuda-release\nTest project /home/ubuntu/projects/ARCH-mpi/build-mpi-cuda-release\n  Test #84: mpi_cuda_runtime_2\n  Test #85: mpi_cuda_mixed_2\n  Test #86: mpi_cuda_flux_2\n  Test #87: mpi_cuda_staging_2\n\nTotal Tests: 4\n"
+    },
+    "build-mpi-cuda-debug": {
+      "exit": 0,
+      "output": "Internal ctest changing into directory: /home/ubuntu/projects/ARCH-mpi/build-mpi-cuda-debug\nTest project /home/ubuntu/projects/ARCH-mpi/build-mpi-cuda-debug\n  Test #84: mpi_cuda_runtime_2\n  Test #85: mpi_cuda_mixed_2\n  Test #86: mpi_cuda_flux_2\n  Test #87: mpi_cuda_staging_2\n\nTotal Tests: 4\n"
+    }
+  },
+  "math_identity": {
+    "src/numerics": {
+      "tracked_files": 73,
+      "unchanged_from_base": true
+    },
+    "src/physics": {
+      "tracked_files": 106,
+      "unchanged_from_base": true
+    },
+    "src/cuda/hydro": {
+      "tracked_files": 14,
+      "unchanged_from_base": true
+    },
+    "src/cuda/amr": {
+      "tracked_files": 8,
+      "unchanged_from_base": true
+    },
+    "src/driver/runtime/DriverRuntime.cpp": {
+      "tracked_files": 1,
+      "unchanged_from_base": true
+    },
+    "src/api/ExecutionPreflight.h": {
+      "tracked_files": 1,
+      "unchanged_from_base": true
+    },
+    "src/api/inspection/ExecutionPreflight.cpp": {
+      "tracked_files": 1,
+      "unchanged_from_base": true
+    },
+    "src/driver/dispatch/ExecutionPreflight.cpp": {
+      "tracked_files": 1,
+      "unchanged_from_base": true
+    },
+    "src/driver/dispatch/ExecutionPreflight.h": {
+      "tracked_files": 1,
+      "unchanged_from_base": true
+    }
+  },
+  "base_commit_hosted_ci": {
+    "Shiro-Akane/ARCH": {
+      "headSha": "a786735ba13221a5e4dbab2a9b6a23490e8ebc65",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Shiro-Akane/ARCH/actions/runs/43326173851"
+    },
+    "Arsenic-er/ARCH": {
+      "headSha": "a786735ba13221a5e4dbab2a9b6a23490e8ebc65",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Arsenic-er/ARCH/actions/runs/43326178223"
+    }
+  },
+  "this_commit_hosted_ci": "dispatch after publication; exact-head run IDs/status in server evidence publication.json",
+  "retained_failures": [
+    {
+      "prefix": "attempt01-build-gpu-release",
+      "cause": "test storage callback called the protected serial entry on an MPI-owned FluxRegister",
+      "fix": "test-only independent storage uses original serial executor; production collective guard retained"
+    }
+  ],
+  "limits": [
+    "operator/stage fixture only; no complete Euler/RK2/RK3 GPU macrostep or rollback of partial Device writes",
+    "two ranks share one GPU; no multi-node, multi-GPU, long-time conservation or scaling claim",
+    "RKL diffusion cache cannot share the distributed stage capture path",
+    "no compute-sanitizer result",
+    "full GPU MPI-AMR application, distributed migration/output/restart remain gated"
+  ],
+  "next": [
+    "G2-2b Runtime macrostep integration and snapshot recovery for one-sided Device failures",
+    "Euler/RK2/RK3 conservative evolution against serial reference",
+    "CUDA ownership migration/regrid capacity and retirement lifecycle",
+    "distributed output/restart completeness and publication"
+  ],
+  "server_evidence": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-flux-20261113",
+  "source_sha256": {
+    "cmake/tests/CudaTests.cmake": "ba56d45048bec3be93a8813cd3cb6427fec122d2d4c6401f900daaa23ec06331",
+    "src/amr/flux/FluxRegister.h": "8aa8ffcf56cd99aa7b3bae4d372966a2538b632f991307579d2ca7172b3fc875",
+    "src/cuda/runtime/CudaBackend.h": "0830846301316877c9119ab61a217879638da9ba9c07c2768c2e5e1ef723ec1f",
+    "src/cuda/runtime/amr/CudaBackendAmrFlux.cu": "b270f9124310ab38d0e75b9c682a27bd1a4ade51d1e53f1f0c64eba8c45ff4ec",
+    "src/cuda/runtime/amr/CudaBackendAmrFlux.h": "44fe83fb2b7119e8d5eabf7dc755eb091b0e41ac6fb20c7cd39a7242695cf2f4",
+    "src/cuda/runtime/control/CudaBackendInternal.h": "50bd6f9103f0eea62ee657a662bade063e787da7d45e3a91d285c3c5fc39a655",
+    "src/cuda/runtime/control/CudaBackendResources.cpp": "df395eda9af3198ef569001484bde3d21e492457c09d8b6e548a599cedbb9c20",
+    "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp": "da9e1e984d44ee198cbcb57cf10c7b92d7eac58a42f0296aadd921d428c6e9a5",
+    "src/driver/runtime/ComputeBackend.h": "9b8771c8aa514d557bb91b424cfbd69113286c963d780741b7f1f042ab060129",
+    "tests/cuda/README.md": "dc636e29c97043252c0c98354a0276431e9a1affe8a97ac045a805306af346fd",
+    "tests/cuda/amr/test_cuda_mpi_runtime.cpp": "04b944374898912fe25a09781b679c6f919cfb57ede6a3b04343cc9ace54e9c8",
+    "tests/host/amr/test_flux_reflux_exchange.cpp": "3b72cfbac4e7abfa130d459620af8e50b39e17a43a1bda732b6f5c9927b612a6"
+  },
+  "cleanup_summary": "../mpi-storage-20261113/summary.json"
+}

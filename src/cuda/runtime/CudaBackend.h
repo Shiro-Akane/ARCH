@@ -235,6 +235,10 @@ public:
         std::span<const int> = {},
         std::span<const amr::BlockHandle> = {},
         const amr::CoordinateSeamPlan* = nullptr) override;
+    std::vector<std::vector<double>> download_amr_flux_stage(
+        const amr::AmrFluxTopologyPlan&, state::CompletionToken) override;
+    void upload_amr_flux_register(const amr::AmrFluxTopologyPlan&,
+        const amr::FluxRegister&, std::uint64_t) override;
     void stage_amr_flux_plan(
         backend::BackendTopologyStoreTransaction& transaction,
         const amr::AmrFluxTopologyPlan& topology,

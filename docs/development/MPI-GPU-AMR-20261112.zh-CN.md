@@ -220,13 +220,63 @@ G2-1 新提交另行触发 CI，不沿用该结果。
 Euler/RK2/RK3 的跨 rank GPU 宏步。之后才进行设备迁移、重网格与输出/重启。
 本次尚未执行这些步骤，完整 GPU MPI/AMR 应用仍未开放。
 
+## G2-2a：GPU 面通量捕获、MPI 注册与原 CUDA reflux（2026-11-13）
+
+这个增量在原 CudaBackend 中准备本地源面的紧凑缓冲，复用已有面捕获 kernel；
+每个 Hydro stage 完成后，D2H 按原 FluxRegistrationPlan 的操作顺序生成原始值。
+远端目的块不参与 Device lowering，也不分配远端流体存储。现有
+FluxRegister::ApplyDistributedRegistrationStage 继续拥有 owner、配方、
+阶段权重、收包完整性及累加顺序。粗网格 owner 将接受后的 register 面上传，
+再调用原 CUDA reflux kernel。未新增 MPI 内存池、分配器或推进管理器。
+
+原 amr_initial_flux 面缓冲在这里复用为每阶段的源面捕获区；与 RKL 初始算子缓存
+并用会被拒绝。原 amr_flux_register 仍保存 reflux 输入。上传必须匹配原 Host
+register 的拓扑和已完成阶段，新 Hydro stage、上传失败或一次 reflux 调用都会
+使旧上传凭据失效。设备流完成后才能将包交给 MPI 或发布消费完成。
+
+原 ExecuteDistributedReflux 增加实际 storage 消费回调。Host 路径仍执行原
+CommitReflux；Device 路径先复用原几何/布局验证和公共 21-word 身份头，再调用
+storage。Host/Device 入口混用在回调前共同拒绝；只有全部回调成功才发布完成。
+回调异常不自动恢复已经写过的 Device 字段，调用者必须恢复快照才能重试。
+因此 DriverRuntime 的分布式 flux 准备门槛、应用 ExecutionPreflight 均继续关闭。
+
+新增 mpi_cuda_flux_2 使用原五叶二维 Cartesian 拓扑，两个 rank 分别拥有
+一个 coarse leaf 和四个 fine leaf。species 1/4/37 × outflow/periodic 为六个布局。
+对同一 Current 独立重复执行原 Euler stage，注册权重依次为 0、1/2、1/6、2/3；
+它覆盖零权重和累加，但不是完整 RK2/RK3 时间演化。每份原始通量对照原 Host
+HLLC/PCM 求解器，累加结果及最终 reflux 对照原 Host 实现，沿用已有
+2e-13 × max(1, |a|, |b|) 门槛；ENUC、非目标槽及 ghost 保持逐位比较。
+Host 镜像在捕获和注册期间覆盖为哨兵，reflux 对照输入仅在最后恢复，未重新上传。
+
+失败用例覆盖单侧 Hydro 绑定缺失、报文缺值、NaN、错误 owner、重复阶段、
+过期/重复捕获、错误完成阶段、过期上传凭据、入口模式不一致及上传完成后的
+单侧拒绝。上传拒绝用例尚未执行 reflux kernel，不能替代“部分 Device 字段已写入”
+后的全宏步恢复验收。CPU 回调见证首轮错误调用了受保护的串行入口；已修正为
+测试专用独立存储使用原串行执行器，生产 MPI 入口保护保留，失败日志保留。
+
+H100-20C 上 Release/Debug 的 GPU MPI 与原 CUDA AMR exchange/regrid 共 12 项
+CTest 通过且无跳过；每种构建的新通量见证均通过 54 次对照和 198 次共同拒绝检查。
+CPU Release/Debug × MPI ON/OFF 共 18 项相关回归通过，629 项 tooling 通过且无跳过。
+CUDA OFF 或 MPI OFF 不注册 GPU MPI 用例。没有 compute-sanitizer 结果。
+
+G2-1 基线 a786735b 的双方 CI 已核对全部成功：
+[朋友仓库](https://github.com/Shiro-Akane/ARCH/actions/runs/43326173851)、
+[自有仓库](https://github.com/Arsenic-er/ARCH/actions/runs/43326178223)。
+本增量推送后另行触发对应提交的 CI，不继承基线结论。
+[结构化摘要](../../validation/backend/results/mpi-gpu-flux-20261113/summary.json)
+记录 JUnit、二进制和源码哈希；原始证据及保留的失败日志位于
+/home/ubuntu/projects/ARCH-mpi-evidence-gpu-flux-20261113。
+后续 G2-2b 才把这条通量路径纳入原 Runtime 的 Euler/RK2/RK3 宏步及快照恢复；
+之后依次验证 Device 迁移、重网格、容量和输出/重启。当前没有完整 GPU MPI-AMR、
+多 GPU、多节点、长程守恒或性能扩展结论。
+
 ## 服务器资源与恢复
 
 代码、构建、测试和证据位于 gpu-273312；Windows 仅发送控制命令。
 CUDA Release/Debug 分别使用 build-mpi-cuda-release、build-mpi-cuda-debug，
 配置独立 ARCH_RUNTIME_OUTPUT_DIRECTORY，不覆盖已有 CPU 构建。
 
-本次仅归档并移除两组过期 MPI 展开副本：
+2026-11-12 这一轮仅归档并移除两组过期 MPI 展开副本：
 
 - ARCH-mpi-evidence-multidim-20261101：4,676 个文件。
 - ARCH-mpi-evidence-optimization-20261101/regression：4,602 个文件。
@@ -247,3 +297,20 @@ ec57fab3889ee96777e81883d1acf54be981166f76c9cfb997c862ed55c5be9c。
 先检查目的地不存在或为空，再解包；按相应 manifest 重新验证。
 清理收据的可用空间从 10,931,126,272 增为 17,386,180,608 字节；
 并发项目可能影响该磁盘观测，实际删除文件与压缩大小另有完整记录。
+
+## 2026-11-13 旧构建清理
+
+按用户要求，在继续通量开发前完成旧产物清理。八、九月份 19 个旧目录中的
+693 个未被 Git 跟踪的 ELF、静态库和对象文件，逻辑大小 10,127,341,636 字节，
+压缩保留为 4,304,451,534 字节。整个归档逐文件读回核对 SHA-256，实际恢复最大
+成员核验后，重新检查源文件内容、身份和进程使用情况，再按清单逐文件删除。
+
+清理前后的源码 HEAD、未提交状态和 diff 哈希一致；当前 MPI 构建、工具链、
+原始实验数据、未提交源码及唯一归档均保留。没有整目录递归删除。
+此前退役清单中的安装归档已不存在，本轮没有重复处理这些包。
+
+删除收据观测可用空间从 15,248,486,400 增至 31,803,547,648 字节，期间有其他
+任务的磁盘变化，也存在 XFS 共享，不能将这一差值全部归因于本次清理。
+完整清单、归档、恢复说明和删除日志保存在
+/home/ubuntu/projects/ARCH-mpi-storage-20261113；
+[清理摘要](../../validation/backend/results/mpi-storage-20261113/summary.json) 随源码发布。

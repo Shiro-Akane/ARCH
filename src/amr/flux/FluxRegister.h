@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <functional>
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -169,6 +170,14 @@ public:
 
   public:
     bool DistributedRefluxComplete() const noexcept { return distributed_reflux_applied_; }
+
+    void RequireDistributedStages(std::uint64_t fingerprint, std::uint64_t stages) const {
+        std::lock_guard lock(identity_mutex_);
+        if (!topology_identity_ || *topology_identity_ != fingerprint
+            || !distributed_stage_ || stages != *distributed_stage_ + 1
+            || distributed_reflux_applied_)
+            throw std::logic_error("MPI flux stages are incomplete or already consumed");
+    }
 
     /** Owner changes may retire slots only after all captured fluxes are consumed. */
     void RequireOwnershipTransferBoundary() const {
@@ -452,9 +461,15 @@ public:
                                            const AmrFluxTopologyPlan& topology,
                                            std::span<const std::vector<double>> values,
                                            std::uint64_t stage, double stage_weight);
+    /** Complete the common receipt only after every storage callback succeeds.
+     * Callbacks must finish their queued work before returning or throwing.
+     * Collective rejection does not restore storage: a caller that permits
+     * writes before failure must restore its snapshot before retrying.
+     */
     void ExecuteDistributedReflux(const std::shared_ptr<MemoryPool>& pool, const AmrTree& tree,
                                   std::span<const BlockHandle> handles, double dt,
-                                  FluidState Block::* slot, std::uint64_t completed_stages);
+                                  FluidState Block::* slot, std::uint64_t completed_stages,
+                                  const std::function<void(const RefluxPlan&)>& apply_storage = {});
 
     RefluxPlan BuildRefluxPlan(
         const std::shared_ptr<MemoryPool>& pool,
@@ -1072,12 +1087,14 @@ inline void FluxRegister::ExecuteDistributedReflux(const std::shared_ptr<MemoryP
                                                    const AmrTree& tree,
                                                    std::span<const BlockHandle> handles, double dt,
                                                    FluidState Block::* slot,
-                                                   std::uint64_t completed_stages) {
+                                                   std::uint64_t completed_stages,
+                                                   const std::function<void(const RefluxPlan&)>& apply_storage) {
 #if ARCH_MPI_ENABLED
     using namespace flux_mpi_detail;
     const auto [rank, size] = require_world();
     std::array<std::uint64_t, 21> identity{};
     std::vector<CompiledGroup> groups;
+    RefluxPlan plan;
     prepare([&] {
         if (!pool || size < 2 || tree.PartitionRank() != rank || tree.PartitionSize() != size ||
             !distributed_stage_ || completed_stages != *distributed_stage_ + 1 ||
@@ -1093,13 +1110,17 @@ inline void FluxRegister::ExecuteDistributedReflux(const std::shared_ptr<MemoryP
                                                            tree.GetRootGridDim(), num_species_,
                                                            &tree.GetRootGrid(), rank, size);
         ValidateTopologyIdentity(topology.fingerprint);
-        const auto plan = build_amr_reflux_topology_plan(*pool, topology);
+        plan = build_amr_reflux_topology_plan(*pool, topology);
         groups = PrepareRefluxPlan(plan, pool, tree.GetActiveBlocks(), handles, slot, dt);
-        identity = signature(tree.GetRootGrid(), num_species_, topology.epoch, 2, completed_stages,
+        identity = signature(tree.GetRootGrid(), num_species_, topology.epoch,
+                             apply_storage ? 3 : 2, completed_stages,
                              dt, state_slot);
     });
     agree(identity);
-    CommitReflux(groups, pool, tree.GetRootGridDim(), slot, dt);
+    if (apply_storage)
+        prepare([&] { apply_storage(plan); });
+    else
+        CommitReflux(groups, pool, tree.GetRootGridDim(), slot, dt);
     distributed_reflux_applied_ = true;
 #else
     (void)pool;
@@ -1108,6 +1129,7 @@ inline void FluxRegister::ExecuteDistributedReflux(const std::shared_ptr<MemoryP
     (void)dt;
     (void)slot;
     (void)completed_stages;
+    (void)apply_storage;
     throw std::logic_error("distributed reflux requires ARCH_ENABLE_MPI=ON");
 #endif
 }

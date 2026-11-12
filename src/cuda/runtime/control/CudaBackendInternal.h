@@ -232,6 +232,9 @@ struct CudaAmrFluxRouteStorage {
     amr::AmrCompiledFluxRegistrationRoute compiled{};
     DeviceAllocation<amr::AmrFluxRegistrationTarget> targets;
     DeviceAllocation<amr::AmrFluxRegistrationTerm> terms;
+    // Source face and scalar offset in the existing compact surface.
+    std::vector<std::array<int, 2>> capture_offsets;
+    unsigned int capture_face_mask = 0;
 };
 
 struct CudaAmrFluxPlanRuntime {
@@ -240,6 +243,9 @@ struct CudaAmrFluxPlanRuntime {
     std::uint64_t reflux_fingerprint = 0;
     int dimension = 0;
     int species_count = 0;
+    bool distributed = false;
+    std::optional<state::CompletionToken> captured_stage;
+    bool register_upload_ready = false;
     std::vector<CudaBlockRuntime*> runtime_blocks;
     std::vector<DeviceAmrFluxBlockView> host_blocks;
     DeviceAllocation<DeviceAmrFluxBlockView> device_blocks;

@@ -125,6 +125,24 @@ CudaAmrFluxLaunchResult launch_cuda_amr_flux_register(
     double stage_weight, cudaStream_t stream)
 {
     CudaAmrFluxLaunchResult result{};
+    if (route.capture_only) {
+        if (source != AmrFluxSource::StageScratch || !std::isfinite(stage_weight)
+            || route.direction < 0 || route.direction >= 3 || !route.source_face_mask
+            || (route.source_face_mask & ~(3U << (2 * route.direction))) != 0) {
+            result.error = cudaErrorInvalidValue;
+            return result;
+        }
+        for (int side = 0; side < 2; ++side) {
+            const int face = 2 * route.direction + side;
+            if (!(route.source_face_mask & (1U << face))) continue;
+            result.error = launch_cuda_amr_flux_surface_capture(
+                route.device_blocks, route.block_count, route.source_block,
+                face, route.capture_face_cells, stream);
+            if (result.error != cudaSuccess) return result;
+            ++result.kernels_launched;
+        }
+        return result;
+    }
     if (route.target_count == 0 || stage_weight == 0.0) return result;
     result.error = launch_cuda_amr_flux_register_route(
         route.device_blocks, route.block_count, route.source_block,

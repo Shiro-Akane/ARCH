@@ -59,3 +59,5 @@ experimental-provider capacity results are indexed in the
 [HPC-CUDA campaign summary](../../validation/backend/results/hpc-cuda-optimization/README.md).
 
 The mpi_cuda_mixed_2 mode of [the Runtime witness](amr/test_cuda_mpi_runtime.cpp) covers a two-rank, five-leaf Cartesian ghost exchange. It retains the original CUDA AMR arithmetic tolerance and rejects unqualified distributed flux/reflux preparation. It does not validate a GPU Hydro macrostep.
+
+The mpi_cuda_flux_2 mode uses the same five-leaf fixture for native GPU source-face capture, the existing MPI FluxRegister protocol, and original CUDA reflux. Six layouts cover 1/4/37 species and outflow/periodic boundaries. A zero-weight stage and three nonzero weights test registration against original Host flux/reflux, with failed and repeated completion checks. These are repeated Euler operator evaluations on fixed input, not RK macrosteps or Device rollback acceptance. Full Runtime flux preparation and application preflight remain gated.

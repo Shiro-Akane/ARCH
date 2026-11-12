@@ -21,6 +21,8 @@
 #include <iostream>
 #include <cstdint>
 #include <cmath>
+#include "numerics/flux/FluxHLLC.h"
+#include "numerics/integrator/HydroSolverImpl.h"
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -33,7 +35,7 @@ using Side = state::ExecutionSide;
 constexpr std::array slots{Slot::Current, Slot::Next, Slot::Scratch};
 constexpr std::array members{&amr::Block::fluid_state, &amr::Block::state_next, &amr::Block::state_scratch};
 int rank = 0, checks = 0, rejections = 0;
-bool mixed = false;
+bool mixed = false, flux_mode = false;
 std::uint64_t boundary_h2d = 0, boundary_d2h = 0, observed_device_used = 0;
 void require(bool ok, const char* message) { if (!ok) throw std::runtime_error(message); }
 bool same(double a, double b) { return std::bit_cast<std::uint64_t>(a) == std::bit_cast<std::uint64_t>(b); }
@@ -61,7 +63,7 @@ SimConfig config_for(int dim, bool periodic) {
 }
 cuda::CudaLaunchConfig launch(const SimConfig& c) {
     using namespace dispatch;
-    return cuda::make_cuda_launch_config({FluxId::Hllc,ReconstructionId::Ppm,LimiterId::MinMod,
+    return cuda::make_cuda_launch_config({FluxId::Hllc,flux_mode?ReconstructionId::Pcm:ReconstructionId::Ppm,LimiterId::MinMod,
         TimeIntegratorId::Euler,EosId::Ideal,NetworkId::None,OdeSolverId::None,
         LinearSolverId::None,DiffusionIntegratorId::None},c);
 }
@@ -442,6 +444,213 @@ void run(int dim,int species,bool periodic) {
         &&materialized.kernel_count==cached.kernel_count,"materialization cache lost synchronized state");
     if(rank==0)std::cout<<"runtime layout PASS dim="<<dim<<" species="<<species<<" periodic="<<periodic<<std::endl;
 }
+std::vector<double> snapshot(Run& run,Slot slot,Region region) {
+    std::vector<double> result;
+    const auto& active=run.control.tree->GetActiveBlocks();
+    for(std::size_t b=0;b<active.size();++b) {
+        const auto& grid=run.control.pool->GetBlock(active[b]).grid;
+        std::vector<int> cells;
+        for(int k=0;k<grid.GetTotalZ();++k)for(int j=0;j<grid.GetTotalY();++j)
+            for(int i=0;i<grid.GetTotalX();++i) {
+                const bool interior=i>=grid.Is()&&i<grid.Ie()&&j>=grid.Js()&&j<grid.Je()
+                    &&k>=grid.Ks()&&k<grid.Ke();
+                if(interior==(region==Region::Interior))cells.push_back(grid.GetIndex(i,j,k));
+            }
+        const auto values=run.runtime.backend()->read_boundary_cells(
+            run.runtime.backend_access(b,slot),cells,region);
+        for(const auto& u:values.conserved)
+            result.insert(result.end(),{u.rho,u.mom_u,u.mom_v,u.mom_w,u.eng});
+        result.insert(result.end(),values.enuc.begin(),values.enuc.end());
+        result.insert(result.end(),values.composition.begin(),values.composition.end());
+    }
+    return result;
+}
+void unchanged(const std::vector<double>& actual,const std::vector<double>& expected) {
+    require(actual.size()==expected.size(),"snapshot extent changed");
+    for(std::size_t i=0;i<actual.size();++i)
+        require(same(actual[i],expected[i]),"flux operation changed an unrelated state region");
+}
+// Native flux-stage consumer. Full Runtime macro recovery remains separately gated.
+void run_flux(int n, bool periodic) {
+    Run actual(2,n,periodic,true);
+    Reference oracle(2,n,periodic);
+    actual.reset(6);oracle.reset(6);
+    oracle.ensure_fluid_ghosts(Slot::Current);actual.refresh();
+    auto& control=actual.control;
+    auto& runtime=actual.runtime;
+    auto* device=runtime.backend();
+    control.flux_register.EnsureSpecies(n);
+    const auto& topology=control.RequireFluxTopologyPlan(n);
+    const auto& reflux=control.RequireRefluxTopologyPlan(n);
+    device->prepare_amr_flux_plan(topology,reflux);
+    const auto& active=control.tree->GetActiveBlocks();
+    std::vector<backend::BackendStateAccess> accesses;
+    for(std::size_t i=0;i<active.size();++i)accesses.push_back(runtime.backend_access(i,Slot::Current));
+    control.flux_register.Clear();
+    amr::FluxRegister expected;expected.Resize(12,2);expected.EnsureSpecies(n);
+    Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> host_solver(actual.eos);
+    const auto descriptor=scheduler::make_hydro_plan(scheduler::HydroMethod::Euler).stages.front();
+    constexpr double dt=1.e-6;
+    const std::array weights{0.0,0.5,1.0/6.0,2.0/3.0};
+    rejected([&]{(void)device->download_amr_flux_stage(topology,{99,state::CompletionState::Complete});});
+    rejected([&]{device->upload_amr_flux_register(topology,control.flux_register,1);});
+    const auto accepted=snapshot(actual,Slot::Current,Region::Interior);
+    rejected([&]{
+        auto invalid=accesses;
+        if(rank==1)invalid.pop_back();
+        std::exception_ptr failure;
+        try {device->execute_hydro_stage_batch(invalid,descriptor,dt,
+            {99,state::CompletionState::Complete});}
+        catch(...) {failure=std::current_exception();}
+        control.CompleteDistributedHydroPhase(failure);
+    });
+    unchanged(snapshot(actual,Slot::Current,Region::Interior),accepted);
+    for(std::size_t stage=0;stage<weights.size();++stage) {
+        std::vector<std::vector<double>> host_values;
+        {
+            amr::FluxRegister::HostStageCapture capture(control.flux_register,topology,1.0);
+            for(int id:active) {
+                const auto& block=control.pool->GetBlock(id);
+                const int reference=oracle.control.tree->FindBlock(
+                    block.level,block.logical_x1,block.logical_x2,block.logical_x3);
+                const auto& source=oracle.control.pool->GetBlock(reference);
+                std::vector<FluidVector> delta(block.grid.GetTotalSize());
+                std::vector<double> species_delta(n*block.grid.GetTotalSize());
+                host_solver.evaluate_patch(&control,id,source.fluid_state,block.grid,dt,
+                    delta,species_delta,nullptr,actual.config.numerics,1.0);
+            }
+            const auto values=capture.complete_values();
+            host_values.assign(values.begin(),values.end());
+        }
+        const state::CompletionToken token{100+stage,state::CompletionState::Complete};
+        amr::GhostExchange::CompleteDistributedPhase(nullptr);
+        std::exception_ptr failure;
+        try {device->execute_hydro_stage_batch(accesses,descriptor,dt,token);}
+        catch(...) {failure=std::current_exception();}
+        control.CompleteDistributedHydroPhase(failure);
+        rejected([&]{(void)device->download_amr_flux_stage(
+            topology,{1000+stage,state::CompletionState::Complete});});
+        auto values=device->download_amr_flux_stage(topology,token);
+        require(values.size()==host_values.size(),"captured CUDA flux route count");
+        for(std::size_t route=0;route<values.size();++route) {
+            require(values[route].size()==host_values[route].size(),"captured CUDA flux operation count");
+            for(std::size_t i=0;i<values[route].size();++i)
+                require(field_equal(values[route][i],host_values[route][i],true),
+                    "captured CUDA face flux differs from original Host solver");
+        }
+        ++checks;
+        rejected([&]{(void)device->download_amr_flux_stage(topology,token);});
+        auto broken=values;
+        if(rank==1)broken.front().pop_back();
+        rejected([&]{control.flux_register.ApplyDistributedRegistrationStage(
+            *control.pool,*control.tree,runtime.handles(),topology,broken,stage,weights[stage]);});
+        broken=values;
+        if(rank==1)broken.front().front()=std::numeric_limits<double>::quiet_NaN();
+        rejected([&]{control.flux_register.ApplyDistributedRegistrationStage(
+            *control.pool,*control.tree,runtime.handles(),topology,broken,stage,weights[stage]);});
+        if(stage==0) {
+            auto wrong_owner=topology;
+            if(rank==1)wrong_owner.owners.at(wrong_owner.routes.front().source)=0;
+            rejected([&]{control.flux_register.ApplyDistributedRegistrationStage(
+                *control.pool,*control.tree,runtime.handles(),wrong_owner,values,stage,weights[stage]);});
+        }
+        control.flux_register.ApplyDistributedRegistrationStage(
+            *control.pool,*control.tree,runtime.handles(),topology,values,stage,weights[stage]);
+        expected.ApplyDistributedRegistrationStage(
+            *control.pool,*control.tree,runtime.handles(),topology,host_values,stage,weights[stage]);
+        if(stage==0) {
+            device->upload_amr_flux_register(topology,control.flux_register,1);
+            rejected([&]{device->upload_amr_flux_register(topology,control.flux_register,2);});
+            rejected([&]{device->execute_amr_reflux(
+                Slot::Current,dt,{899,state::CompletionState::Complete});});
+            device->upload_amr_flux_register(topology,control.flux_register,1);
+        } else rejected([&]{device->execute_amr_reflux(
+            Slot::Current,dt,{900+stage,state::CompletionState::Complete});});
+        rejected([&]{control.flux_register.ApplyDistributedRegistrationStage(
+            *control.pool,*control.tree,runtime.handles(),topology,values,stage,weights[stage]);});
+        for(int id:active)for(int face=0;face<4;++face) {
+            require(control.flux_register.HasData(id,face)==expected.HasData(id,face),
+                "coarse-owner accepted face coverage mismatch");
+            if(!expected.HasData(id,face))continue;
+            for(int cell=0;cell<amr::flux_plan_detail::face_cell_count(2,
+                    static_cast<amr::AmrAxis>(face/2));++cell) {
+                const auto a=control.flux_register.GetSummedFlux(id,face,cell);
+                const auto b=expected.GetSummedFlux(id,face,cell);
+                for(auto member:{&FluidVector::rho,&FluidVector::mom_u,&FluidVector::mom_v,
+                                 &FluidVector::mom_w,&FluidVector::eng})
+                    require(field_equal(a.*member,b.*member,true),"coarse-owner fluid register mismatch");
+                for(int species=0;species<n;++species)
+                    require(field_equal(control.flux_register.GetSummedSpeciesFlux(id,face,cell,species),
+                        expected.GetSummedSpeciesFlux(id,face,cell,species),true),
+                        "coarse-owner species register mismatch");
+            }
+        }
+        ++checks;
+    }
+    unchanged(snapshot(actual,Slot::Current,Region::Interior),accepted);
+    const auto current_ghost=snapshot(actual,Slot::Current,Region::Ghost);
+    const std::array other_slots{snapshot(actual,Slot::Next,Region::Interior),
+        snapshot(actual,Slot::Next,Region::Ghost),snapshot(actual,Slot::Scratch,Region::Interior),
+        snapshot(actual,Slot::Scratch,Region::Ghost)};
+    int callbacks=0;
+    std::function<void(const amr::RefluxPlan&)> mode;
+    if(rank==1)mode=[&](const auto&){++callbacks;};
+    rejected([&]{control.flux_register.ExecuteDistributedReflux(control.pool,*control.tree,
+        runtime.handles(),dt,&amr::Block::fluid_state,weights.size(),mode);});
+    require(callbacks==0,"Host/Device reflux mismatch reached storage callback");
+    rejected([&]{control.flux_register.ExecuteDistributedReflux(control.pool,*control.tree,
+        runtime.handles(),dt,&amr::Block::fluid_state,weights.size(),[&](const auto&){
+            device->upload_amr_flux_register(topology,control.flux_register,weights.size());
+            if(rank==1)throw std::runtime_error("injected completed flux-upload rejection");
+        });});
+    require(!control.flux_register.DistributedRefluxComplete(),"failed upload published reflux completion");
+    unchanged(snapshot(actual,Slot::Current,Region::Interior),accepted);
+    // Host state remains poisoned through capture/registration. Only now restore
+    // the independent Host oracle inputs; no input fields are uploaded again.
+    for(int id:active) {
+        auto& b=control.pool->GetBlock(id);
+        const int ref=oracle.control.tree->FindBlock(b.level,b.logical_x1,b.logical_x2,b.logical_x3);
+        b.fluid_state=oracle.control.pool->GetBlock(ref).fluid_state;
+    }
+    expected.ExecuteDistributedReflux(control.pool,*control.tree,runtime.handles(),
+        dt,&amr::Block::fluid_state,weights.size());
+    control.flux_register.ExecuteDistributedReflux(control.pool,*control.tree,
+        runtime.handles(),dt,&amr::Block::fluid_state,weights.size(),[&](const auto&){
+            device->upload_amr_flux_register(topology,control.flux_register,weights.size());
+            device->execute_amr_reflux(Slot::Current,dt,{200,state::CompletionState::Complete});
+        });
+    require(control.flux_register.DistributedRefluxComplete(),"GPU reflux was not collectively completed");
+    for(std::size_t index=0;index<active.size();++index) {
+        const auto& b=control.pool->GetBlock(active[index]);
+        std::vector<int> cells;
+        for(int j=b.grid.Js();j<b.grid.Je();++j)for(int i=b.grid.Is();i<b.grid.Ie();++i)
+            cells.push_back(b.grid.GetIndex(i,j,b.grid.Ks()));
+        const auto got=device->read_boundary_cells(runtime.backend_access(index,Slot::Current),cells,Region::Interior);
+        for(std::size_t i=0;i<cells.size();++i) {
+            const auto want=b.fluid_state.get(cells[i]);
+            for(auto member:{&FluidVector::rho,&FluidVector::mom_u,&FluidVector::mom_v,
+                             &FluidVector::mom_w,&FluidVector::eng})
+                require(field_equal(got.conserved[i].*member,want.*member,true),
+                    "GPU reflux fields differ from original Host reflux");
+            for(int species=0;species<n;++species)
+                require(field_equal(got.composition[i*n+species],b.fluid_state.X(species,cells[i]),true),
+                    "GPU reflux species differ from original Host reflux");
+            require(same(got.enuc[i],b.fluid_state.enuc_rate[cells[i]]),"GPU reflux changed ENUC");
+        }
+    }
+    unchanged(snapshot(actual,Slot::Current,Region::Ghost),current_ghost);
+    unchanged(snapshot(actual,Slot::Next,Region::Interior),other_slots[0]);
+    unchanged(snapshot(actual,Slot::Next,Region::Ghost),other_slots[1]);
+    unchanged(snapshot(actual,Slot::Scratch,Region::Interior),other_slots[2]);
+    unchanged(snapshot(actual,Slot::Scratch,Region::Ghost),other_slots[3]);
+    ++checks;
+    rejected([&]{control.flux_register.ExecuteDistributedReflux(control.pool,*control.tree,
+        runtime.handles(),dt,&amr::Block::fluid_state,weights.size(),[&](const auto&){++callbacks;});});
+    require(callbacks==0,"repeated reflux reached storage callback");
+    rejected([&]{device->execute_amr_reflux(Slot::Current,dt,{201,state::CompletionState::Complete});});
+    require(control.pool->GetNumActiveBlocks()==(rank?4:1),"flux transport allocated remote fluid blocks");
+}
+
 }
 int main(int argc,char** argv) {
     int provided=0;MPI_Init_thread(&argc,&argv,MPI_THREAD_FUNNELED,&provided);
@@ -451,18 +660,23 @@ int main(int argc,char** argv) {
         int devices=0;const int local=cudaGetDeviceCount(&devices)==cudaSuccess&&devices>0?1:0;
         int ready=0;MPI_Allreduce(&local,&ready,1,MPI_INT,MPI_MIN,MPI_COMM_WORLD);
         if(!ready){if(!rank)std::cout<<"SKIP no CUDA device\n";MPI_Finalize();return 77;}
-        mixed=argc==2&&std::string(argv[1])=="--mixed";
-        if(mixed)for(int species:{1,4,37})for(bool periodic:{false,true})run(2,species,periodic);
+        flux_mode=argc==2&&std::string(argv[1])=="--flux";
+        mixed=flux_mode||(argc==2&&std::string(argv[1])=="--mixed");
+        if(flux_mode)for(int species:{1,4,37})for(bool periodic:{false,true})run_flux(species,periodic);
+        else if(mixed)for(int species:{1,4,37})for(bool periodic:{false,true})run(2,species,periodic);
         else for(int dim:{1,2,3})for(int species:{1,4,37})for(bool periodic:{false,true})run(dim,species,periodic);
         std::array<std::uint64_t,3> traffic{boundary_h2d,boundary_d2h,observed_device_used};
         std::array<std::uint64_t,6> all{};
         MPI_Gather(traffic.data(),3,MPI_UINT64_T,all.data(),3,MPI_UINT64_T,0,MPI_COMM_WORLD);
-        if(!rank)for(int r=0;r<2;++r)std::cout<<"boundary traffic rank="<<r
+        if(!rank&&!flux_mode)for(int r=0;r<2;++r)std::cout<<"boundary traffic rank="<<r
             <<" h2d_including_metadata="<<all[3*r]<<" d2h="<<all[3*r+1]
             <<" observed_device_used_including_test_and_contexts="<<all[3*r+2]<<std::endl;
-        if(!rank)std::cout<<"PASS CUDA MPI Runtime mixed="<<mixed<<" layouts="<<(mixed?6:18)
-            <<" full_state_checks="<<checks
-            <<" collective_rejections="<<rejections<<std::endl;
+        if(!rank) {
+            if(flux_mode)std::cout<<"PASS CUDA MPI flux layouts=6 weighted_stages=24 flux_reflux_checks="<<checks;
+            else std::cout<<"PASS CUDA MPI Runtime mixed="<<mixed<<" layouts="<<(mixed?6:18)
+                <<" full_state_checks="<<checks;
+            std::cout<<" collective_rejections="<<rejections<<std::endl;
+        }
         MPI_Finalize();return 0;
     } catch(const std::exception& e) {
         std::cerr<<"rank="<<rank<<" "<<e.what()<<std::endl;MPI_Abort(MPI_COMM_WORLD,1);return 1;

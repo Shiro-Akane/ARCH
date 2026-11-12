@@ -8,6 +8,7 @@
  * Flux, CFL, interpolation and geometry formulas stay in their shared owners.
  */
 
+#include "amr/flux/FluxRegister.h"
 #include "cuda/runtime/control/CudaBackendInternal.h"
 
 #include <algorithm>
@@ -122,6 +123,13 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
     const scheduler::StageDescriptor& descriptor,
     double dt, state::CompletionToken expected)
 {
+    auto* flux = impl_->active_amr_flux.get();
+    if (flux && flux->distributed) {
+        flux->captured_stage.reset();
+        flux->register_upload_ready = false;
+        if (currents.size() != flux->runtime_blocks.size())
+            throw std::invalid_argument("distributed CUDA flux stage requires all local blocks");
+    }
     validate_hydro_batch_accesses(currents);
     const auto plan = scheduler::make_hydro_plan(
         hydro_method(impl_->launch.plan.time_integrator));
@@ -218,9 +226,104 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
         report.block_uid = currents[index].block.uid.value;
         stage_repairs.combine(report);
     }
-
+    if (flux && flux->distributed) flux->captured_stage = expected;
 
     return expected;
+}
+
+std::vector<std::vector<double>> CudaBackend::download_amr_flux_stage(
+    const amr::AmrFluxTopologyPlan& topology, state::CompletionToken completed)
+{
+    auto* plan = impl_->active_amr_flux.get();
+    if (!plan || !plan->distributed || !plan->captured_stage
+        || *plan->captured_stage != completed || !complete_token(completed)
+        || plan->topology_fingerprint != topology.fingerprint
+        || plan->epoch != topology.epoch || plan->routes.size() != topology.routes.size())
+        throw std::invalid_argument("CUDA flux capture has no matching completed stage");
+    amr::validate_amr_flux_topology_plan(topology);
+    // Allocate all Host packet storage before the first enqueue. Each surface
+    // is copied once; duplicate operations retain the original recipe ordering.
+    std::map<std::pair<int, int>, std::vector<double>> surfaces;
+    std::vector<std::vector<double>> values(plan->routes.size());
+    for (std::size_t i = 0; i < plan->routes.size(); ++i) {
+        const auto& route = *plan->routes[i];
+        if (route.compiled.logical_fingerprint != topology.routes[i].plan.fingerprint
+            || route.capture_offsets.size() != topology.routes[i].plan.operations.size())
+            throw std::invalid_argument("CUDA flux capture recipe drifted");
+        values[i].resize(route.capture_offsets.size());
+        for (const auto& [face, offset] : route.capture_offsets) {
+            const auto surface = plan->host_blocks.at(route.compiled.source_block).initial_flux[face];
+            const auto count = amr_flux_surface_scalar_count(surface.cell_count, surface.species_count);
+            if (!valid_amr_flux_surface(surface) || offset < 0
+                || static_cast<std::size_t>(offset) >= count)
+                throw std::invalid_argument("CUDA flux capture surface extent drifted");
+            surfaces.try_emplace({route.compiled.source_block, face}, count);
+        }
+    }
+    impl_->select_device();
+    CudaQuiescenceGuard guard{*impl_};
+    for (auto& [key, packet] : surfaces) {
+        const auto surface = plan->host_blocks[key.first].initial_flux[key.second];
+        check_cuda(cudaMemcpyAsync(packet.data(), surface.rho, packet.size() * sizeof(double),
+            cudaMemcpyDeviceToHost, impl_->stream.get()), "download captured CUDA face flux");
+        impl_->runtime_counters.bytes_d2h += packet.size() * sizeof(double);
+    }
+    impl_->checked_quiesce("complete CUDA face-flux packets");
+    guard.completed = true;
+    for (std::size_t i = 0; i < plan->routes.size(); ++i) {
+        const auto& route = *plan->routes[i];
+        for (std::size_t n = 0; n < route.capture_offsets.size(); ++n) {
+            const auto [face, offset] = route.capture_offsets[n];
+            values[i][n] = surfaces.at({route.compiled.source_block, face})[offset];
+        }
+    }
+    plan->captured_stage.reset();
+    return values;
+}
+
+void CudaBackend::upload_amr_flux_register(const amr::AmrFluxTopologyPlan& topology,
+    const amr::FluxRegister& flux, std::uint64_t completed_stages)
+{
+    auto* plan = impl_->active_amr_flux.get();
+    if (plan) plan->register_upload_ready = false;
+    if (!plan || !plan->distributed || plan->topology_fingerprint != topology.fingerprint
+        || plan->epoch != topology.epoch || flux.GetNumSpecies() != plan->species_count)
+        throw std::invalid_argument("CUDA flux upload topology/storage mismatch");
+    amr::validate_amr_flux_topology_plan(topology);
+    flux.RequireDistributedStages(topology.fingerprint, completed_stages);
+    std::vector<std::pair<DeviceAmrFluxSurfaceView, std::vector<double>>> packets;
+    for (const auto& requirement : plan->surface_requirements) {
+        if (!(requirement.roles & static_cast<std::uint8_t>(amr::AmrFluxSurfaceRole::Register)))
+            continue;
+        const int block = topology.pool_lowering.at(topology.active_endpoints.at(requirement.block));
+        const auto surface = plan->host_blocks.at(requirement.block).registers[requirement.face];
+        if (!valid_amr_flux_surface(surface) || surface.cell_count != requirement.cell_count
+            || surface.species_count != plan->species_count)
+            throw std::invalid_argument("CUDA flux upload surface layout is invalid");
+        auto& packet = packets.emplace_back(surface, amr_flux_surface_scalar_count(
+            surface.cell_count, surface.species_count)).second;
+        for (int cell = 0; cell < surface.cell_count; ++cell) {
+            const auto value = flux.GetSummedFlux(block, requirement.face, cell);
+            const std::array fluid{value.rho, value.mom_u, value.mom_v, value.mom_w, value.eng};
+            for (int field = 0; field < 5; ++field)
+                packet[field * surface.cell_count + cell] = fluid[field];
+            for (int species = 0; species < surface.species_count; ++species)
+                packet[(5 + species) * surface.cell_count + cell] =
+                    flux.GetSummedSpeciesFlux(block, requirement.face, cell, species);
+        }
+        if (!std::all_of(packet.begin(), packet.end(), [](double v) { return std::isfinite(v); }))
+            throw std::invalid_argument("CUDA flux upload contains nonfinite accumulated values");
+    }
+    impl_->select_device();
+    CudaQuiescenceGuard guard{*impl_};
+    for (const auto& [surface, packet] : packets) {
+        check_cuda(cudaMemcpyAsync(surface.rho, packet.data(), packet.size() * sizeof(double),
+            cudaMemcpyHostToDevice, impl_->stream.get()), "upload accepted CUDA reflux surface");
+        impl_->runtime_counters.bytes_h2d += packet.size() * sizeof(double);
+    }
+    impl_->checked_quiesce("complete accepted CUDA reflux surfaces");
+    guard.completed = true;
+    plan->register_upload_ready = true;
 }
 
 state::CompletionToken CudaBackend::clear_amr_flux_register(
@@ -233,6 +336,8 @@ state::CompletionToken CudaBackend::clear_amr_flux_register(
     if (plan == nullptr)
         throw std::logic_error("CUDA AMR flux plan is unavailable");
 
+    plan->captured_stage.reset();
+    plan->register_upload_ready = false;
     // The caller may have selected another device; launches use our stream.
     impl_->select_device();
     int kernels = 0;
@@ -271,6 +376,10 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
         || plan->device_blocks.size() != plan->host_blocks.size())
         throw std::logic_error("CUDA AMR flux block bindings drifted");
 
+    if (plan->distributed && !plan->register_upload_ready)
+        throw std::logic_error("CUDA distributed reflux requires accepted uploaded registers");
+    // A failed launch or validation cannot leave a reusable publication receipt.
+    plan->register_upload_ready = false;
     // Authenticate every original plan owner/shape before rebinding or clearing
     // even an empty report. Slot rotation changes views, not owners.
     for (const auto* block : plan->runtime_blocks) {

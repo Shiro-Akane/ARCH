@@ -362,6 +362,66 @@ void failures() {
         f.control.ApplyDistributedReflux(.01, slots[2], 1);
     }
 }
+void storage_boundary() {
+    if(ranks!=2)return;
+    Fixture f(2,rank,ranks,true),reference(2,rank,ranks,true);
+    seed(f);seed(reference);
+    const auto& topology=f.control.RequireFluxTopologyPlan(2);
+    const auto& other=reference.control.RequireFluxTopologyPlan(2);
+    stage(f,topology,gather(f,topology,2,.5),0,.5);
+    stage(reference,other,gather(reference,other,2,.5),0,.5);
+    int callbacks=0;
+    std::function<void(const amr::RefluxPlan&)> mixed;
+    if(rank==1)mixed=[&](const auto&){++callbacks;};
+    rejects_without_write(f,[&] {
+        f.control.flux_register.ExecuteDistributedReflux(f.control.pool,*f.control.tree,
+            f.handles,.01,&amr::Block::fluid_state,1,mixed);
+    });
+    require(callbacks==0,"storage kind mismatch reached reflux callback");
+    rejects_without_write(f,[&] {
+        f.control.flux_register.ExecuteDistributedReflux(f.control.pool,*f.control.tree,
+            f.handles,.01,&amr::Block::fluid_state,1,[&](const auto&) {
+                ++callbacks;
+                if(rank==1)throw std::runtime_error("injected storage completion failure");
+            });
+    });
+    require(callbacks==1&&!f.control.flux_register.DistributedRefluxComplete(),
+        "failed storage callback published completion");
+    // Model independent storage with the original serial executor. The MPI
+    // register remains the collective receipt owner and cannot use that entry.
+    amr::FluxRegister storage;
+    const auto& active=f.control.tree->GetActiveBlocks();
+    storage.Resize(*std::max_element(active.begin(),active.end())+1,2);
+    storage.EnsureSpecies(2);
+    for(int id:active)for(int face=0;face<4;++face) {
+        if(!f.control.flux_register.HasData(id,face))continue;
+        const int cells=amr::flux_plan_detail::face_cell_count(
+            2,static_cast<amr::AmrAxis>(face/2));
+        for(int cell=0;cell<cells;++cell) {
+            storage.AddRegisteredFlux(id,face,cell,
+                f.control.flux_register.GetSummedFlux(id,face,cell),1.);
+            for(int sp=0;sp<2;++sp)storage.AddRegisteredSpeciesFlux(id,face,cell,sp,
+                f.control.flux_register.GetSummedSpeciesFlux(id,face,cell,sp),1.);
+        }
+    }
+    reference.control.ApplyDistributedReflux(.01,&amr::Block::fluid_state,1);
+    f.control.flux_register.ExecuteDistributedReflux(f.control.pool,*f.control.tree,
+        f.handles,.01,&amr::Block::fluid_state,1,[&](const auto& plan) {
+            f.control.flux_register.RequireDistributedStages(topology.fingerprint,1);
+            storage.ExecuteRefluxPlan(plan,f.control.pool,
+                f.control.tree->GetActiveBlocks(),f.handles,&amr::Block::fluid_state,.01);
+            ++callbacks;
+        });
+    require(callbacks==2&&f.control.flux_register.DistributedRefluxComplete(),
+        "successful storage callback lacks completion");
+    compare_fields(f,reference);
+    rejects_without_write(f,[&] {
+        f.control.flux_register.ExecuteDistributedReflux(f.control.pool,*f.control.tree,
+            f.handles,.01,&amr::Block::fluid_state,1,[&](const auto&){++callbacks;});
+    });
+    require(callbacks==2,"replayed reflux invoked storage");
+}
+
 } // namespace
 int main(int argc, char** argv) {
 #if ARCH_MPI_ENABLED
@@ -388,6 +448,7 @@ int main(int argc, char** argv) {
             }
         count_boundaries();
         failures();
+        storage_boundary();
         if (rank == 0)
             std::cout
                 << "flux reflux exchange passed: bitwise registers/all slots, signed/zero stages, "

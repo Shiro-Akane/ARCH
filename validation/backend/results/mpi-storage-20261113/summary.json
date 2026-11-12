@@ -1,0 +1,24 @@
+{
+  "utc": "2026-11-12T23:19:20.701330+00:00",
+  "deleted_files": 693,
+  "logical_removed_bytes": 10127341636,
+  "allocated_file_bytes": 10128613376,
+  "archive_bytes": 4304451534,
+  "archive_sha256": "ef201f070094595ce3b32433481d633fd0683b8ce5a2a1cc6813fa3b0a0f75dc",
+  "free_before": 15248486400,
+  "free_after": 31803547648,
+  "source_heads_status_and_diffs_unchanged": true,
+  "protected_current_mpi_builds_and_toolchains": true,
+  "note": "filesystem free-space change includes concurrent projects and XFS sharing; logical removal is not exclusive reclaim",
+  "scope": "retired ARCH August/September generated ELF/static/object artifacts only",
+  "archive_verified": {
+    "archive": "/home/ubuntu/projects/ARCH-mpi-storage-20261113/retired-build-artifacts.tar.zst",
+    "archive_sha256": "ef201f070094595ce3b32433481d633fd0683b8ce5a2a1cc6813fa3b0a0f75dc",
+    "bytes": 4304451534,
+    "files": 693,
+    "all_member_hashes_verified": true,
+    "largest_file_restored_and_rehashed": "/home/ubuntu/projects/ARCH-large-application-20260914/build/p12-20260914/large-application-v2/release/bin/ARCH"
+  },
+  "server_evidence": "/home/ubuntu/projects/ARCH-mpi-storage-20261113",
+  "untouched": "source repositories including uncommitted edits, raw experiments, current MPI build variants and toolchains; unique backup archives"
+}

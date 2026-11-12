@@ -36,7 +36,7 @@
 #include <vector>
 
 namespace Physical::Gravity { class GravityExecution; class IGravityPolicy; }
-namespace amr { struct CoarseFineCellPlan; struct AmrFluxTopologyPlan; struct Block; struct CoordinateSeamPlan; }
+namespace amr { class FluxRegister; struct CoarseFineCellPlan; struct AmrFluxTopologyPlan; struct Block; struct CoordinateSeamPlan; }
 namespace arch::boundary { class BoundaryPlan; }
 
 namespace arch::backend {
@@ -592,6 +592,16 @@ public:
         const amr::AmrFluxTopologyPlan&, const amr::RefluxPlan&)
     {
         throw std::logic_error("backend AMR flux plans are unavailable");
+    }
+    /** Completed source-face values in the original registration operation order. */
+    virtual std::vector<std::vector<double>> download_amr_flux_stage(
+        const amr::AmrFluxTopologyPlan&, state::CompletionToken) {
+        throw std::logic_error("backend distributed flux capture is unavailable");
+    }
+    /** Upload only accepted coarse-owner register surfaces for native reflux. */
+    virtual void upload_amr_flux_register(const amr::AmrFluxTopologyPlan&,
+        const amr::FluxRegister&, std::uint64_t) {
+        throw std::logic_error("backend distributed flux upload is unavailable");
     }
     /** Stage the next epoch's AMR flux resources before store publication. */
     virtual void stage_amr_flux_plan(
