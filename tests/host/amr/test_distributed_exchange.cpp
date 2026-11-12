@@ -248,6 +248,39 @@ void failures() {
         execute(f, slots[0]);
     }
 }
+void storage_callback_failures() {
+    if (ranks != 2) return;
+    for (int fault=0;fault<6;++fault) {
+        Fixture f(2,rank,ranks,true,1,fault==4?2:1);
+        seed(f,false);
+        const auto before=snapshot(f);
+        int begins=0,gathers=0,scatters=0;
+        amr::GhostExchange::DistributedStorage storage;
+        storage.source_version=fault==5?1+rank:1;
+        storage.begin=[&] {
+            ++begins;
+            if(fault==0&&rank==0)throw std::runtime_error("storage begin failure");
+        };
+        storage.gather=[&](auto,auto) {
+            ++gathers;
+            if(fault==1&&rank==0)throw std::runtime_error("storage gather failure");
+        };
+        storage.scatter=[&](auto,auto) {
+            ++scatters;
+            if(fault==2&&rank==0)throw std::runtime_error("storage scatter failure");
+        };
+        bool rejected=false;
+        try {
+            f.control.ghost_exchange.ExecuteDistributedExchange(f.control.pool,f.control.tree,2,
+                slots[0],f.handles,fault==3&&rank==0?nullptr:&storage);
+        } catch(const std::exception&) {rejected=true;}
+        require(rejected,"storage failure was not collective");
+        require(before==snapshot(f),"rejected storage preparation modified Host fields");
+        require(begins==(fault<3?1:0)&&gathers==(fault==1||fault==2?1:0)
+            &&scatters==(fault==2?1:0),"failed storage callback entered a later phase");
+        execute(f,slots[0]);
+    }
+}
 void late_coarse_failure() {
     if (ranks != 2)
         return;
@@ -296,6 +329,7 @@ int main(int argc, char** argv) {
         copy_bits();
         failures();
         late_coarse_failure();
+        storage_callback_failures();
         if (rank == 0)
             std::cout
                 << "complete exchange passed: 72 configurations, X/Y/Z non-root owners, "

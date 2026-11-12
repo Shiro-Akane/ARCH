@@ -32,12 +32,16 @@ using topology::TopologyObservation;
 state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requested, state::StateVersion version, state::CompletionToken token)
 {
     auto& accesses = boundary_accesses;
-    accesses.clear();
-    accesses.reserve(stage_handles.size());
-    for (std::size_t index = 0; index < stage_handles.size(); ++index) {
-        const auto access = backend_access(index, requested);
-        accesses.push_back(access);
-    }
+    std::exception_ptr failure;
+    try {
+        accesses.clear();
+        accesses.reserve(stage_handles.size());
+        for (std::size_t index = 0; index < stage_handles.size(); ++index)
+            accesses.push_back(backend_access(index, requested));
+    } catch (...) { failure = std::current_exception(); }
+    if (amr_ctrl.tree->PartitionSize() > 1)
+        amr::GhostExchange::CompleteDistributedPhase(failure);
+    else if (failure) std::rethrow_exception(failure);
     return execute_device_boundary_domain(accesses, stage_handles, requested,
         version, token);
 }
@@ -48,6 +52,50 @@ state::CompletionToken DriverRuntime::execute_device_boundary_domain(
     std::span<const amr::BlockHandle> handles, StateSlot requested,
     state::StateVersion version, state::CompletionToken token)
 {
+    if (amr_ctrl.tree->PartitionSize() > 1) {
+        amr::GhostExchange::DistributedStorage storage;
+        FluidState amr::Block::* member = nullptr;
+        std::exception_ptr failure;
+        try {
+            if (!state::is_valid(version) || !state::is_complete(token)
+                || handles.empty() || accesses.size() != handles.size())
+                throw std::logic_error("distributed Device boundary identity is invalid");
+            if (bc_handler.has_user())
+                throw std::logic_error("distributed Device user boundary is not yet available");
+            for (std::size_t i = 0; i < handles.size(); ++i) {
+                if (accesses[i].block != handles[i] || accesses[i].slot != requested
+                    || !compute_backend->contains(accesses[i]))
+                    throw std::logic_error("distributed Device boundary storage is stale");
+                residency_ledger->require_ghost_publication(
+                    {handles[i], requested}, ExecutionSide::Device, version, token);
+            }
+            switch (requested) {
+            case StateSlot::Current: member = &amr::Block::fluid_state; break;
+            case StateSlot::Next: member = &amr::Block::state_next; break;
+            case StateSlot::Scratch: member = &amr::Block::state_scratch; break;
+            default: throw std::invalid_argument("invalid distributed Device boundary slot");
+            }
+            storage.source_version = version.value;
+            storage.begin = [&] {
+                // Called only after every rank has validated topology/layout.
+                // A failed sweep cannot leave formerly cached ghosts readable.
+                for (const auto handle : handles)
+                    residency_ledger->invalidate_ghost({handle, requested}, ExecutionSide::Device);
+                if (compute_backend->execute_physical_boundary_batch(accesses, version, token) != token)
+                    throw std::logic_error("distributed Device physical boundary is incomplete");
+            };
+            storage.gather = [&](auto slices, auto packet) {
+                compute_backend->gather_exchange_packet(accesses, slices, packet);
+            };
+            storage.scatter = [&](auto slices, auto packet) {
+                compute_backend->scatter_exchange_packet(accesses, slices, packet);
+            };
+        } catch (...) { failure = std::current_exception(); }
+        amr::GhostExchange::CompleteDistributedPhase(failure);
+        amr_ctrl.ghost_exchange.ExecuteDistributedExchange(
+            amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, member, handles, &storage);
+        return token;
+    }
     if (accesses.size() != handles.size())
         throw std::logic_error("Device boundary access/handle extent mismatch");
     for (std::size_t index = 0; index < accesses.size(); ++index)
@@ -99,46 +147,59 @@ state::CompletionToken DriverRuntime::execute_device_boundary_domain(
 /** Wait for and validate a device boundary publication. */
 void DriverRuntime::complete_device_boundary(StateSlot slot)
 {
-    if (stage_handles.empty())
-        throw std::logic_error("CUDA boundary requires active blocks");
-    const auto version = residency_ledger->inspect(
-        {stage_handles.front(), slot}).interior.version;
-    bool needs_device_ghosts = false;
-    for (const auto handle : stage_handles) {
-        residency_ledger->require_readable(
-            {handle, slot},
-            {ExecutionSide::Device, version, true, false});
-        const auto coherence = residency_ledger->inspect({handle, slot});
-        needs_device_ghosts = needs_device_ghosts
-            || !arch::state::side_can_read(
-                coherence.ghost.residency, ExecutionSide::Device)
-            || coherence.ghost.version != version
-            || coherence.ghost_source_version != version
-            || !arch::state::is_complete(coherence.ghost.completion)
-            || coherence.ghost.pending_transfer
-                != arch::state::PendingTransferPhase::None;
-    }
-    // Reuse the completed boundary for this field version. Re-publishing
-    // identical Device ghosts would invalidate a synchronized Host copy
-    // while leaving the interior synchronized, breaking the whole-state
-    // materialization contract required by Host consumers.
+    const bool distributed = amr_ctrl.tree->PartitionSize() > 1;
+    state::StateVersion version{};
+    std::array<std::uint64_t, 3> identity{};
+    const auto prepare = [&] {
+        if (stage_handles.empty())
+            throw std::logic_error("CUDA boundary requires active blocks");
+        if (slot != StateSlot::Current && slot != StateSlot::Next && slot != StateSlot::Scratch)
+            throw std::invalid_argument("invalid CUDA boundary slot");
+        version = residency_ledger->inspect({stage_handles.front(), slot}).interior.version;
+        identity = {static_cast<std::uint64_t>(slot), version.value, stage_handles.front().epoch.value};
+        bool needed = false;
+        for (const auto handle : stage_handles) {
+            residency_ledger->require_readable({handle, slot},
+                {ExecutionSide::Device, version, true, false});
+            const auto coherence = residency_ledger->inspect({handle, slot});
+            needed |= !state::side_can_read(coherence.ghost.residency, ExecutionSide::Device)
+                || coherence.ghost.version != version || coherence.ghost_source_version != version
+                || !state::is_complete(coherence.ghost.completion)
+                || coherence.ghost.pending_transfer != state::PendingTransferPhase::None;
+        }
+        const auto& stamp = user_boundary_stamps_[static_cast<std::size_t>(slot)];
+        return needed || (bc_handler.has_user()
+            && (stamp.epoch != stage_handles.front().epoch || stamp.revision != bc_handler.stage_revision()));
+    };
+    // Preserve synchronized Host ghosts on cache hits; every rank joins a
+    // refresh requested by any peer. Local validation failures are collective.
+    if (!(distributed ? amr::GhostExchange::PrepareDistributedBoundary(prepare, identity) : prepare()))
+        return;
     auto& stamp = user_boundary_stamps_[static_cast<std::size_t>(slot)];
-
-    const bool same_context = !bc_handler.has_user()
-        || (stamp.epoch == stage_handles.front().epoch
-            && stamp.revision == bc_handler.stage_revision());
-    if (!needs_device_ghosts && same_context) return;
     const auto before = compute_backend->counters();
     StageExecutionContext context{
         ExecutionSide::Device, *residency_ledger, scheduler_clock};
+    if (distributed)
+        context.hydro_rank_completion = &amr::GhostExchange::CompleteDistributedPhase;
     (void)arch::scheduler::complete_boundary(
         context, stage_handles, slot, version,
         [&](StateSlot requested, arch::state::StateVersion version,
             arch::state::CompletionToken token) {
             return execute_device_boundary(requested, version, token);
         });
-    trace_backend_operation(
-        arch::backend::BackendOperation::PhysicalBoundary, slot, before);
+    std::exception_ptr trace_failure;
+    try {
+        trace_backend_operation(
+            arch::backend::BackendOperation::PhysicalBoundary, slot, before);
+    } catch (...) { trace_failure = std::current_exception(); }
+    if (distributed) {
+        try { amr::GhostExchange::CompleteDistributedPhase(trace_failure); }
+        catch (...) {
+            for (const auto handle : stage_handles)
+                residency_ledger->invalidate_ghost({handle, slot}, ExecutionSide::Device);
+            throw;
+        }
+    } else if (trace_failure) std::rethrow_exception(trace_failure);
     // Publish the context stamp only after every boundary/exchange and the
     // residency transaction completed. Failed work cannot become a cache hit.
     if (bc_handler.has_user())

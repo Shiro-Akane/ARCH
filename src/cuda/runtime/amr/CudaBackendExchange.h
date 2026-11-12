@@ -73,6 +73,12 @@ cudaError_t launch_cuda_backend_coordinate_seam(
     const DeviceCoordinateSeamTransfer* transfers,
     int transfer_count, int* status, cudaStream_t stream);
 
+cudaError_t launch_cuda_backend_exchange_packet(
+    const DeviceExchangeBlock* blocks,
+    const DeviceExchangeOperation* operations, int operation_count,
+    int field_count, std::uint64_t total_cells, double* scratch,
+    cudaStream_t stream, bool gather);
+
 cudaError_t launch_cuda_backend_exchange_phase(
     const DeviceExchangeBlock* blocks,
     const DeviceExchangeOperation* operations, int operation_count,

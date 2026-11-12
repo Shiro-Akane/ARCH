@@ -94,6 +94,19 @@ cudaError_t launch_cuda_backend_coordinate_seam(
     return cudaGetLastError();
 }
 
+cudaError_t launch_cuda_backend_exchange_packet(
+    const DeviceExchangeBlock* blocks,
+    const DeviceExchangeOperation* operations, int operation_count,
+    int field_count, std::uint64_t total_cells, double* scratch,
+    cudaStream_t stream, bool gather)
+{
+    return gather
+        ? launch_same_level_exchange_gather(blocks, operations, operation_count,
+            field_count, total_cells, scratch, stream)
+        : launch_same_level_exchange_scatter(blocks, operations, operation_count,
+            field_count, total_cells, scratch, stream);
+}
+
 cudaError_t launch_cuda_backend_exchange_phase(
     const DeviceExchangeBlock* blocks,
     const DeviceExchangeOperation* operations, int operation_count,

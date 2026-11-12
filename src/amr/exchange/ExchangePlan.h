@@ -51,6 +51,15 @@ struct LogicalExchangeBox {
                                      const LogicalExchangeBox&) = default;
 };
 
+/** One local box in the shared cell-major Host packet; offset counts 64-bit fields.
+ * The transport owns packet layout. Storage owners only gather/scatter this slice.
+ */
+struct ExchangePacketSlice {
+    BlockHandle block{};
+    LogicalExchangeBox box{};
+    std::size_t word_offset = 0;
+};
+
 struct SameLevelExchangeOperation {
     std::uint64_t ordinal = 0;
     ExchangePhaseId phase = ExchangePhaseId::X;

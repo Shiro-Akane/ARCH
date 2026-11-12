@@ -63,6 +63,14 @@ endfunction()
 
 # Host staging uses production header kernels and the existing build contract.
 if(ARCH_ENABLE_MPI)
+    add_executable(arch_cuda_mpi_runtime tests/cuda/amr/test_cuda_mpi_runtime.cpp)
+    target_link_libraries(arch_cuda_mpi_runtime PRIVATE
+        arch_driver_runtime arch_cuda_backend CUDA::cudart)
+    add_test(NAME mpi_cuda_runtime_2
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_cuda_mpi_runtime> ${MPIEXEC_POSTFLAGS})
+    set_tests_properties(mpi_cuda_runtime_2 PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 300 PROCESSORS 2 LABELS "mpi;cuda")
     add_executable(arch_cuda_mpi_staging
         tests/cuda/amr/test_cuda_mpi_staging.cu
         tests/cuda/amr/CudaMpiStagingPlan.cpp)
@@ -73,6 +81,12 @@ if(ARCH_ENABLE_MPI)
             ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_cuda_mpi_staging> ${MPIEXEC_POSTFLAGS})
     set_tests_properties(mpi_cuda_staging_2 PROPERTIES
         SKIP_RETURN_CODE 77 TIMEOUT 180 PROCESSORS 2 LABELS "mpi;cuda")
+    if(ARCH_CUDA_HEAVY_JOB_POOL)
+        foreach(target IN ITEMS arch_cuda_mpi_runtime arch_cuda_mpi_staging)
+            set_property(TARGET ${target} PROPERTY JOB_POOL_COMPILE ${ARCH_CUDA_HEAVY_JOB_POOL})
+            set_property(TARGET ${target} PROPERTY JOB_POOL_LINK ${ARCH_CUDA_HEAVY_JOB_POOL})
+        endforeach()
+    endif()
 endif()
 
 # Generated-network mathematical and trajectory witnesses.

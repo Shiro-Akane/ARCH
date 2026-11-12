@@ -57,12 +57,12 @@ level 2 在这里仍是同层布局，不是 mixed-level 验收。
 编译器调用原计划构建器；避免 NVCC 12.8 对 defaulted C++20 comparison 的
 链接限制。未改生产拓扑类型或数学实现。
 
-这个增量还没有把 MPI 插入生产 CudaBackend 的 ghost/residency 发布链，
-没有执行跨 rank GPU Hydro 宏步。G1 的 Runtime 接入及 collective 失败恢复
-仍待完成。测试夹具中的 Host 全域 oracle 只用于验收，不是生产 staging 方案。
+首个提交 2bc272fd 没有把 MPI 插入生产 CudaBackend 的 ghost/residency 发布链，
+没有执行跨 rank GPU Hydro 宏步。当时 G1 的 Runtime 接入及 collective 失败恢复
+尚待完成；下节记录后续 Runtime 增量。测试夹具中的 Host 全域 oracle 只用于验收，不是生产 staging 方案。
 应用 GPU MPI / MPI-AMR 预检继续关闭。
 
-## 本增量验收
+## 首个增量验收
 
 服务器 H100-20C 上的 Release 与 Debug 双进程 CTest 均通过，无跳过；
 每个构建覆盖上述 18 布局、162 次槽交换、每 rank 324 次 phase 检查。
@@ -75,6 +75,95 @@ level 2 在这里仍是同层布局，不是 mixed-level 验收。
 源码、二进制、JUnit 与范围见
 [结构化摘要](../../validation/backend/results/mpi-gpu-staging-20261112/summary.json)。
 初始工具环境错误和报文检查失败的日志均保留，未删除失败项或降低门槛。
+
+## G1 第二个增量：Runtime 同层边界接入
+
+本增量复用原 GhostExchange 的 owner 目录、X/Y/Z 配方、cell-major 报文及
+MPI_Alltoallv。新增的同步 storage 回调只负责 begin、gather、scatter，不持有
+拓扑、字段或 communicator。原 Host 路径仍执行原字段循环；CUDA 后端在原
+exchange_scratch 中准备切片，并在每次 D2H / H2D + scatter 后等待原流完成。
+没有新增 MPI 内存池或设备 ownership 管理器。
+
+DriverRuntime 使用现有 ledger 和 scheduler 完成边界发布。缓存查询由所有 rank
+共同决定，任一 rank 需要刷新时，其他 rank 也参加。刷新前使旧 ghost 不可读，
+保留 interior 版本和 token 高水位；只有全部轴及每 rank 的发布前检查成功才发布。
+版本、slot、epoch 必须一致；completion token 属于各 rank 的本地时钟，不能因
+不等量分块的上传次数不同而要求其数值相等。
+
+当前路径只接受 Cartesian 同层边界。mixed-level 在任何 storage 回调前共同拒绝；
+用户边界、GPU Hydro 宏步、reflux、设备迁移与应用开放仍由后续阶段单独验证。
+GPU MPI 和 MPI-AMR 的 ExecutionPreflight 门槛未改。
+
+[Runtime 双进程见证](../../tests/cuda/amr/test_cuda_mpi_runtime.cpp) 链接原
+arch_driver_runtime 和完整 arch_cuda_backend。三块 X 根网格形成不等量 rank
+存储；Host 镜像在上传后覆盖，所有字段、species、ghost 与其他槽通过独立设备
+snapshot kernel 对照原串行 Host boundary recipe。另覆盖非对称缓存、单侧错误、报文容量、
+存储 generation、禁止写 active cell、重叠目的区、交换失败后的重试，以及重复 Host
+materialization 的缓存。
+
+CPU 既有跨入口失败测试曾发现新增标识扩大公共报文造成 MPI_ERR_TRUNCATE。
+修正保留原 18-word 公共头，在入口 tag 一致后再校验 storage/版本；失败日志
+保留。CPU CI 追加 storage begin/gather/scatter 单侧拒绝、Host/Device 模式不一致、
+mixed-level 拒绝，以及 ledger ghost 失效后的 token 高水位与 pending-transfer 检查。
+
+首个提交 2bc272fd 的双方手动 CI 已通过：
+[朋友仓库](https://github.com/Shiro-Akane/ARCH/actions/runs/43121730586)、
+[自有仓库](https://github.com/Arsenic-er/ARCH/actions/runs/43121734160)。
+本增量单独记录构建、实机数据和 CI 状态，不沿用前一提交的成功状态。
+
+## Runtime 增量验收记录
+
+Release 与 Debug 均已完成完整 arch_cuda_backend / arch_driver_runtime 构建，
+并在 H100-20C 上以两个 MPI rank 执行 Runtime 与原低层 staging 见证，无跳过。
+Runtime 每个构建覆盖 18 个布局：1/2/3 维、species 1/4/37、outflow/periodic；
+三个槽、两轮重复，共每 rank 252 次全状态对照、59 次双 rank 拒绝检查。
+这里对照的是所有逻辑网格单元；Host materialization 另外验证对齐填充区保持未写入。
+原低层见证继续通过 18 布局、162 次槽交换、324 次 phase 对照。
+
+Runtime 边界调用的累计传输计数如下，两种构建一致。H2D 包括元数据，
+D2H 只计边界调用内的字段回传；初始化、独立 oracle 读回和最终 materialization
+不计入这张表。它是测试流量记录，不是扩展或性能结论。
+
+| rank | H2D 字节（含元数据） | D2H 字节 |
+| --- | ---: | ---: |
+| 0 | 371,845,968 | 370,281,600 |
+| 1 | 770,105,232 | 766,945,920 |
+
+刷新后 cudaMemGetInfo 观测到的整卡最大已用量为 2,197,422,080 字节，
+包含两个进程的 CUDA 上下文和测试分配；不是每 rank 用量，也不是瞬时峰值测量。
+两个 rank 共用同一张 GPU，没有多 GPU 或多节点结论。迁移接收预留、容量耗尽
+及瞬时峰值仍由 A1 的资源验收覆盖。
+
+CPU Release/Debug、MPI ON/OFF 共 56 项相关 CTest 通过且无跳过；
+追加 source-version 不一致用例后，四种构建的协议回归也再次通过。
+629 项 tooling 全部通过且无跳过。CUDA OFF 或 MPI OFF 不注册 GPU MPI 测试。
+已有 CUDA AMR exchange 与 regrid transaction 在两种构建下也全部通过；结果记入
+[本增量结构化摘要](../../validation/backend/results/mpi-gpu-runtime-20261112/summary.json)。
+
+以下测试开发失败记录保留：先于 Runtime 构造初始化分区；
+串行参考调用原 Host recipe，保留生产 Runtime 的 communicator 校验；
+独立 snapshot 按 Interior/Ghost 租约读取；materialization 对照逻辑单元，
+另外断言 padding 未被写入。没有放宽数值门槛或删除有效字段检查。
+生产缺陷 MPI_ERR_TRUNCATE 的原失败记录和修复后的四种 CPU 回归也保留。
+
+本地证据位于 /home/ubuntu/projects/ARCH-mpi-evidence-gpu-runtime-20261112；
+包括命令、原失败、最终 JUnit、源码/二进制哈希及传输计数。
+本增量尚未执行 GPU Hydro 宏步、mixed-level、reflux 或迁移；
+没有 compute-sanitizer 结果，也未构建/开放完整 CUDA MPI 应用。
+新提交 CI 在推送后单独触发，最终状态保存在同一证据目录。
+
+## G2 的具体入口
+
+G1 完成后，先在原 ExecuteRemoteCoarseFinePlan 的请求/回复流程接入设备存储。
+源 owner 使用现有 CoarseFineCellPlan 及 CUDA coarse/fine gather 生成最终 ghost
+值；收到完整回复并共同通过检查后，目的 owner 再 scatter。这样保留原 interpolation、
+restriction 和守恒配方，不需要给本 rank 建立远端设备块，也不回传整个流体状态。
+
+先验收双 rank、二维五叶 mixed-level 拓扑的三个槽和角点，再接入现有 flux register /
+reflux 与 Euler、RK2、RK3 的完整宏步。设备端单侧失败必须在下一次通信前共同
+退出，失败恢复保留已接受的 interior、拓扑、池及 CUDA store。随后才将 Host
+迁移/同胞合并事务接到 CUDA StoreTransaction，并处理接收容量与退休事件。
+这些是后续工作，当前增量不宣称已执行。
 
 ## 服务器资源与恢复
 

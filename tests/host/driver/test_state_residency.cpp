@@ -847,6 +847,28 @@ int main()
                    == StateResidency::Invalid,
                "migration does not initialize unrelated state slots");
     });
+    run_case("ghost refresh invalidation", [] {
+        const auto block=handle(17,9);
+        const auto current=key(block,StateSlot::Current);
+        StateResidencyLedger ledger({9});
+        ledger.register_block(block,version(10),complete(20),ExecutionSide::Device);
+        ledger.publish_ghost(current,ExecutionSide::Device,version(10),complete(21));
+        const auto interior=ledger.inspect(current).interior;
+        ledger.invalidate_ghost(current,ExecutionSide::Device);
+        expect(same_region(interior,ledger.inspect(current).interior),"refresh changed interior");
+        expect_throws([&] {ledger.require_readable(current,
+            {ExecutionSide::Device,version(10),true,true});},"invalidated ghost remained readable");
+        expect_throws([&] {ledger.publish_ghost(current,ExecutionSide::Device,version(10),complete(21));},
+            "invalidation reset the ghost token watermark");
+        ledger.publish_ghost(current,ExecutionSide::Device,version(10),complete(22));
+        ledger.begin_transfer(current,StateRegion::Ghost,PendingTransferPhase::PendingD2H,pending(23));
+        expect_throws([&] {ledger.invalidate_ghost(current,ExecutionSide::Device);},
+            "invalidation allowed a pending transfer");
+        ledger.complete_transfer(current,StateRegion::Ghost,complete(23));
+        ledger.invalidate_ghost(current,ExecutionSide::Device);
+        expect(ledger.inspect(current).ghost.residency==StateResidency::Invalid,
+            "synchronized Host ghost remained visible after Device refresh");
+    });
     run_case("value contract and helpers", test_value_contract_and_helpers);
     run_case("registration snapshots and reads", test_registration_snapshots_and_reads);
     run_case("publication and region versions", test_publication_and_region_versions);

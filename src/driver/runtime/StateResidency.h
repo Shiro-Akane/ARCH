@@ -283,6 +283,20 @@ public:
         entry.coherence.ghost_source_version = source_version;
     }
 
+    /** Discard ghost visibility before a synchronous refresh can overwrite it.
+     * Interior identity and token high-watermarks are retained after failures.
+     */
+    void invalidate_ghost(StateKey key, ExecutionSide side) {
+        validate_side(side);
+        if (snapshot_owner_ && side != snapshot_owner_->side_)
+            throw std::logic_error("Metadata snapshot excludes invalidation from the other side");
+        Entry& entry = require_entry(key);
+        require_slot_without_pending(entry.coherence);
+        require_region_readable(entry.coherence.interior, side, entry.coherence.interior.version);
+        entry.coherence.ghost = invalid_region();
+        entry.coherence.ghost_source_version = {};
+    }
+
     void begin_transfer(StateKey key, StateRegion region,
                         PendingTransferPhase direction,
                         CompletionToken pending_operation)

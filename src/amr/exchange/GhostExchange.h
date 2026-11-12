@@ -23,6 +23,7 @@
 #include <cmath>
 #include <climits>
 #include <exception>
+#include <functional>
 #include <limits>
 #include <set>
 #include <tuple>
@@ -449,6 +450,51 @@ public:
         execute_coordinate_seam_plan(plans.coordinate_seam, pool, state_ptr);
     }
 
+    /** Storage callbacks borrow the existing packet; they own neither topology
+     * nor transport. Completion is synchronous, including exceptional exits.
+     * The first device consumer is Cartesian same-level exchange only.
+     */
+    struct DistributedStorage {
+        std::uint64_t source_version = 0;
+        std::function<void()> begin;
+        std::function<void(std::span<const ExchangePacketSlice>, std::span<std::uint64_t>)> gather;
+        std::function<void(std::span<const ExchangePacketSlice>, std::span<const std::uint64_t>)> scatter;
+    };
+
+    /** Agree local boundary failures before a peer can enter its next collective. */
+    static void CompleteDistributedPhase(std::exception_ptr failure) {
+#if ARCH_MPI_ENABLED
+        (void)RequireMpiWorld();
+        PrepareMpi([&] { if (failure) std::rethrow_exception(failure); });
+#else
+        (void)failure;
+        throw std::logic_error("distributed boundary requires ARCH_ENABLE_MPI=ON");
+#endif
+    }
+
+    /** Cached ranks join a refresh if any peer needs ghosts. Identities are
+     * slot, field version and topology epoch; completion tokens remain local.
+     */
+    template <class Prepare>
+    static bool PrepareDistributedBoundary(Prepare&& prepare,
+        const std::array<std::uint64_t, 3>& identity) {
+#if ARCH_MPI_ENABLED
+        (void)RequireMpiWorld();
+        int needed = 0, any = 0;
+        PrepareMpi([&] { needed = prepare() ? 1 : 0; });
+        std::array<std::uint64_t, 3> minimum{}, maximum{};
+        CheckMpi(MPI_Allreduce(identity.data(), minimum.data(), 3, MPI_UINT64_T, MPI_MIN, MPI_COMM_WORLD));
+        CheckMpi(MPI_Allreduce(identity.data(), maximum.data(), 3, MPI_UINT64_T, MPI_MAX, MPI_COMM_WORLD));
+        if (minimum != maximum)
+            throw std::invalid_argument("distributed boundary slot/version/epoch mismatch");
+        CheckMpi(MPI_Allreduce(&needed, &any, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD));
+        return any != 0;
+#else
+        (void)prepare; (void)identity;
+        throw std::logic_error("distributed boundary requires ARCH_ENABLE_MPI=ON");
+#endif
+    }
+
     /** All ranks call after Host workers join. Reuses serial X/Y/Z recipes,
      * coarse/fine faces and 2-D corner completion. Only compact topology is
      * global; fields stay on their owners. Failure leaves ghosts invalid:
@@ -457,9 +503,11 @@ public:
     void ExecuteDistributedExchange(const std::shared_ptr<MemoryPool>& pool,
                                     const std::shared_ptr<AmrTree>& tree, int dim,
                                     FluidState Block::* slot,
-                                    std::span<const BlockHandle> handles) {
+                                    std::span<const BlockHandle> handles,
+                                    const DistributedStorage* storage = nullptr) {
         // A serial reference inside WORLD must not participate.
         if (tree && tree->PartitionSize() == 1) {
+            if (storage) throw std::invalid_argument("distributed storage requires partitioned topology");
             ExecuteExchange(pool, tree, dim, slot, handles);
             return;
         }
@@ -473,6 +521,7 @@ public:
         struct Sweep {
             std::vector<int> send_counts, receive_counts, send_offsets, receive_offsets;
             std::vector<Transfer> transfers;
+            std::vector<ExchangePacketSlice> sources, destinations;
             std::vector<std::uint64_t> send, receive;
         };
         std::array<Sweep, 6> sweeps;
@@ -485,6 +534,9 @@ public:
         std::vector<std::uint64_t> words, global;
         std::vector<int> counts, offsets;
         std::array<std::uint64_t, 18> signature{}, minimum{}, maximum{};
+        // Keep the common header extent shared with coarse/fine entry points:
+        // mismatched calls must reject by tag, not truncate an MPI collective.
+        std::array<std::uint64_t, 2> storage_identity{}, storage_min{}, storage_max{};
         const auto encode = [](auto& out, const AmrEndpoint& e) {
             out.insert(out.end(), {static_cast<std::uint64_t>(e.logical.dimension),
                                    static_cast<std::uint64_t>(e.logical.level),
@@ -513,7 +565,10 @@ public:
             const auto& root = tree->GetRootGrid();
             if (root.geometry != "cartesian")
                 throw std::invalid_argument("distributed exchange requires Cartesian geometry");
-            signature = {2,
+            if (storage && (!storage->source_version || !storage->begin
+                || !storage->gather || !storage->scatter))
+                throw std::invalid_argument("distributed storage callbacks are incomplete");
+            signature = {3,
                          static_cast<std::uint64_t>(dim),
                          static_cast<std::uint64_t>(species),
                          static_cast<std::uint64_t>(state_slot),
@@ -531,6 +586,7 @@ public:
                          std::bit_cast<std::uint64_t>(root.x2_max),
                          std::bit_cast<std::uint64_t>(root.x3_min),
                          std::bit_cast<std::uint64_t>(root.x3_max)};
+            storage_identity = {storage ? 1ULL : 0ULL, storage ? storage->source_version : 0ULL};
             std::map<int, std::size_t> indices;
             for (std::size_t i = 0; i < active.size(); ++i)
                 if (!indices.emplace(active[i], i).second)
@@ -587,6 +643,12 @@ public:
                                MPI_MAX, MPI_COMM_WORLD));
         if (minimum != maximum)
             throw std::invalid_argument("distributed exchange rank identity/layout/slot mismatch");
+        CheckMpi(MPI_Allreduce(storage_identity.data(), storage_min.data(), 2, MPI_UINT64_T,
+                               MPI_MIN, MPI_COMM_WORLD));
+        CheckMpi(MPI_Allreduce(storage_identity.data(), storage_max.data(), 2, MPI_UINT64_T,
+                               MPI_MAX, MPI_COMM_WORLD));
+        if (storage_min != storage_max)
+            throw std::invalid_argument("distributed exchange storage/version mismatch");
         const int count = static_cast<int>(words.size());
         CheckMpi(MPI_Allgather(&count, 1, MPI_INT, counts.data(), 1, MPI_INT, MPI_COMM_WORLD));
         PrepareMpi([&] {
@@ -601,6 +663,8 @@ public:
         CheckMpi(
             MPI_Allreduce(&has_coarse_fine, &any_coarse_fine, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD));
         PrepareMpi([&] {
+            if (storage && any_coarse_fine)
+                throw std::invalid_argument("distributed device coarse-fine exchange is not yet available");
             const auto decode = [&](std::size_t at) {
                 const auto* w = global.data() + at;
                 if (w[0] != static_cast<std::uint64_t>(dim) || w[1] > 31 || w[2] > UINT32_MAX ||
@@ -716,13 +780,19 @@ public:
                         transfer.send += sweep.send_offsets[transfer.to];
                     if (transfer.destination >= 0)
                         transfer.receive += sweep.receive_offsets[transfer.from];
+                    if (storage && transfer.source >= 0)
+                        sweep.sources.push_back({handles[transfer.source], transfer.source_box, transfer.send});
+                    if (storage && transfer.destination >= 0)
+                        sweep.destinations.push_back({handles[transfer.destination], transfer.destination_box, transfer.receive});
                 }
             }
         });
+        if (storage) PrepareMpi([&] { storage->begin(); });
         const auto execute = [&](Sweep& sweep) {
+            if (storage) PrepareMpi([&] { storage->gather(sweep.sources, sweep.send); });
             // All allocation/index checks precede the first sweep; metadata and
             // borrowed storage remain fixed until the entire exchange returns.
-            for (const auto& transfer : sweep.transfers)
+            if (!storage) for (const auto& transfer : sweep.transfers)
                 if (transfer.source >= 0) {
                     const auto& view = views[transfer.source];
                     exchange_detail::for_each_box_cell(
@@ -739,7 +809,8 @@ public:
                                    sweep.send_offsets.data(), MPI_UINT64_T, sweep.receive.data(),
                                    sweep.receive_counts.data(), sweep.receive_offsets.data(),
                                    MPI_UINT64_T, MPI_COMM_WORLD));
-            for (const auto& transfer : sweep.transfers)
+            if (storage) PrepareMpi([&] { storage->scatter(sweep.destinations, sweep.receive); });
+            if (!storage) for (const auto& transfer : sweep.transfers)
                 if (transfer.destination >= 0) {
                     const auto& view = views[transfer.destination];
                     exchange_detail::for_each_box_cell(
@@ -756,7 +827,7 @@ public:
         for (int axis = 0; axis < dim; ++axis)
             execute(sweeps[axis]);
         // Empty-work ranks participate; local plan emptiness cannot select collectives.
-        ExecuteRemoteCoarseFinePlan(coarse_fine, pool, tree, dim, slot, handles);
+        if (!storage) ExecuteRemoteCoarseFinePlan(coarse_fine, pool, tree, dim, slot, handles);
         if (dim == 2 && any_coarse_fine)
             for (int axis = 0; axis < dim; ++axis)
                 execute(sweeps[3 + axis]);
@@ -765,6 +836,7 @@ public:
         (void)dim;
         (void)slot;
         (void)handles;
+        (void)storage;
         throw std::logic_error("distributed exchange requires ARCH_ENABLE_MPI=ON");
 #endif
     }

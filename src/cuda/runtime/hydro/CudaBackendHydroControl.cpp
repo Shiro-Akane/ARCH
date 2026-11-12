@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <bit>
 #include <cmath>
+#include <climits>
 #include <string>
 #include <utility>
 
@@ -442,6 +443,147 @@ state::CompletionToken CudaBackend::Impl::execute_physical_boundary_batch(
     work_guard.completed = true;
     runtime_counters.kernel_count += static_cast<std::uint64_t>(kernels);
     return expected;
+}
+
+void CudaBackend::gather_exchange_packet(
+    std::span<const backend::BackendStateAccess> accesses,
+    std::span<const amr::ExchangePacketSlice> slices, std::span<std::uint64_t> packet)
+{
+    impl_->exchange_packet(accesses, slices, packet, {}, true);
+}
+
+void CudaBackend::scatter_exchange_packet(
+    std::span<const backend::BackendStateAccess> accesses,
+    std::span<const amr::ExchangePacketSlice> slices, std::span<const std::uint64_t> packet)
+{
+    impl_->exchange_packet(accesses, slices, {}, packet, false);
+}
+
+void CudaBackend::Impl::exchange_packet(
+    std::span<const backend::BackendStateAccess> accesses,
+    std::span<const amr::ExchangePacketSlice> slices,
+    std::span<std::uint64_t> outgoing, std::span<const std::uint64_t> incoming, bool gather)
+{
+    const auto words = gather ? outgoing.size() : incoming.size();
+    if (accesses.empty() || accesses.size() > static_cast<std::size_t>(INT_MAX)
+        || slices.size() > static_cast<std::size_t>(INT_MAX)
+        || words > static_cast<std::size_t>(INT_MAX))
+        throw std::invalid_argument("invalid CUDA exchange packet extent");
+    std::map<amr::BlockHandle, int> indices;
+    std::vector<DeviceExchangeBlock> host_blocks;
+    host_blocks.reserve(accesses.size());
+    int species = -1;
+    for (const auto access : accesses) {
+        if (access.slot != accesses.front().slot
+            || access.block.epoch != accesses.front().block.epoch)
+            throw std::invalid_argument("CUDA exchange packet slot/epoch mismatch");
+        auto& block = require_block(access);
+        const auto selected = block.require_access(access);
+        if (!indices.emplace(access.block, static_cast<int>(host_blocks.size())).second)
+            throw std::invalid_argument("duplicate CUDA exchange packet block");
+        if (selected.n_species < 0 || selected.n_species > INT_MAX - 6
+            || (species >= 0 && species != selected.n_species))
+            throw std::invalid_argument("CUDA exchange packet species mismatch");
+        species = selected.n_species;
+        host_blocks.push_back({selected, block.grid});
+    }
+    const std::size_t fields = 6 + species;
+    std::vector<DeviceExchangeOperation> operations;
+    operations.reserve(slices.size());
+    std::vector<std::vector<amr::LogicalExchangeBox>> destinations;
+    if (!gather) destinations.resize(host_blocks.size());
+    for (const auto& slice : slices) {
+        const auto found = indices.find(slice.block);
+        if (found == indices.end())
+            throw std::invalid_argument("CUDA exchange packet endpoint is missing");
+        const auto& grid = host_blocks[found->second].grid;
+        bool outside_interior = false;
+        for (int axis = 0; axis < 3; ++axis) {
+            const std::int64_t origin = axis == 0 ? grid.is : axis == 1 ? grid.js : grid.ks;
+            const std::int64_t end_active = axis == 0 ? grid.ie : axis == 1 ? grid.je : grid.ke;
+            const std::int64_t total = axis == 0 ? grid.total_x : axis == 1 ? grid.total_y : grid.total_z;
+            const std::int64_t first = origin + slice.box.first[axis];
+            const std::int64_t end = first + slice.box.extent[axis];
+            if (!slice.box.extent[axis] || first < 0 || end > total)
+                throw std::out_of_range("CUDA exchange packet box is outside storage");
+            outside_interior |= end <= origin || first >= end_active;
+        }
+        if (!gather && !outside_interior)
+            throw std::invalid_argument("CUDA exchange packet scatter intersects active cells");
+        const auto cells = amr::exchange_detail::checked_product(slice.box.extent);
+        if (slice.word_offset % fields || slice.word_offset > words
+            || cells > (words - slice.word_offset) / fields)
+            throw std::invalid_argument("CUDA exchange packet slice exceeds payload");
+        DeviceExchangeOperation operation{};
+        operation.source_block = gather ? found->second : -1;
+        operation.destination_block = gather ? -1 : found->second;
+        operation.scratch_first = slice.word_offset / fields;
+        for (int axis = 0; axis < 3; ++axis) {
+            operation.source_first[axis] = operation.destination_first[axis] = slice.box.first[axis];
+            operation.extent[axis] = slice.box.extent[axis];
+        }
+        if (!gather) {
+            auto& boxes = destinations[found->second];
+            for (const auto& prior : boxes) {
+                bool disjoint = false;
+                for (int axis = 0; axis < 3; ++axis)
+                    disjoint |= static_cast<std::int64_t>(prior.first[axis]) + prior.extent[axis]
+                                    <= slice.box.first[axis]
+                        || static_cast<std::int64_t>(slice.box.first[axis]) + slice.box.extent[axis]
+                                    <= prior.first[axis];
+                if (!disjoint)
+                    throw std::invalid_argument("overlapping CUDA exchange packet destinations");
+            }
+            boxes.push_back(slice.box);
+        }
+        operations.push_back(operation);
+    }
+    std::sort(operations.begin(), operations.end(), [](const auto& a, const auto& b) {
+        return a.scratch_first < b.scratch_first;
+    });
+    std::uint64_t cells = 0;
+    for (const auto& operation : operations) {
+        if (operation.scratch_first != cells)
+            throw std::invalid_argument("CUDA exchange packet has gaps or overlapping payload");
+        cells += static_cast<std::uint64_t>(operation.extent[0])
+            * operation.extent[1] * operation.extent[2];
+    }
+    if (cells * fields != words)
+        throw std::invalid_argument("CUDA exchange packet payload is not fully covered");
+    if (!words) return;
+    select_device();
+    // Reuse the original exchange arena. Every call drains this same stream
+    // before MPI, before a following axis, and before any scratch reuse.
+    auto& blocks = exchange_scratch.blocks;
+    auto& buffers = exchange_scratch.phases[0];
+    blocks.reserve(host_blocks.size());
+    buffers.operations.reserve(operations.size());
+    buffers.values.reserve(words);
+    CudaQuiescenceGuard work_guard{*this};
+    enqueue_cuda_metadata_upload(blocks.get(), host_blocks.data(),
+        host_blocks.size() * sizeof(DeviceExchangeBlock), stream.get(), runtime_counters,
+        "upload CUDA packet blocks");
+    enqueue_cuda_metadata_upload(buffers.operations.get(), operations.data(),
+        operations.size() * sizeof(DeviceExchangeOperation), stream.get(), runtime_counters,
+        "upload CUDA packet operations");
+    static_assert(sizeof(double) == sizeof(std::uint64_t));
+    const auto bytes = words * sizeof(std::uint64_t);
+    if (!gather) {
+        check_cuda(cudaMemcpyAsync(buffers.values.get(), incoming.data(), bytes,
+            cudaMemcpyHostToDevice, stream.get()), "upload CUDA exchange packet");
+        runtime_counters.bytes_h2d += bytes;
+    }
+    check_cuda(launch_cuda_backend_exchange_packet(blocks.get(), buffers.operations.get(),
+        static_cast<int>(operations.size()), static_cast<int>(fields), cells,
+        buffers.values.get(), stream.get(), gather), "launch CUDA exchange packet");
+    ++runtime_counters.kernel_count;
+    if (gather) {
+        check_cuda(cudaMemcpyAsync(outgoing.data(), buffers.values.get(), bytes,
+            cudaMemcpyDeviceToHost, stream.get()), "download CUDA exchange packet");
+        runtime_counters.bytes_d2h += bytes;
+    }
+    checked_quiesce("complete CUDA exchange packet");
+    work_guard.completed = true;
 }
 
 state::CompletionToken CudaBackend::execute_same_level_exchange(

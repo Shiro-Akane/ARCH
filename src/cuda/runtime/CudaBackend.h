@@ -101,6 +101,10 @@ public:
     amr::BlockHandle block_handle() const noexcept override;
     backend::StorageGeneration storage_generation() const noexcept override;
     bool contains(backend::BackendStateAccess access) const noexcept override;
+    void gather_exchange_packet(std::span<const backend::BackendStateAccess>,
+        std::span<const amr::ExchangePacketSlice>, std::span<std::uint64_t>) override;
+    void scatter_exchange_packet(std::span<const backend::BackendStateAccess>,
+        std::span<const amr::ExchangePacketSlice>, std::span<const std::uint64_t>) override;
     bool contains(backend::BackendTopologyStoreTransaction&,
         backend::BackendStateAccess) const noexcept override;
     state::CompletionToken execute_physical_boundary_batch(

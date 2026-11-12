@@ -287,6 +287,19 @@ public:
     virtual StorageGeneration storage_generation() const noexcept = 0;
     virtual bool contains(BackendStateAccess access) const noexcept = 0;
 
+    /** Synchronous field slices for the existing distributed ghost transport.
+     * Borrowed packets and views are released only after device work completes.
+     * These calls do not publish residency or change topology ownership.
+     */
+    virtual void gather_exchange_packet(std::span<const BackendStateAccess>,
+        std::span<const amr::ExchangePacketSlice>, std::span<std::uint64_t>) {
+        throw std::logic_error("backend exchange packet gather is unavailable");
+    }
+    virtual void scatter_exchange_packet(std::span<const BackendStateAccess>,
+        std::span<const amr::ExchangePacketSlice>, std::span<const std::uint64_t>) {
+        throw std::logic_error("backend exchange packet scatter is unavailable");
+    }
+
     /** Explicit candidate namespace only; unsupported backends never fall back. */
     virtual bool contains(BackendTopologyStoreTransaction&,
         BackendStateAccess) const noexcept { return false; }

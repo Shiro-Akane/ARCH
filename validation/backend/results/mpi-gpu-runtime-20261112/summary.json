@@ -1,0 +1,379 @@
+{
+  "stage": "G1 production Runtime same-level CUDA Host-staged MPI boundary",
+  "status": "locally_validated",
+  "base_commit": "2bc272fd397180e6f47f7fd3078909762817988e",
+  "upstream_main": "2e05e66e3b09e3890488fb872cd842b1885f71e4",
+  "branch": "MPI/gpu-amr-integration",
+  "hardware": {
+    "host": "gpu-273312",
+    "gpu": "NVIDIA H100-20C",
+    "visible_devices": 1,
+    "ranks": 2,
+    "multi_gpu_validated": false,
+    "multi_node_validated": false
+  },
+  "scope": {
+    "runtime_boundary_integrated": true,
+    "application_preflight_opened": false,
+    "geometry": "cartesian",
+    "dimensions": [
+      1,
+      2,
+      3
+    ],
+    "same_level": 0,
+    "mixed_level": false,
+    "species": [
+      1,
+      4,
+      37
+    ],
+    "boundaries": [
+      "outflow",
+      "periodic"
+    ],
+    "slots": [
+      "Current",
+      "Next",
+      "Scratch"
+    ],
+    "repetitions": 2,
+    "layouts_per_build": 18,
+    "full_state_checks_per_rank_per_build": 252,
+    "collective_rejections_per_build": 59,
+    "bitwise_comparison": true,
+    "oracle": "original serial Host boundary recipe + independent CUDA snapshot kernel; all logical cells and fields; poisoned Host mirrors; materialization padding stays poisoned",
+    "unequal_rank_block_counts": true,
+    "host_staging_reuses": "GhostExchange packet/owner directory/Alltoallv; CudaBackend exchange_scratch and shared cell-major gather/scatter; existing Runtime ledger/scheduler"
+  },
+  "tests": [
+    {
+      "build": "release",
+      "scope": "runtime",
+      "junit": {
+        "file": "release-runtime-junit.xml",
+        "tests": 2,
+        "failures": 0,
+        "skipped": 0,
+        "sha256": "733b8d7aeb3ee9e640238c9690b4c5e29b3e85b3dbe986f70ac9f4659b748917",
+        "names": [
+          "mpi_cuda_runtime_2",
+          "mpi_cuda_staging_2"
+        ]
+      },
+      "binaries": {
+        "arch_cuda_mpi_runtime": "4778819f86342aac25f31c5f379ad6b7f52e0375e6a79cb82c0f639e235831d7",
+        "arch_cuda_mpi_staging": "5c0327f282db24ea6f8a24668f7058c3ab155dc068a695276c6994767e564ca7"
+      },
+      "boundary_traffic": [
+        {
+          "rank": 0,
+          "h2d_including_metadata": 371845968,
+          "d2h": 370281600,
+          "observed_device_used_including_test_and_contexts": 2197422080
+        },
+        {
+          "rank": 1,
+          "h2d_including_metadata": 770105232,
+          "d2h": 766945920,
+          "observed_device_used_including_test_and_contexts": 2197422080
+        }
+      ]
+    },
+    {
+      "build": "release",
+      "scope": "regression",
+      "junit": {
+        "file": "release-regression-junit.xml",
+        "tests": 2,
+        "failures": 0,
+        "skipped": 0,
+        "sha256": "78ba1ca72cdc5fb6c52435fa88ae33b01777e71fc4dfd2ca6e203f380d070225",
+        "names": [
+          "cuda_regrid_transaction",
+          "cuda_amr_exchange"
+        ]
+      },
+      "binaries": {
+        "arch_cuda_amr_exchange": "389dc57ca9a200d6588b6356c53a3571e0e486ec37b4a897d12381b0d45e0b69",
+        "arch_cuda_regrid_transaction": "9b5b1a59afc09e055387eb8fe0bb42dddc4ee58c815181372206e5ffe959b9cf"
+      }
+    },
+    {
+      "build": "debug",
+      "scope": "runtime",
+      "junit": {
+        "file": "debug-runtime-junit.xml",
+        "tests": 2,
+        "failures": 0,
+        "skipped": 0,
+        "sha256": "91e6871663bb38df3f0464236a138abfd7227ed20053c248e0857e0bba7bae85",
+        "names": [
+          "mpi_cuda_runtime_2",
+          "mpi_cuda_staging_2"
+        ]
+      },
+      "binaries": {
+        "arch_cuda_mpi_runtime": "a6dca99c91c2179864c94f28d353567e44703a0e780189a2147d4be24e7ed28a",
+        "arch_cuda_mpi_staging": "2c2dadc03ff097c5499d444d282cf2b33a212917dcf4df8ffd6673f79b3af7d1"
+      },
+      "boundary_traffic": [
+        {
+          "rank": 0,
+          "h2d_including_metadata": 371845968,
+          "d2h": 370281600,
+          "observed_device_used_including_test_and_contexts": 2197422080
+        },
+        {
+          "rank": 1,
+          "h2d_including_metadata": 770105232,
+          "d2h": 766945920,
+          "observed_device_used_including_test_and_contexts": 2197422080
+        }
+      ]
+    },
+    {
+      "build": "debug",
+      "scope": "regression",
+      "junit": {
+        "file": "debug-regression-junit.xml",
+        "tests": 2,
+        "failures": 0,
+        "skipped": 0,
+        "sha256": "82dfeffb928d5c223ad12d7ecb9c3a926107bf80afe0407ba76ca9271ac615f9",
+        "names": [
+          "cuda_regrid_transaction",
+          "cuda_amr_exchange"
+        ]
+      },
+      "binaries": {
+        "arch_cuda_amr_exchange": "2f947060bc819a4c70788e7b52ede35984d1d23c0825ce742bf7ed372eb092b3",
+        "arch_cuda_regrid_transaction": "41fc96ac7d545c91f1c379a0b8480451f3fffab95cde2b3cf654c6a71f2f2530"
+      }
+    }
+  ],
+  "cpu_regression": {
+    "tests_across_four_builds": 56,
+    "builds": [
+      {
+        "build": "build-gpu-release",
+        "tests": 19,
+        "failures": 0,
+        "skips": 0,
+        "junit": "build-gpu-release-accepted-junit.xml",
+        "sha256": "0dced6d11896d475d5f948fe6e7885e19c0b657cfd6f377fe8668bbd7416f612"
+      },
+      {
+        "build": "build-gpu-release-serial",
+        "tests": 9,
+        "failures": 0,
+        "skips": 0,
+        "junit": "build-gpu-release-serial-accepted-junit.xml",
+        "sha256": "95c200228430f9d3dbf9c9331f3af090f4b0da3f4786f494f846131202536fab"
+      },
+      {
+        "build": "build-gpu-debug",
+        "tests": 19,
+        "failures": 0,
+        "skips": 0,
+        "junit": "build-gpu-debug-final-junit.xml",
+        "sha256": "ea10706359cdd8e607e5f6fc51e3a3e0e07519b78b09f2508560fc9b06dcd23d"
+      },
+      {
+        "build": "build-gpu-debug-serial",
+        "tests": 9,
+        "failures": 0,
+        "skips": 0,
+        "junit": "build-gpu-debug-serial-final-junit.xml",
+        "sha256": "49ffca4729a5400d8d17d27dc89bba7dd458239066114aa7e9fec875c2ac4bf5"
+      }
+    ],
+    "storage_identity_followup": [
+      {
+        "file": "build-gpu-release-storage-identity-junit.xml",
+        "tests": 1,
+        "failures": 0,
+        "skipped": 0,
+        "sha256": "9e3121816862246d7f4178943aa9cb9aa98eee72c014c3c11cbe31ddd21eee2a",
+        "names": [
+          "mpi_distributed_exchange_2"
+        ]
+      },
+      {
+        "file": "build-gpu-release-serial-storage-identity-junit.xml",
+        "tests": 1,
+        "failures": 0,
+        "skipped": 0,
+        "sha256": "146f53ac30e214607fc645a735ab1b04dd3e4e18987bab51e7cdb03a7cdcfa76",
+        "names": [
+          "distributed_exchange"
+        ]
+      },
+      {
+        "file": "build-gpu-debug-storage-identity-junit.xml",
+        "tests": 1,
+        "failures": 0,
+        "skipped": 0,
+        "sha256": "86577b37f9fd10e9737be9457ac8b37ff3f8879f6dced390ea297bdef044558a",
+        "names": [
+          "mpi_distributed_exchange_2"
+        ]
+      },
+      {
+        "file": "build-gpu-debug-serial-storage-identity-junit.xml",
+        "tests": 1,
+        "failures": 0,
+        "skipped": 0,
+        "sha256": "a4b8480373da6c15d756537b5e600150bc95a201efb7449ed87d0792800f056e",
+        "names": [
+          "distributed_exchange"
+        ]
+      }
+    ],
+    "note": "Followup executions are reruns, not additional unique tests."
+  },
+  "tooling": {
+    "passed": 629,
+    "skipped": 0,
+    "log_sha256": "d34dfdae836b2c6750557ad0ea8d34130848501d32917eabf0be7b19755de67c"
+  },
+  "optional_build_boundaries": [
+    {
+      "build": "build-mpi-cuda-release",
+      "mpi_cuda_tests": [
+        "mpi_cuda_runtime_2",
+        "mpi_cuda_staging_2"
+      ],
+      "inventory_count": 158
+    },
+    {
+      "build": "build-mpi-cuda-debug",
+      "mpi_cuda_tests": [
+        "mpi_cuda_runtime_2",
+        "mpi_cuda_staging_2"
+      ],
+      "inventory_count": 158
+    },
+    {
+      "build": "build-mpi-cuda-serial-check",
+      "mpi_cuda_tests": [],
+      "inventory_count": 146
+    },
+    {
+      "build": "build-gpu-release",
+      "mpi_cuda_tests": [],
+      "inventory_count": 90
+    },
+    {
+      "build": "build-gpu-release-serial",
+      "mpi_cuda_tests": [],
+      "inventory_count": 80
+    }
+  ],
+  "source_sha256": {
+    "cmake/tests/CudaTests.cmake": "50fa8aca72b0267fc6bff0876d7851442cafc3d4120600fc82bb14343130a966",
+    "src/amr/exchange/ExchangePlan.h": "dd5a0e425af7bf5a204d2307fbd9596df5cd6157ed78f5cb703e91768d3275a7",
+    "src/amr/exchange/GhostExchange.h": "91a2f47ecf401568a0a95535487d2e030962a64d34e549242bfff5849db21cb3",
+    "src/cuda/runtime/CudaBackend.h": "f7d5e9da5cfd34ae518b0b50b86e8058b10302edbd7196081842a9846d5a158a",
+    "src/cuda/runtime/amr/CudaBackendExchange.cu": "6c63067887829ec8a1287a4d6cf836ed505e16cf1d26aed2a0138668068e0d7d",
+    "src/cuda/runtime/amr/CudaBackendExchange.h": "2f39a874b4f2be04995832f6439dc9a36b8bf5b937d8170d5b8753b58ef6beeb",
+    "src/cuda/runtime/control/CudaBackendInternal.h": "cef6020bba7383710c1bfec9a70ed3a16c10c27067ff4eac6bb8dc0f764d5333",
+    "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp": "35bcbcd9341d50869f0b407f46c6b4c64524200fe8164674ac32c10f1e6388e1",
+    "src/driver/runtime/ComputeBackend.h": "b32cbfa0f25c8d3b8e47160b3f9e99da572df7bdf3c95c79a70c38c0e09f7b89",
+    "src/driver/runtime/DriverBoundary.cpp": "3306f537ded4046d71c79806c79f7d6a47ac34b8f2b5cad24f4750b871b68412",
+    "src/driver/runtime/StateResidency.h": "198f5134ae7891e78abd92a6367c125e7f95a5235d22ef9a347cf7404054acc8",
+    "tests/cuda/amr/test_cuda_mpi_runtime.cpp": "83a8c1bfc1f897b1733839de2c72508b8d6a157e6544286cc89d98ffc0c434bc",
+    "tests/host/amr/test_distributed_exchange.cpp": "149dec6aab5f5ae54ba71bff0770c034dd1348ecc4a19a02932a37e5a5f7956c",
+    "tests/host/driver/test_state_residency.cpp": "0fb5c82960135ff7bfa59b6205c5bf0cef035899bd53cfc41c6e306206ffd2cd"
+  },
+  "unchanged_math": true,
+  "server_evidence": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-runtime-20261112",
+  "failed_attempts_retained": [
+    "build-gpu-release-test.log: MPI_ERR_TRUNCATE from expanded common header; fixed with original 18-word extent and separate storage identity agreement",
+    "release-runtime-initial-topology-test.log: fixture initialized partition after Runtime construction; moved initialization before Runtime",
+    "release-runtime-serial-oracle-test.log: production Runtime rejects serial topology inside two-rank WORLD; reference now invokes original serial Host recipe",
+    "release-runtime-snapshot-role-test.log: independent readback must request Interior/Ghost region leases separately",
+    "release-runtime-materialization-allocation-test.log: compared aligned padding as logical data; now checks every logical cell and preservation of poisoned padding"
+  ],
+  "memory_observation_note": "cudaMemGetInfo is sampled after refresh; whole visible device includes both rank contexts, scratch and test resources. Do not sum rank observations or call them an exact transient allocation peak.",
+  "limitations": [
+    "Two ranks on one GPU; no multi-node, multi-GPU, device-aware MPI, performance or scaling claim",
+    "No distributed GPU Hydro macrostep, mixed-level coarse/fine/reflux, topology migration, full AMR application or distributed output/restart acceptance",
+    "Device user boundary not admitted; mixed-level storage callback path rejects before any callback",
+    "Complete CudaBackend/DriverRuntime and regression targets built; no complete CUDA MPI application build/launch",
+    "compute-sanitizer unavailable in the existing toolkit; transient peak and migration receive reserve remain future resource gates"
+  ],
+  "ci": {
+    "state_at_commit": "dispatch_after_push",
+    "base_commit_ci_verified": [
+      {
+        "conclusion": "success",
+        "headSha": "2bc272fd397180e6f47f7fd3078909762817988e",
+        "jobs": [
+          {
+            "conclusion": "success",
+            "name": "CPU Release",
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "Tooling",
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "Studio and Host",
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "MPI fixed-grid",
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "CI required",
+            "status": "completed"
+          }
+        ],
+        "status": "completed",
+        "url": "https://github.com/Shiro-Akane/ARCH/actions/runs/43121730586"
+      },
+      {
+        "conclusion": "success",
+        "headSha": "2bc272fd397180e6f47f7fd3078909762817988e",
+        "jobs": [
+          {
+            "conclusion": "success",
+            "name": "Tooling",
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "MPI fixed-grid",
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "CPU Release",
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "Studio and Host",
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "CI required",
+            "status": "completed"
+          }
+        ],
+        "status": "completed",
+        "url": "https://github.com/Arsenic-er/ARCH/actions/runs/43121734160"
+      }
+    ],
+    "new_commit_status_location": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-runtime-20261112/publication.json",
+    "note": "Base CI success is historical only. GitHub-hosted CI does not validate native GPU execution."
+  }
+}

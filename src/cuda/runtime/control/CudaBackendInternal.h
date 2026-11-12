@@ -397,6 +397,10 @@ struct CudaBackend::Impl {
         const BlockResolver&);
     // One lowering/execution path serves active slots and the unpublished
     // regrid namespace; only the validated storage resolver differs.
+    void exchange_packet(std::span<const backend::BackendStateAccess>,
+        std::span<const amr::ExchangePacketSlice>, std::span<std::uint64_t> outgoing,
+        std::span<const std::uint64_t> incoming, bool gather);
+
     void execute_same_level_exchange(
         std::span<const backend::BackendStateAccess>,
         const amr::SameLevelExchangePlan&, state::StateSlot,
