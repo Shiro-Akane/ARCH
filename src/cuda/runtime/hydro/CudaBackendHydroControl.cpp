@@ -558,20 +558,55 @@ void CudaBackend::gather_exchange_packet(
     std::span<const backend::BackendStateAccess> accesses,
     std::span<const amr::ExchangePacketSlice> slices, std::span<std::uint64_t> packet)
 {
-    impl_->exchange_packet(accesses, slices, packet, {}, true);
+    impl_->exchange_packet(accesses, slices, packet, {}, true,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            return impl_->require_block(access);
+        });
 }
 
 void CudaBackend::scatter_exchange_packet(
     std::span<const backend::BackendStateAccess> accesses,
     std::span<const amr::ExchangePacketSlice> slices, std::span<const std::uint64_t> packet)
 {
-    impl_->exchange_packet(accesses, slices, {}, packet, false);
+    impl_->exchange_packet(accesses, slices, {}, packet, false,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            return impl_->require_block(access);
+        });
+}
+
+void CudaBackend::gather_exchange_packet(
+    backend::BackendTopologyStoreTransaction& transaction,
+    std::span<const backend::BackendStateAccess> accesses,
+    std::span<const amr::ExchangePacketSlice> slices, std::span<std::uint64_t> packet)
+{
+    auto& staged = require_staged_boundary_transaction(transaction);
+    impl_->exchange_packet(accesses, slices, packet, {}, true,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged packet requires Current");
+            return resolve_staged_block(staged, access);
+        });
+}
+
+void CudaBackend::scatter_exchange_packet(
+    backend::BackendTopologyStoreTransaction& transaction,
+    std::span<const backend::BackendStateAccess> accesses,
+    std::span<const amr::ExchangePacketSlice> slices, std::span<const std::uint64_t> packet)
+{
+    auto& staged = require_staged_boundary_transaction(transaction);
+    impl_->exchange_packet(accesses, slices, {}, packet, false,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged packet requires Current");
+            return resolve_staged_block(staged, access);
+        });
 }
 
 void CudaBackend::Impl::exchange_packet(
     std::span<const backend::BackendStateAccess> accesses,
     std::span<const amr::ExchangePacketSlice> slices,
-    std::span<std::uint64_t> outgoing, std::span<const std::uint64_t> incoming, bool gather)
+    std::span<std::uint64_t> outgoing, std::span<const std::uint64_t> incoming, bool gather,
+    const BlockResolver& resolve)
 {
     const auto words = gather ? outgoing.size() : incoming.size();
     if (accesses.empty() || accesses.size() > static_cast<std::size_t>(INT_MAX)
@@ -586,7 +621,7 @@ void CudaBackend::Impl::exchange_packet(
         if (access.slot != accesses.front().slot
             || access.block.epoch != accesses.front().block.epoch)
             throw std::invalid_argument("CUDA exchange packet slot/epoch mismatch");
-        auto& block = require_block(access);
+        auto& block = resolve(access);
         const auto selected = block.require_access(access);
         if (!indices.emplace(access.block, static_cast<int>(host_blocks.size())).second)
             throw std::invalid_argument("duplicate CUDA exchange packet block");
@@ -953,6 +988,22 @@ void CudaBackend::gather_coarse_fine_packet(
     impl_->execute_coarse_fine_cells(accesses, cells, accesses.front().slot,
         [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
             return impl_->require_block(access);
+        }, true, outgoing);
+}
+
+void CudaBackend::gather_coarse_fine_packet(
+    backend::BackendTopologyStoreTransaction& transaction,
+    std::span<const backend::BackendStateAccess> accesses,
+    const amr::CoarseFineCellPlan& cells, std::span<double> outgoing)
+{
+    auto& staged = require_staged_boundary_transaction(transaction);
+    if (accesses.empty())
+        throw std::invalid_argument("staged coarse-fine packet requires source bindings");
+    impl_->execute_coarse_fine_cells(accesses, cells, state::StateSlot::Current,
+        [&](backend::BackendStateAccess access) -> CudaBlockRuntime& {
+            if (access.slot != state::StateSlot::Current)
+                throw std::invalid_argument("staged coarse-fine packet requires Current");
+            return resolve_staged_block(staged, access);
         }, true, outgoing);
 }
 

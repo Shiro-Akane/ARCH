@@ -43,14 +43,15 @@ state::CompletionToken DriverRuntime::execute_device_boundary(StateSlot requeste
         amr::GhostExchange::CompleteDistributedPhase(failure);
     else if (failure) std::rethrow_exception(failure);
     return execute_device_boundary_domain(accesses, stage_handles, requested,
-        version, token);
+        version, token, *residency_ledger);
 }
 
 /** Reuse the ordered recipe over the caller's exact backend storage domain. */
 state::CompletionToken DriverRuntime::execute_device_boundary_domain(
     std::span<const backend::BackendStateAccess> accesses,
     std::span<const amr::BlockHandle> handles, StateSlot requested,
-    state::StateVersion version, state::CompletionToken token)
+    state::StateVersion version, state::CompletionToken token, StateResidencyLedger& ledger,
+    backend::BackendTopologyStoreTransaction* staged)
 {
     if (amr_ctrl.tree->PartitionSize() > 1) {
         amr::GhostExchange::DistributedStorage storage;
@@ -64,9 +65,10 @@ state::CompletionToken DriverRuntime::execute_device_boundary_domain(
                 throw std::logic_error("distributed Device user boundary is not yet available");
             for (std::size_t i = 0; i < handles.size(); ++i) {
                 if (accesses[i].block != handles[i] || accesses[i].slot != requested
-                    || !compute_backend->contains(accesses[i]))
+                    || !(staged ? compute_backend->contains(*staged, accesses[i])
+                         : compute_backend->contains(accesses[i])))
                     throw std::logic_error("distributed Device boundary storage is stale");
-                residency_ledger->require_ghost_publication(
+                ledger.require_ghost_publication(
                     {handles[i], requested}, ExecutionSide::Device, version, token);
             }
             switch (requested) {
@@ -80,18 +82,24 @@ state::CompletionToken DriverRuntime::execute_device_boundary_domain(
                 // Called only after every rank has validated topology/layout.
                 // A failed sweep cannot leave formerly cached ghosts readable.
                 for (const auto handle : handles)
-                    residency_ledger->invalidate_ghost({handle, requested}, ExecutionSide::Device);
-                if (compute_backend->execute_physical_boundary_batch(accesses, version, token) != token)
+                    ledger.invalidate_ghost({handle, requested}, ExecutionSide::Device);
+                const auto completed = staged
+                    ? compute_backend->execute_physical_boundary_batch(*staged, accesses, version, token)
+                    : compute_backend->execute_physical_boundary_batch(accesses, version, token);
+                if (completed != token)
                     throw std::logic_error("distributed Device physical boundary is incomplete");
             };
             storage.gather = [&](auto slices, auto packet) {
-                compute_backend->gather_exchange_packet(accesses, slices, packet);
+                if (staged) compute_backend->gather_exchange_packet(*staged, accesses, slices, packet);
+                else compute_backend->gather_exchange_packet(accesses, slices, packet);
             };
             storage.scatter = [&](auto slices, auto packet) {
-                compute_backend->scatter_exchange_packet(accesses, slices, packet);
+                if (staged) compute_backend->scatter_exchange_packet(*staged, accesses, slices, packet);
+                else compute_backend->scatter_exchange_packet(accesses, slices, packet);
             };
             storage.gather_coarse_fine = [&](const auto& cells, auto packet) {
-                compute_backend->gather_coarse_fine_packet(accesses, cells, packet);
+                if (staged) compute_backend->gather_coarse_fine_packet(*staged, accesses, cells, packet);
+                else compute_backend->gather_coarse_fine_packet(accesses, cells, packet);
             };
         } catch (...) { failure = std::current_exception(); }
         amr::GhostExchange::CompleteDistributedPhase(failure);
@@ -99,6 +107,7 @@ state::CompletionToken DriverRuntime::execute_device_boundary_domain(
             amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, member, handles, &storage);
         return token;
     }
+    if (staged) throw std::logic_error("staged Runtime domain requires distributed topology");
     if (accesses.size() != handles.size())
         throw std::logic_error("Device boundary access/handle extent mismatch");
     for (std::size_t index = 0; index < accesses.size(); ++index)

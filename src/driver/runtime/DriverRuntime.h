@@ -158,7 +158,11 @@ private:
     state::CompletionToken execute_device_boundary_domain(
         std::span<const backend::BackendStateAccess>,
         std::span<const amr::BlockHandle>, state::StateSlot,
-        state::StateVersion, state::CompletionToken);
+        state::StateVersion, state::CompletionToken, state::StateResidencyLedger&,
+        backend::BackendTopologyStoreTransaction* staged = nullptr);
+    std::unique_ptr<backend::BackendTopologyStoreTransaction> begin_device_topology_store(
+        amr::AmrPlanScope, std::span<const amr::BlockHandle>,
+        std::vector<backend::StorageGeneration>&);
     void migrate_leaves(std::span<const amr::AmrEndpoint>, int destination_rank,
         const std::function<void(LeafTransferPhase)>& observer);
     bool execute_regrid(bool jeans_repair_only);

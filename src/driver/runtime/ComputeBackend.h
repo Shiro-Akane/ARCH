@@ -306,6 +306,26 @@ public:
         throw std::logic_error("backend coarse-fine packet gather is unavailable");
     }
 
+    virtual void gather_exchange_packet(BackendTopologyStoreTransaction&,
+        std::span<const BackendStateAccess>, std::span<const amr::ExchangePacketSlice>,
+        std::span<std::uint64_t>) {
+        throw std::logic_error("backend staged packet gather is unavailable");
+    }
+    virtual void scatter_exchange_packet(BackendTopologyStoreTransaction&,
+        std::span<const BackendStateAccess>, std::span<const amr::ExchangePacketSlice>,
+        std::span<const std::uint64_t>) {
+        throw std::logic_error("backend staged packet scatter is unavailable");
+    }
+    virtual void gather_coarse_fine_packet(BackendTopologyStoreTransaction&,
+        std::span<const BackendStateAccess>, const amr::CoarseFineCellPlan&, std::span<double>) {
+        throw std::logic_error("backend staged coarse-fine gather is unavailable");
+    }
+    /** Accept Runtime's completed GhostExchange witness for the private Current. */
+    virtual void accept_staged_current_ghosts(BackendTopologyStoreTransaction&,
+        state::CompletionToken) {
+        throw std::logic_error("backend staged ghost completion is unavailable");
+    }
+
     /** Explicit candidate namespace only; unsupported backends never fall back. */
     virtual bool contains(BackendTopologyStoreTransaction&,
         BackendStateAccess) const noexcept { return false; }

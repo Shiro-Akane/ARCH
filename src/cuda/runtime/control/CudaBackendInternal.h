@@ -427,7 +427,7 @@ struct CudaBackend::Impl {
         bool gather_only, std::span<double> outgoing);
     void exchange_packet(std::span<const backend::BackendStateAccess>,
         std::span<const amr::ExchangePacketSlice>, std::span<std::uint64_t> outgoing,
-        std::span<const std::uint64_t> incoming, bool gather);
+        std::span<const std::uint64_t> incoming, bool gather, const BlockResolver&);
 
     void execute_same_level_exchange(
         std::span<const backend::BackendStateAccess>,

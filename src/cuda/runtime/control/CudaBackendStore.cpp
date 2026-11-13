@@ -407,6 +407,17 @@ CudaBackend::StoreTransaction::Impl& CudaBackend::require_staged_boundary_transa
     return staged;
 }
 
+void CudaBackend::accept_staged_current_ghosts(
+    backend::BackendTopologyStoreTransaction& transaction, state::CompletionToken completion)
+{
+    if (!state::is_complete(completion))
+        throw std::invalid_argument("staged ghosts require a complete Runtime witness");
+    auto& staged = require_staged_boundary_transaction(transaction);
+    impl_->checked_quiesce("accept Runtime staged CUDA ghost completion");
+    for (auto& [arena, initialized] : staged.uploaded_current)
+        initialized = StoreTransaction::Impl::kCompleteCurrent;
+}
+
 void CudaBackend::enqueue_upload_staged_current(
     backend::BackendTopologyStoreTransaction& transaction,
     backend::BackendStateAccess access, state::StateRegion region,

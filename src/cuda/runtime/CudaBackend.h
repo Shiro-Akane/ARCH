@@ -107,6 +107,17 @@ public:
         std::span<const amr::ExchangePacketSlice>, std::span<const std::uint64_t>) override;
     void gather_coarse_fine_packet(std::span<const backend::BackendStateAccess>,
         const amr::CoarseFineCellPlan&, std::span<double>) override;
+    void gather_exchange_packet(backend::BackendTopologyStoreTransaction&,
+        std::span<const backend::BackendStateAccess>, std::span<const amr::ExchangePacketSlice>,
+        std::span<std::uint64_t>) override;
+    void scatter_exchange_packet(backend::BackendTopologyStoreTransaction&,
+        std::span<const backend::BackendStateAccess>, std::span<const amr::ExchangePacketSlice>,
+        std::span<const std::uint64_t>) override;
+    void gather_coarse_fine_packet(backend::BackendTopologyStoreTransaction&,
+        std::span<const backend::BackendStateAccess>, const amr::CoarseFineCellPlan&,
+        std::span<double>) override;
+    void accept_staged_current_ghosts(backend::BackendTopologyStoreTransaction&,
+        state::CompletionToken) override;
     bool contains(backend::BackendTopologyStoreTransaction&,
         backend::BackendStateAccess) const noexcept override;
     state::CompletionToken execute_physical_boundary_batch(

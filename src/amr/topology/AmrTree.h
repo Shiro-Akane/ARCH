@@ -814,12 +814,14 @@ public:
         // A device executor needs the proposed neighbor geometry before its
         // private runtime is constructed. This changes metadata only: old
         // accepted fields remain untouched and abort restores the old tree.
-        void ActivateForDeviceMigration()
+        void ActivateForDeviceMigration(std::span<const BlockTopology> global = {})
         {
             ValidateMigrationPlans();
-            if (!changed_ || activated_)
+            // A peer may change topology while this rank only rebinds survivors
+            // to the new common epoch. The migration scope still authenticates it.
+            if (activated_ || (!changed_ && global.empty()))
                 throw std::logic_error("staged device topology is not activatable");
-            activate_topology();
+            activate_topology(global);
         }
 
         // Call only after checked backend migration AND ghost completion. The

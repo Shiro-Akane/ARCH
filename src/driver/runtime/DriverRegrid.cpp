@@ -83,6 +83,34 @@ struct RegridSourceBackup {
 };
 } // namespace
 
+/** Bind the original candidate tree to one private Device store and flux plan.
+ * Call after topology activation; all allocation remains before publication. */
+std::unique_ptr<backend::BackendTopologyStoreTransaction>
+DriverRuntime::begin_device_topology_store(amr::AmrPlanScope scope,
+    std::span<const amr::BlockHandle> handles, std::vector<backend::StorageGeneration>& storage)
+{
+    const auto& ids = amr_ctrl.tree->GetActiveBlocks();
+    if (!compute_backend || handles.empty() || handles.size() != ids.size() || !storage.empty())
+        throw std::logic_error("invalid Device topology preparation");
+    std::vector<backend::BackendTopologyBinding> bindings;
+    bindings.reserve(handles.size());
+    storage.reserve(handles.size());
+    for (std::size_t i = 0; i < handles.size(); ++i) {
+        auto& block = amr_ctrl.pool->GetBlock(ids[i]);
+        const auto generation = storage_generation_issuer.issue();
+        storage.push_back(generation);
+        bindings.push_back({&block, handles[i], generation, &bc_handler.logical_plan(block.grid),
+            bc_handler.hydro_physical_faces(*amr_ctrl.tree, block)});
+    }
+    auto transaction = compute_backend->begin_topology_store_transaction(scope, bindings);
+    const auto flux = amr::build_amr_flux_topology_plan(*amr_ctrl.pool, ids, handles,
+        config.grid.dim, specs.count(), &amr_ctrl.tree->GetRootGrid(),
+        amr_ctrl.tree->PartitionRank(), amr_ctrl.tree->PartitionSize());
+    const auto reflux = amr::build_amr_reflux_topology_plan(*amr_ctrl.pool, flux);
+    compute_backend->stage_amr_flux_plan(*transaction, flux, reflux);
+    return transaction;
+}
+
 /** One accepted leaf uses the same transaction and packet path as a family. */
 void DriverRuntime::migrate_leaf(amr::AmrEndpoint source,int destination_rank,
     const std::function<void(LeafTransferPhase)>& observer)
@@ -429,25 +457,16 @@ void DriverRuntime::migrate_leaves(std::span<const amr::AmrEndpoint> sources, in
             prepared->ActivateForFinalization(proposed_global);
             notify(LeafTransferPhase::TopologyActivated);
             if(compute_backend) {
-                std::vector<backend::BackendTopologyBinding> bindings,incoming;
+                std::vector<backend::BackendTopologyBinding> incoming;
                 std::vector<backend::BackendStateAccess> old;
                 for(std::size_t i=0;i<stage_handles.size();++i)
                     old.push_back(backend_access(i,StateSlot::Current));
+                device_transaction=begin_device_topology_store(transaction->scope(),handles,storage);
                 for(std::size_t i=0;i<handles.size();++i) {
-                    auto& block=amr_ctrl.pool->GetBlock(amr_ctrl.tree->GetActiveBlocks()[i]);
-                    const auto generation=storage_generation_issuer.issue();
-                    storage.push_back(generation);
-                    bindings.push_back({&block,handles[i],generation,&bc_handler.logical_plan(block.grid),
-                        bc_handler.hydro_physical_faces(*amr_ctrl.tree,block)});
-                    if(std::find(target_ids.begin(),target_ids.end(),amr_ctrl.tree->GetActiveBlocks()[i])!=target_ids.end())
-                        incoming.push_back(bindings.back());
+                    const int id=amr_ctrl.tree->GetActiveBlocks()[i];
+                    if(std::find(target_ids.begin(),target_ids.end(),id)!=target_ids.end())
+                        incoming.push_back({&amr_ctrl.pool->GetBlock(id),handles[i],storage[i]});
                 }
-                device_transaction=compute_backend->begin_topology_store_transaction(transaction->scope(),bindings);
-                const auto flux=amr::build_amr_flux_topology_plan(*amr_ctrl.pool,
-                    amr_ctrl.tree->GetActiveBlocks(),handles,config.grid.dim,specs.count(),
-                    &amr_ctrl.tree->GetRootGrid(),rank,size);
-                const auto reflux=amr::build_amr_reflux_topology_plan(*amr_ctrl.pool,flux);
-                compute_backend->stage_amr_flux_plan(*device_transaction,flux,reflux);
                 compute_backend->stage_ownership_slots(*device_transaction,old,incoming);
                 compute_backend->prepare_topology_store_publication(*device_transaction);
                 notify(LeafTransferPhase::DevicePrepared);
@@ -596,7 +615,7 @@ void DriverRuntime::balance_distributed_refinement(
 #endif
 }
 
-/** Collective Host regrid using the original selection, pool and conservative
+/** Collective regrid using the original selection, pool and conservative
  * migration. Families stay colocated; the native boundary is limited to level 2.
  */
 bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_repair_only,
@@ -607,25 +626,28 @@ bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_r
     const auto [rank,size]=require_world();
     const auto notify=[&](RegridPhase phase) {if(observer)observer(phase);};
     state::StateVersion accepted{};
+    const auto side=compute_backend?ExecutionSide::Device:ExecutionSide::Host;
     std::vector<std::uint64_t> controls;
     prepare([&] {
         if(size<2 || rank!=amr_ctrl.tree->PartitionRank() || size!=amr_ctrl.tree->PartitionSize()
-            || compute_backend || hydro_attempt_ || config.grid.geometry!="cartesian"
+            || hydro_attempt_ || config.grid.geometry!="cartesian"
             || config.grid.dim!=2 || config.amr.lrefinemin!=0
             || config.amr.lrefinemax<1 || config.amr.lrefinemax>2
             || config.physics.burn.use_burn || config.physics.diffusion.use_diffusion
             || config.physics.gravity.type!="none" || config.amr.refine_on_jeans
             || jeans_repair_only || bc_handler.has_user())
-            throw std::logic_error("distributed regrid requires Cartesian Host Hydro with maximum level one or two");
+            throw std::logic_error("distributed regrid requires Cartesian Hydro with maximum level one or two");
         if(step!=ctrl.step_count || !std::isfinite(time) || time!=ctrl.t_current
             || next_amr_transaction_id==std::numeric_limits<std::uint64_t>::max())
             throw std::invalid_argument("distributed regrid is not at the accepted controller boundary");
+        if(compute_backend && !compute_backend->supports_dynamic_topology_store())
+            throw std::logic_error("distributed regrid backend lacks transactional storage");
         topology_registry.validate_committed_snapshot(observe_topology());
         if(stage_handles.empty())throw std::logic_error("distributed regrid requires a nonempty rank");
         accepted=current_interior_version();
         for(auto handle:stage_handles)
             residency_ledger->require_readable({handle,StateSlot::Current},
-                {ExecutionSide::Host,accepted,true,true});
+                {side,accepted,true,true});
         amr_ctrl.flux_register.RequireOwnershipTransferBoundary();
         std::map<amr::LogicalBlockKey,int> family_owner;
         for(const auto& leaf:topology_registry.blocks()) {
@@ -670,7 +692,7 @@ bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_r
     std::array<std::uint64_t,21> identity{
         static_cast<std::uint64_t>(step),accepted.value,scheduler_clock.last_token(),
         scheduler_clock.last_version(),next_amr_transaction_id,controls.size(),
-        std::bit_cast<std::uint64_t>(ctrl.dt_old)};
+        std::bit_cast<std::uint64_t>(ctrl.dt_old),static_cast<std::uint64_t>(side)};
     agree(identity);
     for(std::size_t offset=0;offset<controls.size();offset+=identity.size()) {
         identity.fill(0);
@@ -688,21 +710,21 @@ bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_r
     std::optional<BCHandler::StageContextSnapshot> boundary_context;
     std::unique_ptr<StateResidencyLedger> ledger;
     scheduler::PublicationWitness witness{};
+    std::unique_ptr<backend::BackendTopologyStoreTransaction> device_transaction;
+    std::vector<backend::StorageGeneration> storage;
+    std::vector<backend::BackendStateAccess> staged_accesses;
+    bool published=false;
     try {
+        prepare([&] { prepared.emplace(amr_ctrl.tree->BeginRegrid(config)); });
+        if(compute_backend) evaluate_device_regrid_indicators(false);
+        else prepare([&] { amr_ctrl.tree->EvaluateRefinement(config); });
+        prepare([&] { notify(RegridPhase::IndicatorsEvaluated); });
+        if(config.amr.lrefinemax>1) balance_distributed_refinement(observer);
+        else prepare([&] { amr_ctrl.tree->RippleCheck(config.amr.lrefinemax); });
         prepare([&] {
-            if(config.amr.lrefinemax==1)
-                prepared.emplace(amr_ctrl.tree->SelectRegrid(config));
-            else {
-                prepared.emplace(amr_ctrl.tree->BeginRegrid(config));
-                amr_ctrl.tree->EvaluateRefinement(config);
-                notify(RegridPhase::IndicatorsEvaluated);
-            }
+            amr_ctrl.tree->SelectRegridRelations(*prepared);
+            notify(RegridPhase::Selected);
         });
-        if(config.amr.lrefinemax>1) {
-            balance_distributed_refinement(observer);
-            prepare([&] {amr_ctrl.tree->SelectRegridRelations(*prepared);});
-        }
-        prepare([&] {notify(RegridPhase::Selected);});
         std::array<std::uint64_t,4> local{
             static_cast<std::uint64_t>(amr_ctrl.pool->GetCapacity()),
             static_cast<std::uint64_t>(amr_ctrl.pool->GetNumActiveBlocks()),
@@ -744,24 +766,36 @@ bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_r
             transaction->begin_migration();
             transaction->require_scope(prepared->prolongation_plan());
             transaction->require_scope(prepared->restriction_plan());
-            prepared->ExecuteMigration();
-            notify(RegridPhase::Migrated);
-            // Boundary completion writes unchanged leaves too. Lease the original
-            // arrays before activating candidates, not a second MPI field store.
             boundary_context.emplace(bc_handler.snapshot_stage_context());
-            backups.reserve(amr_ctrl.tree->GetActiveBlocks().size());
-            for(int id:amr_ctrl.tree->GetActiveBlocks())
-                backups.emplace_back(id,amr_ctrl.pool->GetBlock(id));
             witness=scheduler_clock.next_publication();
             ledger=std::make_unique<StateResidencyLedger>(candidate->reconciliation().epoch);
-            for(auto handle:handles)ledger->register_block(handle,witness.version,witness.completion);
-            prepared->ActivateForFinalization(proposed_global);
+            for(auto handle:handles)ledger->register_block(handle,witness.version,witness.completion,side);
+            if(compute_backend) {
+                std::vector<backend::BackendStateAccess> sources;
+                for(std::size_t i=0;i<stage_handles.size();++i)
+                    sources.push_back(backend_access(i,StateSlot::Current));
+                prepared->ActivateForDeviceMigration(proposed_global);
+                device_transaction=begin_device_topology_store(scope,handles,storage);
+                compute_backend->migrate_staged_current(*device_transaction,sources,
+                    prepared->prolongation_plan(),prepared->restriction_plan());
+                for(std::size_t i=0;i<handles.size();++i)
+                    staged_accesses.push_back({handles[i],storage[i],StateSlot::Current});
+            } else {
+                prepared->ExecuteMigration();
+                // Host ghost completion can write survivors; Device sources
+                // remain immutable in the old store and need no Host backup.
+                backups.reserve(amr_ctrl.tree->GetActiveBlocks().size());
+                for(int id:amr_ctrl.tree->GetActiveBlocks())
+                    backups.emplace_back(id,amr_ctrl.pool->GetBlock(id));
+            }
+            notify(RegridPhase::Migrated);
+            if(!compute_backend)prepared->ActivateForFinalization(proposed_global);
             notify(RegridPhase::TopologyActivated);
         });
         std::optional<StageExecutionContext> context;
         std::optional<scheduler::ScopedStageBinding> binding;
         prepare([&] {
-            context.emplace(ExecutionSide::Host,*ledger,scheduler_clock);
+            context.emplace(side,*ledger,scheduler_clock);
             context->hydro_rank_completion=[this](std::exception_ptr failure) {
                 amr_ctrl.CompleteDistributedHydroPhase(failure);
             };
@@ -769,13 +803,27 @@ bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_r
                 (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
             binding.emplace(*context,handles);
         });
-        TimeIntegration::synchronize_domain_boundary(amr_ctrl,bc_handler,&amr::Block::fluid_state,handles);
-        prepare([&] {
-            (void)scheduler::complete_boundary(*context,handles,StateSlot::Current,witness.version,
+        state::CompletionToken ghosts{};
+        if(compute_backend) {
+            ghosts=scheduler::complete_boundary(*context,handles,StateSlot::Current,witness.version,
+                [&](StateSlot slot,state::StateVersion version,state::CompletionToken completion) {
+                    return execute_device_boundary_domain(staged_accesses,handles,slot,version,
+                        completion,*ledger,device_transaction.get());
+                });
+        } else {
+            TimeIntegration::synchronize_domain_boundary(amr_ctrl,bc_handler,&amr::Block::fluid_state,handles);
+            ghosts=scheduler::complete_boundary(*context,handles,StateSlot::Current,witness.version,
                 [](StateSlot,state::StateVersion,state::CompletionToken token) {return token;});
+        }
+        prepare([&] {
             for(auto handle:handles)ledger->require_readable({handle,StateSlot::Current},
-                {ExecutionSide::Host,witness.version,true,true});
+                {side,witness.version,true,true});
+            if(compute_backend) {
+                compute_backend->accept_staged_current_ghosts(*device_transaction,ghosts);
+                prepared->CompleteDeviceMigration();
+            }
             notify(RegridPhase::GhostsSynchronized);
+            if(compute_backend)compute_backend->prepare_topology_store_publication(*device_transaction);
             transaction->mark_ready();
             notify(RegridPhase::ReadyToPublish);
         });
@@ -785,18 +833,26 @@ bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_r
                 transaction->commit_after_success(
                     [](const auto&) {return 0;},[](const auto&,int&) {},
                     [&](int&&) noexcept {
+                        if(compute_backend) {
+                            compute_backend->publish_prepared_topology_store_transaction(*device_transaction);
+                            backend_storage.swap(storage);
+                        }
                         prepared->PublishNoexcept();
                         stage_handles.swap(handles);
                         residency_ledger.swap(ledger);
                         amr_ctrl.PublishActiveHandlesNoexcept(stage_handles);
+                        published=true;
                     });
             },[&](std::exception_ptr failure) {
                 prepare([&] {if(failure)std::rethrow_exception(failure);});
             });
         check(MPI_Barrier(MPI_COMM_WORLD));
+        if(compute_backend)compute_backend->finish_topology_store_retirement(*device_transaction);
         prepared->ReleaseRetiredNoexcept();
         return true;
     } catch(...) {
+        if(published)std::terminate();
+        device_transaction.reset();
         for(auto& backup:backups)backup.restore(amr_ctrl.pool->GetBlock(backup.pool_index));
         if(boundary_context)bc_handler.restore_stage_context_noexcept(*boundary_context);
         if(prepared)prepared->AbortNoexcept();
@@ -818,13 +874,23 @@ bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_r
  */
 void DriverRuntime::evaluate_device_regrid_indicators(bool jeans_repair_only)
 {
-    const auto old_active=amr_ctrl.tree->GetActiveBlocks();
-    (void)amr::indicator::make_selection(
+    const auto complete = [&](auto&& work) {
+        std::exception_ptr failure;
+        try { work(); } catch (...) { failure = std::current_exception(); }
+        if (amr_ctrl.tree->PartitionSize() > 1) amr_ctrl.CompleteDistributedHydroPhase(failure);
+        else if (failure) std::rethrow_exception(failure);
+    };
+    std::vector<int> old_active;
+    complete([&] {
+        old_active=amr_ctrl.tree->GetActiveBlocks();
+        (void)amr::indicator::make_selection(
         config.amr,config.grid.dim,amr_ctrl.tree->RefinementSpecies(),
         GridMetrics::resolve_public_chart(config.grid.geometry,config.grid.dim));
+    });
     std::vector<double> errors;
     if(!jeans_repair_only) {
         complete_device_boundary(StateSlot::Current);
+        complete([&] {
         std::vector<arch::backend::BackendStateAccess> accesses;
         accesses.reserve(stage_handles.size());
         for(std::size_t index=0;index<stage_handles.size();++index)
@@ -834,9 +900,11 @@ void DriverRuntime::evaluate_device_regrid_indicators(bool jeans_repair_only)
             amr_ctrl.tree->RefinementSpecies());
         if(errors.size()!=old_active.size())
             throw std::logic_error("backend AMR indicator count mismatch");
+        });
     }
     const auto minima=config.amr.refine_on_jeans
         ? evaluate_current_jeans_resolution() : std::vector<double>{};
+    complete([&] {
     // Validate every finest-level deficit before changing any decision flag.
     if(config.amr.refine_on_jeans)
         for(std::size_t index=0;index<old_active.size();++index)
@@ -851,6 +919,7 @@ void DriverRuntime::evaluate_device_regrid_indicators(bool jeans_repair_only)
         if(config.amr.refine_on_jeans && minima[index]<config.amr.jeans_cells)
             block.refine_flag=1;
     }
+    });
 }
 
 /** Stage one fresh topology transaction; ordinary/device arithmetic is shared. */
@@ -941,7 +1010,6 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only)
             std::unique_ptr<StateResidencyLedger> ledger;
             std::vector<amr::BlockHandle> handles;
             std::vector<arch::backend::StorageGeneration> storage;
-            std::vector<arch::backend::BackendTopologyBinding> bindings;
             std::unique_ptr<arch::backend::BackendTopologyStoreTransaction>
                 store_transaction;
             arch::scheduler::PublicationWitness topology_witness{};
@@ -953,17 +1021,6 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only)
                 || payload.handles.size() != prepared.proposed_active_blocks().size())
                 throw std::logic_error("CUDA AMR proposed topology is empty or mismatched");
             payload.topology_witness = scheduler_clock.next_publication();
-            payload.storage.reserve(payload.handles.size());
-            payload.bindings.reserve(payload.handles.size());
-            for (std::size_t index = 0; index < payload.handles.size(); ++index) {
-                const auto storage = storage_generation_issuer.issue();
-                payload.storage.push_back(storage);
-                auto& block=amr_ctrl.pool->GetBlock(prepared.proposed_active_blocks()[index]);
-                // A new axis child borrows the same per-grid logical plan as
-                // initial binding; the domain-wide plan describes outer walls.
-                payload.bindings.push_back({&block, payload.handles[index], storage,
-                    &bc_handler.logical_plan(block.grid)});
-            }
             std::vector<arch::backend::BackendStateAccess> source_accesses;
             source_accesses.reserve(stage_handles.size());
             for (std::size_t index = 0; index < stage_handles.size(); ++index)
@@ -972,20 +1029,8 @@ bool DriverRuntime::execute_regrid(bool jeans_repair_only)
             // Activate only Host topology/neighbor metadata. Old accepted
             // device sources remain immutable throughout this transaction.
             prepared.ActivateForDeviceMigration();
-            // Candidate Tree membership is authentic only after activation.
-            // Failure still rolls this unpublished topology/store back together.
-            for (auto& binding : payload.bindings)
-                binding.hydro_boundary=bc_handler.hydro_physical_faces(
-                    *amr_ctrl.tree,*binding.block);
             payload.store_transaction =
-                compute_backend->begin_topology_store_transaction(scope, payload.bindings);
-            const auto staged_flux_plan = amr::build_amr_flux_topology_plan(
-                    *amr_ctrl.pool, amr_ctrl.tree->GetActiveBlocks(), payload.handles,
-                    config.grid.dim, specs.count());
-            const auto staged_reflux_plan =
-                amr::build_amr_reflux_topology_plan(*amr_ctrl.pool, staged_flux_plan);
-            compute_backend->stage_amr_flux_plan(
-                *payload.store_transaction, staged_flux_plan, staged_reflux_plan);
+                begin_device_topology_store(scope, payload.handles, payload.storage);
 
             // CPU and CUDA migration share logical plans and mathematical
             // leaves; this route executes against private device storage.

@@ -25,6 +25,7 @@
 #include <iostream>
 #include <cstdint>
 #include <cmath>
+#include <numbers>
 #include "numerics/flux/FluxHLLC.h"
 #include "numerics/integrator/HydroSolverImpl.h"
 #include <stdexcept>
@@ -39,7 +40,7 @@ using Side = state::ExecutionSide;
 constexpr std::array slots{Slot::Current, Slot::Next, Slot::Scratch};
 constexpr std::array members{&amr::Block::fluid_state, &amr::Block::state_next, &amr::Block::state_scratch};
 int rank = 0, checks = 0, rejections = 0;
-bool mixed = false, flux_mode = false, macro_mode = false, ownership_mode = false;
+bool mixed = false, flux_mode = false, macro_mode = false, ownership_mode = false, regrid_mode = false;
 dispatch::TimeIntegratorId macro_method=dispatch::TimeIntegratorId::Euler;
 std::uint64_t boundary_h2d = 0, boundary_d2h = 0, observed_device_used = 0;
 void require(bool ok, const char* message) { if (!ok) throw std::runtime_error(message); }
@@ -59,6 +60,14 @@ SimConfig config_for(int dim, bool periodic) {
     c.grid.nblockx1=mixed?2:3;c.grid.nblockx2=dim>=2?(mixed?1:2):0;c.grid.nblockx3=dim==3?2:0;
     c.grid.x1_min=0.;c.grid.x1_max=3.;c.grid.x2_min=0.;c.grid.x2_max=2.;c.grid.x3_min=0.;c.grid.x3_max=2.;
     c.grid.amr_max_blocks=12;c.amr.lrefinemin=0;c.amr.lrefinemax=mixed?1:0;
+    if(regrid_mode) {
+        c.grid.amr_max_blocks=48;c.amr.lrefinemax=2;
+        c.amr.refine_threshold=.02;c.amr.derefine_threshold=.001;
+        c.amr.refine_on_rho=true;
+        c.amr.refine_on_p=c.amr.refine_on_temp=c.amr.refine_on_velx=c.amr.refine_on_vely=false;
+        c.amr.refine_on_velz=c.amr.refine_on_eng=c.amr.refine_on_vorticity=c.amr.refine_on_div_v=false;
+        c.amr.refine_on_entropy=c.amr.refine_on_enuc=c.amr.refine_on_species=false;
+    }
     const auto bc=periodic?"periodic":"outflow";
     c.grid.x1l_boundary_type=c.grid.x1r_boundary_type=bc;
     c.grid.x2l_boundary_type=c.grid.x2r_boundary_type=bc;
@@ -69,7 +78,7 @@ SimConfig config_for(int dim, bool periodic) {
 }
 cuda::CudaLaunchConfig launch(const SimConfig& c) {
     using namespace dispatch;
-    return cuda::make_cuda_launch_config({FluxId::Hllc,(flux_mode||macro_mode||ownership_mode)?ReconstructionId::Pcm:ReconstructionId::Ppm,LimiterId::MinMod,
+    return cuda::make_cuda_launch_config({FluxId::Hllc,(flux_mode||macro_mode||ownership_mode||regrid_mode)?ReconstructionId::Pcm:ReconstructionId::Ppm,LimiterId::MinMod,
         macro_method,EosId::Ideal,NetworkId::None,OdeSolverId::None,
         LinearSolverId::None,DiffusionIntegratorId::None},c);
 }
@@ -82,7 +91,7 @@ std::vector<amr::BlockHandle> initialize_tree(
     control.tree->InitRootGrid(root,n);
     if(!mixed)return {};
     const int owner=distributed?rank:0, count=distributed?2:1;
-    topology::TopologyIdentityRegistry registry({2,{2,1,1},1},owner,count);
+    topology::TopologyIdentityRegistry registry({2,{2,1,1},config.amr.lrefinemax},owner,count);
     const auto observations=[&](std::span<const int> ids) {
         std::vector<topology::TopologyObservation> local;
         for(int id:ids) {
@@ -156,15 +165,29 @@ struct Reference {
     BCHandler bc;
     std::vector<amr::BlockHandle> handles;
     std::array<bool,3> refreshed{};
+    std::unique_ptr<topology::TopologyIdentityRegistry> regrid_registry;
     const SpeciesManager& populate(int n) {
         for(int i=0;i<n;++i)species.add_species("s"+std::to_string(i),1.,1.,1.4,1.);
         return species;
     }
     Reference(int dim,int n,bool periodic)
-        :config(config_for(dim,periodic)),eos(1.4,populate(n)),control(12,dim),bc(config) {
+        :config(config_for(dim,periodic)),eos(1.4,populate(n)),control(regrid_mode?48:12,dim),bc(config) {
         bc.bind(eos,species);handles=initialize_tree(control,config,n,false);
         if(!mixed)for(std::size_t i=0;i<control.tree->GetActiveBlocks().size();++i)
             handles.push_back({{i+1},{1}});
+        if(regrid_mode) {
+            regrid_registry=std::make_unique<topology::TopologyIdentityRegistry>(
+                topology::TopologyDomainBounds{2,{2,1,1},2},0,1);
+            std::vector<topology::TopologyObservation> observations;
+            for(int id:control.tree->GetActiveBlocks()) {
+                const auto& b=control.pool->GetBlock(id);
+                observations.push_back({id,{2,b.level,b.logical_x1,b.logical_x2,b.logical_x3},0});
+            }
+            auto candidate=regrid_registry->stage_adoption(observations);
+            handles=candidate.reconciliation().handles_in_observation_order;
+            regrid_registry->commit(std::move(candidate));
+            control.tree->UpdateNeighbors(config,regrid_registry->blocks());
+        }
         control.BindActiveHandles(handles);
     }
     void reset(int round) {
@@ -196,7 +219,7 @@ struct Run {
         return control;
     }
     Run(int dim,int n,bool periodic,bool distributed)
-        :config(config_for(dim,periodic)),eos(1.4,populate(n)),control(ownership_mode&&distributed?6:12,dim),
+        :config(config_for(dim,periodic)),eos(1.4,populate(n)),control(regrid_mode?(distributed?24:48):(ownership_mode&&distributed?6:12),dim),
          bc(config),controller(config,RunState{}),
          runtime(initialize_control(distributed,n),bc,config,species,controller) {
         bc.bind(eos,species);
@@ -890,13 +913,14 @@ OwnershipImage ownership_image(Run& run,std::size_t index) {
         for(double value:*field)result.push_back(std::bit_cast<std::uint64_t>(value));
     return result;
 }
-amr::AmrEndpoint ownership_endpoint(Run& run,int owner) {
-    amr::AmrEndpoint endpoint{{2,1,2,0,0},{}};
+amr::AmrEndpoint ownership_endpoint(Run& run,int owner,amr::LogicalBlockKey key={2,1,2,0,0}) {
+    amr::AmrEndpoint endpoint{key,{}};
     if(rank==owner) {
         const auto& ids=run.control.tree->GetActiveBlocks();
         for(std::size_t i=0;i<ids.size();++i) {
             const auto& b=run.control.pool->GetBlock(ids[i]);
-            if(b.level==1&&b.logical_x1==2&&b.logical_x2==0)endpoint.handle=run.runtime.handles()[i];
+            if(amr::LogicalBlockKey{2,b.level,b.logical_x1,b.logical_x2,b.logical_x3}==key)
+                endpoint.handle=run.runtime.handles()[i];
         }
     }
     std::array<std::uint64_t,2> wire{endpoint.handle.uid.value,endpoint.handle.epoch.value};
@@ -1002,6 +1026,204 @@ void run_ownership(int n,bool periodic) {
         <<" periodic="<<periodic<<" accepted_transfers=10 rejected_phases=5 accepted_steps=6"<<std::endl;
 }
 
+void seed_device_regrid(Run& actual,Reference& reference) {
+    const auto wave=[](amr::AMRControl& control) {
+        for(int id:control.tree->GetActiveBlocks()) {
+            auto& b=control.pool->GetBlock(id);seed(b,0,0);
+            for(int j=0;j<b.grid.GetTotalY();++j)for(int i=0;i<b.grid.GetTotalX();++i) {
+                const int cell=b.grid.GetIndex(i,j,0);
+                const double x=b.grid.GetCellCenterX(i)/3.;
+                const double rho=1.+(std::abs(x-.75)<.1
+                    ?.08*(1.+std::cos(2.*std::numbers::pi*(x-.75)/.2)):0.);
+                b.fluid_state.set(cell,{rho,rho*.125,-rho*.0625,0.,
+                    2.5+.5*rho*(.125*.125+.0625*.0625)});
+            }
+            b.state_next=b.state_scratch=b.fluid_state;
+        }
+    };
+    wave(actual.control);wave(reference.control);
+    const auto& ids=actual.control.tree->GetActiveBlocks();
+    for(std::size_t i=0;i<ids.size();++i)for(int slot=0;slot<3;++slot)for(auto region:{Region::Interior,Region::Ghost})
+        actual.runtime.backend()->enqueue_upload_slot(actual.runtime.backend_access(i,slots[slot]),
+            region,view(actual.control.pool->GetBlock(ids[i]).*members[slot]));
+    actual.runtime.backend()->quiesce();
+    auto context=actual.runtime.stage_context();
+    for(auto slot:slots)scheduler::publish_completed_interior(context,actual.runtime.handles(),slot);
+    for(int id:ids)for(auto member:members)for(auto* f:fields(actual.control.pool->GetBlock(id).*member))
+        std::fill(f->begin(),f->end(),-123456789.);
+    actual.refresh();reference.ensure_fluid_ghosts(Slot::Current);
+}
+void serial_device_regrid_reference(Reference& reference,std::unique_ptr<HostMacro>& macro,double time) {
+    macro.reset();
+    auto& tree=*reference.control.tree;
+    auto prepared=tree.PrepareRegrid(reference.config);
+    std::vector<topology::TopologyObservation> observations;
+    for(int id:prepared.proposed_active_blocks()) {
+        const auto& b=reference.control.pool->GetBlock(id);
+        observations.push_back({id,{2,b.level,b.logical_x1,b.logical_x2,b.logical_x3},0});
+    }
+    auto& registry=*reference.regrid_registry;
+    auto candidate=registry.stage_reconciliation(observations);
+    auto next=candidate.reconciliation().handles_in_observation_order;
+    require(prepared.topology_changed(),"serial density criterion did not change topology");
+    prepared.BuildMigrationPlans(reference.handles,next,
+        {registry.epoch().value,registry.epoch(),candidate.reconciliation().epoch});
+    prepared.ExecuteMigration();prepared.ActivateForFinalization(candidate.blocks());
+    prepared.PublishNoexcept();registry.commit(std::move(candidate));reference.handles=std::move(next);
+    reference.control.BindActiveHandles(reference.handles);prepared.ReleaseRetiredNoexcept();
+    macro=std::make_unique<HostMacro>(reference);macro->context.step_start_time=time;
+    scheduler::ScopedStageBinding binding(macro->context,reference.handles);macro->ghosts();
+}
+void run_regrid(int n,bool periodic) {
+    Run actual(2,n,periodic,true);Reference reference(2,n,periodic);
+    seed_device_regrid(actual,reference);actual.runtime.prepare_device_flux_plans();
+    DeviceMacro device(actual);auto host=std::make_unique<HostMacro>(reference);
+    const auto initial=macro_compare(actual,reference);
+    const auto check=[&] {
+        const auto totals=macro_compare(actual,reference);
+        if(periodic)for(std::size_t f=0;f<totals.size();++f)
+            require(std::abs(totals[f]-initial[f])<=2.e-11L+2.e-12L*std::abs(initial[f]),
+                "Device regrid periodic conservation failed");
+    };
+    const auto step=[&] {const double dt=device.step();host->step(dt);check();};
+    const auto regrid=[&](const std::function<void(driver::DriverRuntime::RegridPhase)>& observer={}) {
+        return actual.runtime.perform_regrid(actual.controller.step_count,actual.controller.t_current,false,observer);
+    };
+    step();
+    // The original sum-of-pool-capacities gate includes both ranks.
+    const auto capacity_handles=actual.runtime.handles();
+    std::vector<OwnershipImage> capacity_fields;
+    for(std::size_t i=0;i<capacity_handles.size();++i)capacity_fields.push_back(ownership_image(actual,i));
+    actual.config.grid.amr_max_blocks=47;
+    rejected([&] {
+        try { regrid(); } catch(const std::exception& error) {
+            require(std::string(error.what()).find("global max_blocks")!=std::string::npos,
+                "capacity rejection came from an unrelated failure");
+            throw;
+        }
+    });
+    actual.config.grid.amr_max_blocks=48;
+    require(actual.runtime.handles()==capacity_handles,"capacity rejection changed handles");
+    for(std::size_t i=0;i<capacity_handles.size();++i)
+        require(ownership_image(actual,i)==capacity_fields[i],"capacity rejection changed fields");
+    using Phase=driver::DriverRuntime::RegridPhase;
+    for(int cycle=0;cycle<4;++cycle) {
+        if(cycle==1||cycle==2) {
+            actual.config.amr.refine_threshold=reference.config.amr.refine_threshold=.9;
+            actual.config.amr.derefine_threshold=reference.config.amr.derefine_threshold=.8;
+        } else {
+            actual.config.amr.refine_threshold=reference.config.amr.refine_threshold=.02;
+            actual.config.amr.derefine_threshold=reference.config.amr.derefine_threshold=.001;
+        }
+        for(int victim:{0,1})for(auto phase:{Phase::IndicatorsEvaluated,Phase::Selected,Phase::Constructed,Phase::Migrated,
+                Phase::TopologyActivated,Phase::GhostsSynchronized,Phase::ReadyToPublish}) {
+            const auto handles=actual.runtime.handles();const auto ids=actual.control.tree->GetActiveBlocks();
+            auto context=actual.runtime.stage_context();const auto ledger=context.ledger.snapshot_metadata(Side::Device);
+            const auto bc=actual.bc.snapshot_stage_context();const auto flux=actual.control.flux_register.snapshot_host();
+            const auto controller=actual.controller;
+            const auto old_token=context.clock.last_token(),old_version=context.clock.last_version();
+            std::vector<OwnershipImage> before;
+            std::vector<amr::Block> mirrors;
+            std::vector<const double*> pointers;
+            std::vector<backend::BackendStateAccess> accesses;
+            for(std::size_t i=0;i<ids.size();++i) {
+                before.push_back(ownership_image(actual,i));
+                auto& block=actual.control.pool->GetBlock(ids[i]);
+                mirrors.push_back(block);
+                for(auto member:members)for(auto* field:fields(block.*member))pointers.push_back(field->data());
+                accesses.push_back(actual.runtime.backend_access(i,Slot::Current));
+            }
+            bool reached=false;
+            rejected([&] {
+                try { regrid([&](Phase now) {
+                    if(rank==victim&&now==phase){reached=true;throw std::runtime_error("injected Device regrid rejection");}
+                }); } catch(const std::exception& error) {
+                    std::cout<<"regrid rejected rank="<<rank<<" cycle="<<cycle
+                        <<" phase="<<static_cast<int>(phase)<<" reason="<<error.what()<<std::endl;
+                    throw;
+                }
+            });
+            require(rank!=victim||reached,"Device regrid failed before injected phase");
+            require(actual.runtime.handles()==handles&&actual.control.tree->GetActiveBlocks()==ids,
+                "Device regrid rollback changed topology");
+            require(context.ledger.metadata_snapshot_matches(ledger)&&actual.bc.stage_context_matches(bc)
+                &&actual.control.flux_register.host_snapshot_matches(flux),"Device regrid rollback changed metadata");
+            require(same(actual.controller.t_current,controller.t_current)
+                &&same(actual.controller.dt_old,controller.dt_old)&&actual.controller.step_count==controller.step_count,
+                "Device regrid rejection changed the controller clock");
+            unchanged(actual.controller.repairs.values,controller.repairs.values);
+            require(context.clock.last_token()>=old_token&&context.clock.last_version()>=old_version,
+                "Device regrid rejection reused scheduler identities");
+            std::size_t pointer=0;
+            for(std::size_t i=0;i<ids.size();++i) {
+                auto& block=actual.control.pool->GetBlock(ids[i]);const auto& saved=mirrors[i];
+                require(block.id==saved.id&&block.active_index==saved.active_index
+                    &&block.refine_flag==saved.refine_flag,"Device regrid rollback changed native topology indices/flags");
+                for(int face=0;face<6;++face) {
+                    const auto& live=block.face_neighbors[face];const auto& old=saved.face_neighbors[face];
+                    require(live.count==old.count&&live.level_diff==old.level_diff
+                        &&block.grid.amr_coarse_fine_face[face]==saved.grid.amr_coarse_fine_face[face],
+                        "Device regrid rollback changed face metadata");
+                    for(int j=0;j<4;++j)require(live.blocks[j]==old.blocks[j],
+                        "Device regrid rollback changed a neighbor endpoint");
+                }
+                for(auto member:members) {
+                    auto live=fields(block.*member),old=fields(mirrors[i].*member);
+                    for(int f=0;f<7;++f) {
+                        require(live[f]->data()==pointers[pointer++],"Device regrid rollback replaced a Host lease");
+                        unchanged(*live[f],*old[f]);
+                    }
+                    const auto& x=(block.*member).stage_repairs;const auto& y=(saved.*member).stage_repairs;
+                    unchanged(x.values,y.values);
+                    require(x.block_uid==y.block_uid&&x.stage==y.stage&&same(x.time,y.time),
+                        "Device regrid rollback changed repair provenance");
+                    for(int axis=0;axis<3;++axis)require(same(x.position[axis],y.position[axis]),
+                        "Device regrid rollback changed repair position");
+                }
+                require(ownership_image(actual,i)==before[i],"Device regrid rollback changed original slots");
+                require(actual.runtime.backend()->contains(accesses[i]),"Device regrid rollback invalidated source lease");
+            }
+            const auto store=static_cast<cuda::CudaBackend*>(actual.runtime.backend())->store_snapshot();
+            require(!store.staged_blocks&&!store.retirement_batches
+                &&actual.control.pool->GetNumReservedBlocks()==0,"Device regrid rollback retained resources");
+        }
+        std::vector<backend::BackendStateAccess> stale;
+        for(std::size_t i=0;i<actual.runtime.handles().size();++i)
+            stale.push_back(actual.runtime.backend_access(i,Slot::Current));
+        const auto old_store=static_cast<cuda::CudaBackend*>(actual.runtime.backend())->store_snapshot();
+        require(regrid(),"Device density criterion did not change topology");
+        for(auto access:stale)require(!actual.runtime.backend()->contains(access),
+            "Device regrid retained a stale lease after publication");
+        const auto next_store=static_cast<cuda::CudaBackend*>(actual.runtime.backend())->store_snapshot();
+        require(next_store.active_blocks==actual.runtime.handles().size()&&!next_store.staged_blocks
+            &&!next_store.retirement_batches&&actual.control.pool->GetNumReservedBlocks()==0
+            &&next_store.immutable_owner_constructions==old_store.immutable_owner_constructions,
+            "Device regrid leaked resources or rebuilt immutable owners");
+        serial_device_regrid_reference(reference,host,actual.controller.t_current);
+        check();
+        constexpr std::array<std::size_t,4> expected_leaves{20,8,2,5};
+        require(reference.handles.size()==expected_leaves[cycle],"density experiment selected unexpected leaf count");
+        if(!rank)std::cout<<"regrid cycle="<<cycle<<" global_leaves="<<reference.handles.size()<<std::endl;
+        if(cycle==0) {
+            const amr::LogicalBlockKey key{2,2,4,0,0};
+            actual.runtime.migrate_leaf(ownership_endpoint(actual,1,key),0);check();
+            require(actual.runtime.coalesce_siblings({2,1,2,0,0},1),"Device family colocation was a no-op");check();
+        }
+        step();
+        if(cycle==2) {
+            const auto handles=actual.runtime.handles();
+            std::vector<backend::BackendStateAccess> valid;
+            for(std::size_t i=0;i<handles.size();++i)valid.push_back(actual.runtime.backend_access(i,Slot::Current));
+            require(!regrid()&&actual.runtime.handles()==handles,"agreed no-change regrid changed identity");
+            for(auto access:valid)require(actual.runtime.backend()->contains(access),
+                "no-change regrid invalidated storage");
+            check();
+        }
+    }
+    if(!rank)std::cout<<"regrid PASS method="<<static_cast<int>(macro_method)<<" species="<<n
+        <<" periodic="<<periodic<<" accepted_regrids=4 rejected_phases=56 capacity_rejections=1 accepted_steps=5"<<std::endl;
+}
+
 }
 int main(int argc,char** argv) {
     int provided=0;MPI_Init_thread(&argc,&argv,MPI_THREAD_FUNNELED,&provided);
@@ -1014,12 +1236,15 @@ int main(int argc,char** argv) {
         flux_mode=argc==2&&std::string(argv[1])=="--flux";
         macro_mode=argc==2&&std::string(argv[1])=="--macro";
         ownership_mode=argc==2&&std::string(argv[1])=="--ownership";
-        mixed=ownership_mode||macro_mode||flux_mode||(argc==2&&std::string(argv[1])=="--mixed");
-        if(macro_mode||ownership_mode)for(auto method:{dispatch::TimeIntegratorId::Euler,dispatch::TimeIntegratorId::Rk2,
+        regrid_mode=argc==2&&(std::string(argv[1])=="--regrid"||std::string(argv[1])=="--regrid-smoke");
+        mixed=regrid_mode||ownership_mode||macro_mode||flux_mode||(argc==2&&std::string(argv[1])=="--mixed");
+        if(regrid_mode&&std::string(argv[1])=="--regrid-smoke")run_regrid(1,false);
+        else if(macro_mode||ownership_mode||regrid_mode)for(auto method:{dispatch::TimeIntegratorId::Euler,dispatch::TimeIntegratorId::Rk2,
                 dispatch::TimeIntegratorId::Rk3}) {
             macro_method=method;
             for(int species:{1,4,37})for(bool periodic:{false,true}) {
-                if(ownership_mode)run_ownership(species,periodic);else run_macro(species,periodic);
+                if(regrid_mode)run_regrid(species,periodic);
+                else if(ownership_mode)run_ownership(species,periodic);else run_macro(species,periodic);
             }
         }
         else if(flux_mode)for(int species:{1,4,37})for(bool periodic:{false,true})run_flux(species,periodic);
@@ -1032,7 +1257,8 @@ int main(int argc,char** argv) {
             <<" h2d_including_metadata="<<all[3*r]<<" d2h="<<all[3*r+1]
             <<" observed_device_used_including_test_and_contexts="<<all[3*r+2]<<std::endl;
         if(!rank) {
-            if(ownership_mode)std::cout<<"PASS CUDA MPI ownership layouts=18 comparisons="<<checks;
+            if(regrid_mode)std::cout<<"PASS CUDA MPI regrid comparisons="<<checks;
+            else if(ownership_mode)std::cout<<"PASS CUDA MPI ownership layouts=18 comparisons="<<checks;
             else if(macro_mode)std::cout<<"PASS CUDA MPI macro layouts=18 comparisons="<<checks;
             else if(flux_mode)std::cout<<"PASS CUDA MPI flux layouts=6 weighted_stages=24 flux_reflux_checks="<<checks;
             else std::cout<<"PASS CUDA MPI Runtime mixed="<<mixed<<" layouts="<<(mixed?6:18)

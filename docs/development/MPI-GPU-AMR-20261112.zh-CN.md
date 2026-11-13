@@ -383,6 +383,59 @@ Release/Debug 共 16 项 CUDA 与 store 回归、CPU Release/Debug × MPI ON/OFF
 应用 ExecutionPreflight 继续关闭。单张 H100 的两进程结果不扩展为多 GPU、
 多节点或性能结论。下一步把原 Device 重网格和 GhostExchange 接到上述共同提交边界。
 
+## A1-2：跨 rank Device 细化、粗化与继续演化（2026-11-13）
+
+原 DriverRuntime 重网格事务现在以 Host/Device side 选择已有存储。原 Device
+indicator 产生标记，原 RippleSweep 传播跨 rank 二比一约束，原迁移计划执行
+prolongation/restriction。新拓扑只在候选 Device store 中完成 Current；原
+GhostExchange 通过同一 gather/scatter 与 coarse/fine 配方访问候选存储，
+没有把旧 Host 镜像误作设备权威状态。所有 rank 完成 ghost、ledger 和事件准备后，
+才共同切换原 tree、store、handles 和 ledger，再退休旧分配。
+
+串行 Device 重网格、MPI 重网格和所有权迁移共享 Runtime 内部的一处候选绑定与
+flux/reflux plan 准备。后端只新增接受候选存储参数的原操作重载，没有新建通信、
+分配或时间推进管理器。仅对“远端拓扑已变而本地叶子不变”的候选允许重新绑定；
+串行 no-change 的原保护仍保留。
+
+新增 mpi_cuda_regrid_2 覆盖 Euler/RK2/RK3 × species 1/4/37 × outflow/periodic。
+从五叶 mixed-level 状态继续演化，实际密度指标使全域叶数依次为 20、8、2、5。
+期间把一个 level-two 叶子迁到另一 rank，再通过原 coalesce_siblings 合并兄弟所有权；
+同一 Runtime 完成五个接受的时间步及一次共同 no-change 重网格。
+串行 CPU 参考使用原重网格迁移和宏步，不重置物理字段或时间。
+
+每个布局在两侧 rank 分别注入七个阶段的失败，四轮共 56 次；另保留原
+sum-of-pool-capacities 对 global max_blocks 的拒绝。每种构建共 234 次字段对照、
+1,026 次共同拒绝。检查包含 Device 三槽及 padding、Host 镜像的原指针与逐位字段、
+邻居描述符、repair、ledger、FluxRegister、控制器与单调编号。拒绝后旧 lease 仍有效，
+成功后失效；候选、接收预留与退休计数归零。Current 之外的槽不被误发布为有效状态。
+算术门槛仍为 2e-13 尺度，周期守恒仍为 2e-11 绝对加 2e-12 相对。
+
+原串行 oracle 在重新采用 handle 后曾保留旧 neighbor endpoint，首轮被身份检查拒绝。
+修正为调用原 UpdateNeighbors 重新绑定 oracle 描述符；生产身份保护未放宽，
+原失败日志保留。数学、物理、CUDA hydro/AMR 数值主体均未修改。
+
+最终回归包含 Release/Debug 的 CUDA MPI 与 store/scheduler 检查、原 CUDA AMR
+exchange，共 22 项；CPU Release/Debug ×
+MPI ON/OFF 共 26 项。另有 629 项 tooling，均通过且无跳过。
+额外 CUDA ON / MPI OFF 的完整后端构建仍在进行，尚未计入执行通过数。
+完整命令、失败记录、JUnit 和哈希保存在
+/home/ubuntu/projects/ARCH-mpi-evidence-gpu-regrid-20261113；
+[结构化摘要](../../validation/backend/results/mpi-gpu-regrid-20261113/summary.json) 随提交保存。
+
+A2 衔接诊断另已复现“接受宏步 → Device 状态读回 → 重网格”的编号不一致拒绝：
+不同叶数的本地 transfer 发出了不同数量的调度 token。该路径尚未在本阶段开放；
+后续会在事务入口复用已有高水位同步并加入真实顺序回归，不改变物理时间/版本检查。
+复现材料保存在 /home/ubuntu/projects/ARCH-mpi-evidence-gpu-application-20261113。
+
+A1-1 基线 f9f21f82 的双方 CI 已全部成功：
+[朋友仓库](https://github.com/Shiro-Akane/ARCH/actions/runs/43353542437)、
+[自有仓库](https://github.com/Arsenic-er/ARCH/actions/runs/43353545956)。
+本次新提交仍单独触发并核对对应 CI。
+
+此处验收的是二维 Cartesian、level 0/1/2、非空 rank、同胞共址且无 sources/user BC
+的 native 生命周期。应用根网格启动、自动所有权策略、输出集合与重启继续由 A2/A3
+接入和验收；应用预检尚未开放。单张 H100 上的双进程不代表多 GPU、多节点或扩展性能。
+
 ## 服务器资源与恢复
 
 代码、构建、测试和证据位于 gpu-273312；Windows 仅发送控制命令。

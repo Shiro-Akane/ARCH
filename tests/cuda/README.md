@@ -89,3 +89,11 @@ The original pool capacity is six per rank, twelve globally. The store lifecycle
 tests also cover explicit and RAII abort after retirement-event preparation.
 This qualifies native ownership transfer; dynamic regrid and application opening
 remain separate gates.
+
+
+The native MPI Runtime witness also registers mpi_cuda_regrid_2. It combines
+the original Device indicators, level-two refine/coarsen, ownership migration,
+sibling colocation and five accepted macrosteps. Both ranks inject failures at
+seven preparation phases; original Host mirrors, Device slots, identity leases
+and resource counters must survive rejection. The application startup/output
+boundary is qualified separately in the MPI GPU/AMR development record.
