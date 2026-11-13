@@ -230,7 +230,7 @@ jobs:
           if-no-files-found: warn
 
   mpi:
-    name: MPI fixed-grid
+    name: MPI Hydro
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     env:
@@ -329,6 +329,22 @@ jobs:
             --serial-candidate "$PWD/build-ci/mpi/OFF/bin/ARCH" \
             --candidate "$PWD/build-ci/mpi/ON/bin/ARCH" \
             --evidence "$PWD/build-ci/mpi/multidimensional" --mpiexec "$(command -v mpiexec)"
+
+      - name: Check native AMR continuation and collective startup failures
+        if: steps.scope.outputs.required == 'true'
+        run: |
+          python3 -B tests/integration/test_mpi_amr.py \
+            --reference "$PWD/build-ci/mpi/OFF/bin/ARCH" \
+            --candidate "$PWD/build-ci/mpi/ON/bin/ARCH" --backend cpu --smoke \
+            --evidence "$PWD/build-ci/mpi/amr" --mpiexec "$(command -v mpiexec)"
+          python3 -B tests/integration/test_mpi_startup.py \
+            --candidate "$PWD/build-ci/mpi/ON/bin/ARCH" \
+            --evidence "$PWD/build-ci/mpi/startup" --mpiexec "$(command -v mpiexec)"
+          python3 -B tests/integration/test_mpi_restart_failures.py \
+            --candidate "$PWD/build-ci/mpi/ON/bin/ARCH" \
+            --checkpoint "$PWD/build-ci/mpi/amr/Sedov-RK2-pcm-periodic-r2/distributed/output/AMR_chk_0001.collection" \
+            --config "$PWD/build-ci/mpi/amr/Sedov-RK2-pcm-periodic-r2/distributed/run.par" \
+            --evidence "$PWD/build-ci/mpi/restart" --mpiexec "$(command -v mpiexec)"
 
       - name: Retain MPI diagnostics and comparison summaries
         if: always()
@@ -463,7 +479,7 @@ jobs:
           printf 'Tooling: %s\nCPU Release: %s\n' "$TOOLING_RESULT" "$CPU_RESULT"
           test "$TOOLING_RESULT" = success
           test "$CPU_RESULT" = success
-          printf 'MPI fixed-grid: %s\\n' "$MPI_RESULT"
+          printf 'MPI Hydro: %s\n' "$MPI_RESULT"
           test "$MPI_RESULT" = success
           printf 'Studio and Host: %s\n' "$STUDIO_RESULT"
           test "$STUDIO_RESULT" = success

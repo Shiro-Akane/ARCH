@@ -44,8 +44,8 @@ Hosted CI does not execute CUDA, cuDSS, generated-network trajectories, sanitize
 
 Actions are pinned to full commits; the actionlint archive has a fixed checksum. This workflow uses neither `pull_request_target` nor repository secrets and does not publish releases. Public pull-request code should run on disposable workers rather than persistent personal GPU machines.
 
-## MPI fixed-grid gate
+## MPI Hydro gate
 
 The MPI job builds separate ON/OFF applications, checks the intended rank count through the shared execution preflight, exercises real 1/2/4-rank Host exchange/reductions, and compares 1D/2D/3D production output against the MPI-OFF application bit for bit. The existing fixtures also cover uneven partitions, tight pool capacity, rank input disagreement and unsupported startup modes. Auto-to-CPU selection is checked in both the query and an evolved trajectory. The MPI gate participates in CI required.
 
-Hosted runners may oversubscribe ranks for correctness. Their timings are not scaling evidence. Only diagnostics and small comparison summaries are uploaded, not HDF5, binaries or build trees. AMR, GPU MPI and distributed checkpoint/restart remain unsupported.
+The same job also runs a two-rank Cartesian 2D AMR trajectory, validates native checkpoint continuation, and rejects heterogeneous executable identities and incomplete or overlapping restart topologies even after their checksums are recomputed. MPI application admission is owned by ExecutionPreflight: fixed Cartesian 1D/2D/3D and dynamic Cartesian 2D levels 0..2, nonempty ranks, built-in boundaries, no source operators, and same-rank collection restart on a shared output filesystem.\n\nHosted runners may oversubscribe ranks for correctness. Their timings are not scaling evidence. Only diagnostics and small comparison summaries are uploaded, not HDF5, binaries or build trees. CUDA MPI is validated separately on the designated GPU server; this CPU job does not establish GPU, multi-GPU or multi-node acceptance. See the [application integration record](../../docs/development/MPI-GPU-AMR-20261112.zh-CN.md).

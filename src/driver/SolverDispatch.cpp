@@ -12,6 +12,8 @@
  * 3. Start one Driver runtime without placing numerical formulas in dispatch.
  */
 
+#include <array>
+#include <optional>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -35,6 +37,9 @@
 #include "io/OutputPath.h"
 #include "io/chk/CheckpointCompatibility.h"
 #include "driver/dispatch/ExecutionPreflight.h"
+#include "core/MpiCollective.h"
+#include "core/config/ConfigurationIdentity.h"
+#include "core/files/FileFingerprint.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 
 // Integrator-specific translation units expose these narrow dispatch entries.
@@ -182,6 +187,39 @@ void print_amr_resolution_summary(const SimConfig& config)
 
 } // namespace
 
+// Validate the actual loaded scientific run before acquiring output or mesh.
+// This reuses formal provenance; there is no second configuration authority.
+namespace {
+void agree_mpi_run(const SimConfig& config,const SpeciesManager& species,
+    const arch::dispatch::ExecutionPreflight& execution,int ranks)
+{
+#if ARCH_MPI_ENABLED
+    if(ranks==1)return;
+    using namespace arch;
+    std::string fingerprint;
+    mpi::prepare([&] {
+        const auto provenance=io::inspect_checkpoint_provenance(config,species,
+            execution.plan.eos,execution.requirements.burn,
+            dispatch::canonical_policy_name<dispatch::NetworkPolicies>(execution.plan.network),
+            execution.requirements.use_nse);
+        const auto identity=arch::config::make_plot_source_identity(config,provenance,
+            execution.plan,execution.backend.resolved_backend);
+        fingerprint=core::string_sha256(identity.binary_sha256+"\n"
+            +identity.effective_config_sha256+"\n"+identity.eos_identity_sha256);
+    });
+    std::array<unsigned char,64> low{},high{};
+    mpi::check(MPI_Allreduce(fingerprint.data(),low.data(),64,MPI_UNSIGNED_CHAR,MPI_MIN,MPI_COMM_WORLD));
+    mpi::check(MPI_Allreduce(fingerprint.data(),high.data(),64,MPI_UNSIGNED_CHAR,MPI_MAX,MPI_COMM_WORLD));
+    mpi::prepare([&] {
+        if(low!=high)throw std::runtime_error(
+            "MPI executable, effective configuration, EOS or resolved backend differs between ranks");
+    });
+#else
+    (void)config;(void)species;(void)execution;(void)ranks;
+#endif
+}
+} // namespace
+
 // The Public Dispatch Function
 
 void DispatchSolver(ProblemGenerator &problem,
@@ -217,7 +255,20 @@ void DispatchSolver(ProblemGenerator &problem,
         MPI_Comm_size(MPI_COMM_WORLD, &rank_count);
     }
 #endif
-    const auto preflight = ResolveExecutionPreflight(effective, specs, startup_order, rank_count);
+    std::optional<ExecutionPreflight> prepared_execution;
+    const auto prepare_execution=[&] {
+        prepared_execution.emplace(ResolveExecutionPreflight(effective,specs,startup_order,rank_count));
+    };
+#if ARCH_MPI_ENABLED
+    if(rank_count>1) {
+        (void)arch::mpi::require_world();
+        arch::mpi::prepare(prepare_execution);
+    } else prepare_execution();
+#else
+    prepare_execution();
+#endif
+    const auto& preflight=*prepared_execution;
+    agree_mpi_run(effective,specs,preflight,rank_count);
     const arch::config::RuntimeConfiguration runtime(effective, prepared);
     const auto& config = runtime.config();
     std::filesystem::create_directories(io::output_directory(config.io.out_dir));
@@ -278,8 +329,12 @@ void DispatchSolver(ProblemGenerator &problem,
         // The same resolved identity owns fresh initialization and strict
         // restart; a legacy filename never acquires a new chart by itself.
         const auto expected_geometry = io::checkpoint_geometry_identity(config.grid.dim, config.grid.geometry);
-        read_chk(config.io.restart_file, amr_ctrl, run_state, config, specs,
-                 expected_provenance, expected_geometry);
+        if(rank_count>1)
+            read_distributed_chk(config.io.restart_file,amr_ctrl,run_state,config,specs,
+                expected_provenance,expected_geometry);
+        else
+            read_chk(config.io.restart_file,amr_ctrl,run_state,config,specs,
+                expected_provenance,expected_geometry);
         std::cout << ">>> Grid Config | Dim: " << config.grid.dim
                   << " | Geometry: " << config.grid.geometry << std::endl;
         print_amr_resolution_summary(config);
@@ -315,13 +370,13 @@ void DispatchSolver(ProblemGenerator &problem,
                   << "\nglobal_root_blocks=" << static_cast<std::int64_t>(config.grid.nblockx1)
                       * std::max(1, config.grid.nblockx2) * std::max(1, config.grid.nblockx3)
                   << "\nlocal_pool_capacity=" << max_blocks
-                  << "\noutput_scope=published-collection\nrestart_supported=false\n";
+                  << "\noutput_scope=published-collection\nrestart_supported=same-rank-collection\n";
         partition.close();
         if (!partition)
             throw std::runtime_error("cannot finish MPI partition metadata");
         std::cout << "[MPI] rank=" << rank << '/' << rank_count << " owned roots=["
                   << amr_ctrl.tree->RootBegin() << ',' << amr_ctrl.tree->RootEnd()
-                  << ") pool=" << max_blocks << "; complete plot/checkpoint collections; application restart gated" << std::endl;
+                  << ") pool=" << max_blocks << "; complete plot/checkpoint collections" << std::endl;
     }
     std::cout << "[Dispatch] Resolving Gravity Policy..." << std::endl;
     std::string grav_type = config.physics.gravity.type;

@@ -820,22 +820,30 @@ void test_mpi_backend_selection()
     requirements.mpi_ranks = 4;
     requirements.root_blocks_x1 = 7;
     requirements.uniform_multiblock = true;
-    // Even an available CUDA device must not select an unsupported MPI backend.
+    // Launch policy belongs to ExecutionPreflight. An admitted native MPI
+    // request must still obey the original device/build/binding contract.
     const auto support = query_support(supported_plan(), requirements, available());
-    expect(support.cpu_supported && !support.cuda_supported
-        && support.cuda_code == BackendCapabilityCode::MpiRequiresCpu,
-        "MPI capability is independent of device availability");
+    expect(support.cpu_supported && support.cuda_supported,
+        "native MPI Hydro uses the original CUDA capability checks");
     const auto automatic = resolve_backend(ComputeBackend::Auto, support,
         available(), StartupPhase::BeforeConstruction);
-    expect(automatic.resolved_backend == ComputeBackend::Cpu
-        && automatic.fallback_reason == "MPI multi-rank execution requires CPU",
-        "Auto explains the multi-rank CPU selection");
+    expect(automatic.resolved_backend == ComputeBackend::Cuda
+        && automatic.fallback_reason.empty(), "Auto can select a supported MPI device");
+    auto missing = available(); missing.state = RuntimeProbeState::BuildDisabled;
+    const auto disabled = query_support(supported_plan(), requirements, missing);
+    expect(disabled.cpu_supported && !disabled.cuda_supported
+        && disabled.cuda_code == BackendCapabilityCode::BuildDisabled,
+        "MPI does not bypass CUDA build requirements");
     bool rejected = false;
-    try {
-        (void)resolve_backend(ComputeBackend::Cuda, support, available(),
-                             StartupPhase::BeforeConstruction);
-    } catch (const std::runtime_error&) { rejected = true; }
-    expect(rejected, "explicit CUDA must reject multi-rank execution");
+    try { (void)resolve_backend(ComputeBackend::Cuda, disabled, missing,
+                               StartupPhase::BeforeConstruction); }
+    catch (const std::runtime_error&) { rejected = true; }
+    expect(rejected, "explicit CUDA still rejects an unavailable MPI device");
+    const auto fallback = resolve_backend(ComputeBackend::Auto, disabled, missing,
+        StartupPhase::BeforeConstruction);
+    expect(fallback.resolved_backend == ComputeBackend::Cpu
+        && !fallback.fallback_reason.empty(), "Auto explains native device unavailability");
+
 }
 
 void test_curvilinear_large_passive_capabilities()

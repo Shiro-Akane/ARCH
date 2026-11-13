@@ -72,7 +72,8 @@ static int run_arch(int argc, char **argv)
 #if ARCH_MPI_ENABLED
         if (mpi_size > 1) {
             const auto identity =
-                arch::core::string_sha256(problem_type + "\n" + arch::core::file_sha256(par_file));
+                arch::core::string_sha256(problem_type + "\n" + arch::core::file_sha256(par_file)
+                    + "\n" + arch::core::running_executable_sha256());
             std::array<char, 64> reference{};
             std::copy(identity.begin(), identity.end(), reference.begin());
             MPI_Bcast(reference.data(), 64, MPI_CHAR, 0, MPI_COMM_WORLD);
@@ -81,7 +82,7 @@ static int run_arch(int argc, char **argv)
             MPI_Allreduce(&mismatch, &any_mismatch, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
             if (any_mismatch)
                 throw std::invalid_argument(
-                    "MPI ranks received different problem or parameter contents");
+                    "MPI ranks received different executable, problem or parameter contents");
         }
 #endif
         SimConfig input = RuntimeParams::Load(par_file, problem_type);

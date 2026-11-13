@@ -26,9 +26,11 @@ def parameters(text, values):
     return text
 
 
-def run(executable, problem, par, log, ranks, mpiexec, threads=1):
+def run(executable, problem, par, log, ranks, mpiexec, threads=1, cpu_fallback=False):
     command = ([*mpiexec, "-n", str(ranks)] if ranks else []) + [str(executable), problem, str(par)]
     environment = dict(os.environ, OMP_NUM_THREADS=str(threads), OPENBLAS_NUM_THREADS="1")
+    if cpu_fallback:
+        environment["CUDA_VISIBLE_DEVICES"] = ""
     with log.open("w") as stream:
         result = subprocess.run(
             command,
@@ -40,6 +42,21 @@ def run(executable, problem, par, log, ranks, mpiexec, threads=1):
         )
     if result.returncode:
         raise RuntimeError(f"run failed ({result.returncode}): {log}")
+
+
+
+def verify_backend_identity(directory, backend, binary_sha256):
+    """Require formal native output to identify the backend and actual image."""
+    files = sorted(directory.glob("*_plt_*.collection/rank-*/state.h5"))
+    if not files:
+        files = sorted(directory.glob("*_plt_*.h5"))
+    assert files, "no published plot identity"
+    for path in files:
+        with h5py.File(path) as file:
+            identity = file["SourceIdentity"].attrs
+            assert identity["resolved_backend"] == backend, "unexpected resolved backend: " + str(path)
+            assert identity["binary_sha256"] == binary_sha256, "unexpected executable: " + str(path)
+    return len(files)
 
 
 def snapshots(directory):
@@ -261,9 +278,14 @@ def main():
             lane.mkdir()
             par = lane / "run.par"
             par.write_text(parameters(source, {"out_dir": lane / "output", "compute_backend": "auto"}))
-            run(args.candidate, problem, par, lane / "run.log", 2, mpi_command)
+            # Keep this original CPU bitwise trajectory; visible-device Auto
+            # selection is qualified by the separate production CUDA matrix.
+            run(args.candidate, problem, par, lane / "run.log", 2, mpi_command, cpu_fallback=True)
+            for rank in range(2):
+                plan = (lane / "output" / f"rank-{rank}" / "Sod_backend_plan.txt").read_text()
+                assert "resolved=cpu" in plan
             report["cases"].append({
-                "case": name, "ranks": 2, "requested_backend": "auto",
+                "case": name, "ranks": 2, "requested_backend": "auto", "cuda_visible": False,
                 **compare(reference, snapshots(lane / "output")),
             })
     # Seven roots with only eight total slots expose capacity over-allocation
@@ -306,8 +328,8 @@ def main():
     for name, changes in {
         "amr": {"lrefinemax": 1},
         "empty-rank": {"nblockx1": 1},
-        "checkpoint": {"chk_dstep": 1},
-        "cuda": {"compute_backend": "cuda"},
+        "checkpoint-shard": {"restart": "true", "restart_file": "rank-0/state.h5"},
+        "cuda-unavailable": {"compute_backend": "cuda", "cuda_device": 2147483647},
         "one-sided-periodic": {"x1l_boundary_type": "periodic"},
     }.items():
         lane = args.evidence / "rejected" / name

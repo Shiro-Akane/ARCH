@@ -1377,6 +1377,22 @@ void run_io(int n,bool periodic,bool faults) {
     // the unequal per-rank upload token high-watermarks.
     output.write_checkpoint(123.,false);
     for(int step=0;step<2;++step){const double dt=device.step();host->step(dt);macro_compare(actual,reference);}
+    // Save ownership after a real cross-rank move, not only root descendants.
+    std::array<int,3> moved_coordinates{-1,-1,-1};
+    if(rank==1)for(int id:actual.control.tree->GetActiveBlocks()) {
+        const auto& block=actual.control.pool->GetBlock(id);
+        if(block.level==2) {
+            moved_coordinates={int(block.logical_x1),int(block.logical_x2),int(block.logical_x3)};
+            break;
+        }
+    }
+    mpi::check(MPI_Bcast(moved_coordinates.data(),3,MPI_INT,1,MPI_COMM_WORLD));
+    require(moved_coordinates[0]>=0,"checkpoint fixture has no level-two source on rank one");
+    const amr::LogicalBlockKey moved{2,2,std::uint32_t(moved_coordinates[0]),
+        std::uint32_t(moved_coordinates[1]),std::uint32_t(moved_coordinates[2])};
+    const amr::LogicalBlockKey family{2,1,moved.logical_x1/2,moved.logical_x2/2,moved.logical_x3/2};
+    actual.runtime.migrate_leaf(ownership_endpoint(actual,1,moved),0);
+    macro_compare(actual,reference);
     // Distinct per-rank accounting values exercise original serialization.
     actual.controller.repairs.values[1]=.125+rank;
     const int index=actual.controller.chk_file_index;
@@ -1464,6 +1480,12 @@ void run_io(int n,bool periodic,bool faults) {
             require(std::abs(totals[f]-initial[f])<=2.e-11L+2.e-12L*std::abs(initial[f]),
                 "restart periodic conservation failed");
         if(step==1) {
+            require(actual.runtime.coalesce_siblings(family,1),
+                "checkpoint ownership family did not need colocation");
+            require(restored.runtime.coalesce_siblings(family,1),
+                "restored ownership family did not need colocation");
+            same_interiors(actual,restored);
+            macro_compare(actual,reference);macro_compare(restored,reference);
             actual.config.amr.refine_threshold=restored.config.amr.refine_threshold=reference.config.amr.refine_threshold=.9;
             actual.config.amr.derefine_threshold=restored.config.amr.derefine_threshold=reference.config.amr.derefine_threshold=.8;
             const auto time=actual.controller.t_current;
@@ -1474,7 +1496,7 @@ void run_io(int n,bool periodic,bool faults) {
         }
     }
     if(!rank)std::cout<<"io PASS ranks="<<ranks<<" method="<<int(macro_method)<<" species="<<n
-        <<" periodic="<<periodic<<" faults="<<faults<<" resumed_steps=3"<<std::endl;
+        <<" periodic="<<periodic<<" faults="<<faults<<" migrated_before_checkpoint=1 coalesced_after_restore=1 resumed_steps=3"<<std::endl;
 }
 
 }

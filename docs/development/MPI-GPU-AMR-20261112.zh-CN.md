@@ -1,5 +1,10 @@
 # GPU MPI 与 AMR 应用接入（2026-11-12）
 
+2026-11-13 应用候选进度见本文末尾 A3：CPU/CUDA 的正式 MPI 根网格启动、
+二维 level 0..2 AMR、集合输出与同 rank 数重启已接入原 Driver。历史各节的
+“尚未开放”描述对应当时提交；当前支持边界由末尾记录和 ExecutionPreflight
+共同说明。分支为 MPI/gpu-amr-integration，GPU 增量尚未合并 main。
+
 ## 起点与范围
 
 本阶段从已验收的 CPU Host MPI 提交 4aae33e4 开始，包含朋友 main 的
@@ -533,3 +538,91 @@ CPU 应用输出则使用真实已加载配置和正式身份，二者没有混�
 集合恢复和支持矩阵，并验证迁移后保存、恢复后同胞共址与重网格的组合。额外
 CUDA ON/MPI OFF 构建仍需完成。单张 H100 证据不扩展为多 GPU、多节点、长期
 物理演化或性能结论。
+
+## A3：正式应用入口与 GPU/CPU MPI-AMR 组合（2026-11-13）
+
+本增量将已经验收的原生 Runtime 路径接入正式应用。ExecutionPreflight 仍是
+查询与运行共同使用的准入位置：固定 Cartesian 1/2/3 维，动态 Cartesian
+二维 level 0..2、lrefinemin=0、非空 rank、内置 outflow/periodic/reflecting
+边界、无 burn/diffusion/gravity 和 Jeans 指标。重启必须指向已发布的
+.collection，采用相同 rank 数及共享输出文件系统。同胞共址限制保留；
+本增量没有新增自动负载均衡器，也未移除其他维度、层数和空分区的保护。
+
+原生后端选择不再被 MPI 强制改成 CPU。显式 CUDA 使用原设备可用性与绑定
+检查；Auto 使用原选择过程。程序在创建输出和网格前共同检查实际可执行文件、
+有效配置、EOS 及最终后端身份。各节点程序不同、某侧看不到 GPU、Auto 在
+不同 rank 选择不同后端，均共同结束。预览查询仍由单进程提出目标 rank 数。
+正式输出中的 SourceIdentity 用于逐片回读实际后端和可执行文件 SHA-256，
+不以命令行请求本身代替实际执行身份。
+
+应用 CPU AMR 首个宏步暴露了旧 FluxRegister 延迟分配顺序的问题：快照已经
+冻结后，积分器才准备 species arena。现在在原 HydroAttempt 快照及冻结之前
+调用同一个 EnsureSpecies；保留所有事务互斥和回滚检查。没有改时间积分、
+插值、限制、reflux、EOS 或其他数学/物理实现，没有另建 MPI 管理器。
+
+实际 IdealGas Sedov 二维应用的 CPU、CUDA 各 54 组完成：
+Euler/RK2/RK3 × PCM/MUSCL/PPM × 三类边界 × 2/4 rank，每组 24 步。
+每组包含七个原生 checkpoint 对照和一次中途恢复继续演化；共 756 次
+checkpoint 对照、108 次逐位一致的原生继续演化。另有 CPU、CUDA 各一个
+4-rank RK3/MUSCL 周期案例执行 512 步；采样叶数从 38 到 50 再到 62，
+覆盖实际重网格、输出和恢复。两类后端均继续满足原字段及周期守恒门槛。
+这两个有界 512 步案例不代表长期物理应用或扩展性能验收。
+
+固定版本复验使用服务器上冻结且读回核验 SHA-256 的实际程序。首轮 GPU
+矩阵曾在第 28 组因并行构建覆盖串行参考程序而中断，前 27 组结果单独保留；
+最终两套 54 组矩阵全部使用冻结版本重新执行，不将中断样本算作完整通过。
+最初使用二维 Sod 的夹具违反原 Sod 一维定义，改用原 Sedov；没有修改模型。
+
+原生 checkpoint 组合现在在保存前实际迁移一个二级叶子，恢复后执行同胞
+共址、粗化、重网格并继续宏步。首个宏步前的 checkpoint 检查保留。
+恢复失败测试还会重新计算文件和拓扑校验和，再制造缺叶、越界、祖先重叠、
+重复 owner 和 rank 数不符，要求由各自原完整性检查拒绝且不发布科学输出。
+原字段门槛为 2e-13 × max(1, |a|, |b|)，周期守恒为
+2e-11 绝对加 2e-12 相对，同后端恢复继续演化要求原生字段逐位一致。
+
+CUDA capability 单元曾在 main 之前崩溃：它的 RPATH 加入了编译器 sysroot
+libc 和 CUDA driver stub。现仅将实际 CUDA::cudart 所在目录加入该测试的
+RPATH；原对象独立重链接诊断及 Release/Debug 正式测试均不再需要预加载。
+CUDA ON/MPI OFF 构建另遇到 GCC 13 默认 libstdc++ 不提供 HDF5 所需的
+CXXABI 符号，服务器构建显式选择已有且确实提供该符号的兼容运行库。
+没有忽略未定义符号，没有改浮点选项，构建内存保护没有触发。
+
+上一输出阶段 464c927b 的双方 CI 已全部成功：
+[朋友仓库](https://github.com/Shiro-Akane/ARCH/actions/runs/43367675297)、
+[自有仓库](https://github.com/Arsenic-er/ARCH/actions/runs/43367678595)。
+该阶段最初遗漏了 output_collection 的 CTest 选择，已补齐并重跑两个
+MPI 开关的覆盖完整性检查。A3 提交需要另行触发并核对对应 CI。
+
+### A3 本机服务器验收结果
+
+本轮 80 项 CTest 全部通过且无跳过：CUDA MPI ON Release/Debug 各 18 项，
+CPU MPI ON Release/Debug 各 11 项、MPI OFF 各 8 项，独立 CUDA MPI OFF
+6 项。两种 CUDA MPI 构建各完成 540 次迁移/恢复字段对照和 32 次共同拒绝；
+每个 rank 数的 18 个布局都包含保存前迁移和恢复后同胞共址的见证。
+
+四种应用构建的 20 项预检 API 测试通过。CPU 固定网格保留 21 项逐位对照和
+7 项拒绝，多维补充 28 项逐位对照和 3 项拒绝。GPU 固定网格覆盖一至三维：
+32 个执行结果满足原 CPU 对照门槛，其中 MPI ON 的 1/2/4-rank 结果与
+独立 CUDA MPI OFF 程序完成 24 项逐位对照；另有 3 项准入拒绝。
+Debug 正式 AMR 应用的保存、恢复和继续演化也通过。启动身份 3 项拒绝、
+重新计算校验和后的重启拓扑 5 项拒绝及 629 项 tooling 均通过，无跳过。
+
+CPU/GPU 的 54 组矩阵与两个 512 步案例，共 4,230 个已发布分片被独立回读，
+后端和实际程序 SHA-256 均匹配。嵌入程序的源码清单也逐项回读：所有生产
+源代码均匹配当前工作树；冻结的 CUDA MPI ON 主程序唯一清单差异，是之后
+修正的独立 capability 测试 RPATH 所在 CMake 文件，该单元已单独重建验证。
+详细身份、比较摘要、原失败、最终日志和命令见
+[结构化摘要](../../validation/backend/results/mpi-gpu-application-20261113/summary.json)。
+
+证据位于 /home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113。
+原生字段及应用输出保存在服务器，归档逐成员 SHA-256 回读后，再实际恢复
+最大成员验证；没有用 Git 推送代替这些未跟踪材料的保全。最终发布提交、
+两边远端引用及对应 CI 的结果由该目录 publication.json 单独记录。
+
+当前是 IdealGas Hydro 的有界端到端应用验收。更广 AMR 的后续工作仍包括
+通用族坐标与层级、三维粗细边/角交换、局部容量与同胞安置，以及空 rank
+生命周期；其他 EOS 和物理源项也需各自验收。先复用原串行数值配方进行原生
+对照，再调整具体准入条件，不直接删除保护。若确需改变数学实现，先列出
+具体改动及依据供审核。设备实测仍仅为同一张 H100-20C 上的多个进程，不代表
+多 GPU、多节点、device-aware MPI、断电持久性、sanitizer 或性能扩展结果。
+本分支暂不合并 main，后续增量继续复用同一分支。

@@ -471,6 +471,9 @@ arch_add_completion_barrier(
     arch_solver_dispatch_complete arch_solver_dispatch)
 add_dependencies(ARCH arch_driver_runtime_complete arch_solver_dispatch_complete)
 if(BUILD_TESTING)
+    # This host probe dynamically loads the selected CUDA runtime. Compiler
+    # implicit link paths also contain driver stubs and a host sysroot; putting
+    # those in RPATH can load a foreign libc before the test reaches main.
     set_property(TARGET arch_runtime_probe_capabilities APPEND PROPERTY
-        BUILD_RPATH "${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}")
+        BUILD_RPATH "$<TARGET_FILE_DIR:CUDA::cudart>")
 endif()

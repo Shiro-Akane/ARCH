@@ -179,6 +179,10 @@ void DriverRuntime::begin_distributed_hydro_attempt(const Numerics::IHydroSolver
                 if(slot->boundary_flux_capture)
                     throw std::logic_error("Distributed macro cannot borrow mutable boundary capture");
         if(compute_backend)amr_ctrl.flux_register.RequireOwnershipTransferBoundary();
+        // The first Host macro has not entered the integrator's lazy species
+        // preparation yet. Establish its existing arena before freezing the
+        // rollback snapshot; a stage must never resize frozen storage.
+        amr_ctrl.flux_register.EnsureSpecies(specs.count());
         hydro_attempt_=std::make_unique<HydroAttempt>(*this);
         prepared_here=true;
         hydro_attempt_->freeze();

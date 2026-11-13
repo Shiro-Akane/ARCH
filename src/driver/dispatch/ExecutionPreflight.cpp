@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <filesystem>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -18,7 +19,7 @@
 
 namespace arch::dispatch {
 namespace {
-// This is the single fixed-grid MPI policy boundary for both queries and Run.
+// This is the single MPI policy boundary for both queries and Run.
 // It owns no communicator, mesh or allocator; storage stays with AmrTree/MemoryPool.
 void validate_mpi_launch(const SimConfig& config, int ranks)
 {
@@ -30,15 +31,21 @@ void validate_mpi_launch(const SimConfig& config, int ranks)
 #endif
     if (config.grid.dim < 1 || config.grid.dim > 3 || config.grid.geometry != "cartesian")
         throw std::invalid_argument("MPI requires Cartesian 1-D/2-D/3-D geometry");
-    if (config.amr.lrefinemin != 0 || config.amr.lrefinemax != 0)
-        throw std::invalid_argument("MPI requires a fixed grid (lrefinemin=lrefinemax=0)");
+    if(config.amr.lrefinemin!=0 || config.amr.lrefinemax<0 || config.amr.lrefinemax>2
+        || (config.amr.lrefinemax>0 && config.grid.dim!=2))
+        throw std::invalid_argument("MPI AMR requires Cartesian 2-D with level 0..2 and lrefinemin=0");
+    if(config.amr.refine_on_jeans)
+        throw std::invalid_argument("MPI Jeans refinement is unsupported");
     if (config.grid.nblockx1 < ranks)
         throw std::invalid_argument("MPI requires one or more X slabs per rank");
     if (config.physics.burn.use_burn || config.physics.diffusion.use_diffusion ||
         config.physics.gravity.type != "none")
         throw std::invalid_argument("MPI sources (burn, diffusion, gravity) are unsupported");
-    if (config.io.restart || config.io.chk_dt > 0 || config.io.chk_dstep > 0)
-        throw std::invalid_argument("MPI checkpoint/restart is unsupported");
+    if(config.io.restart && std::filesystem::path(config.io.restart_file).extension()!=".collection")
+        throw std::invalid_argument("MPI restart requires a published .collection directory");
+    if(config.io.base_name.empty() || config.io.base_name=="." || config.io.base_name==".."
+        || std::filesystem::path(config.io.base_name).filename().string()!=config.io.base_name)
+        throw std::invalid_argument("MPI output base_name must be one filename component");
     const auto supported_face = [](const std::string& face) {
         return face == "periodic" || face == "outflow" || face == "reflecting";
     };
@@ -118,7 +125,7 @@ ExecutionPreflight ResolveExecutionPreflight(
     startup_order.record(StartupEvent::RequirementsBuilt);
 
     const RuntimeProbeResult probe = probe_runtime_native({
-        mpi_ranks > 1 ? ComputeBackend::Cpu : requested_backend.value,
+        requested_backend.value,
         static_cast<bool>(ARCH_CUDA_BUILD_ENABLED),
         effective.execution.cuda_device,
         cuda_candidate.value.linear_solver == LinearSolverId::CuDss

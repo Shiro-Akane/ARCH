@@ -52,7 +52,6 @@ enum class BackendCapabilityCode : std::uint16_t
     UnsupportedStateLayout,
     UnsupportedBoundaryFeature,
     CuDssRuntimeUnavailable,
-    MpiRequiresCpu,
 };
 
 struct CapabilityResult
@@ -232,7 +231,6 @@ constexpr StateLayoutRequirement known_state_layout =
 constexpr std::string_view capability_name(BackendCapabilityCode code) noexcept
 {
     switch (code) {
-    case BackendCapabilityCode::MpiRequiresCpu: return "MPI multi-rank execution requires CPU";
     case BackendCapabilityCode::Supported: return "supported";
     case BackendCapabilityCode::InvalidPlan: return "invalid plan";
     case BackendCapabilityCode::BuildDisabled: return "CUDA build disabled";
@@ -318,8 +316,9 @@ inline CapabilityResult query_support(
         result.cuda_code = code;
         return result;
     };
-    if (requirements.mpi_ranks > 1)
-        return reject_cuda(BackendCapabilityCode::MpiRequiresCpu);
+    // MPI launch geometry, AMR bounds, sources and rank capacity are checked
+    // once by ExecutionPreflight for both query and Run. Within that admitted
+    // native Hydro scope, use the same device and binding checks as serial.
     if (cuda_plan.linear_solver == LinearSolverId::SparseKlu)
         return reject_cuda(BackendCapabilityCode::SparseKluRequiresCpu);
     if (probe.state == RuntimeProbeState::BuildDisabled)
