@@ -257,6 +257,8 @@ arch_configure_cuda_backend_object(arch_cuda_backend_amr_indicators
     src/cuda/amr/RefinementIndicators.cu)
 arch_configure_cuda_backend_object(arch_cuda_backend_amr_migration
     src/cuda/amr/RegridMigration.cu)
+arch_configure_cuda_backend_object(arch_cuda_backend_macro_validation
+    src/cuda/runtime/control/CudaBackendMacroStep.cu)
 arch_configure_cuda_backend_object(arch_cuda_backend_grid_metrics
     src/cuda/common/GridMetricsCache.cu)
 # Retain the documented device-owner order within the bounded compile pool.
@@ -334,6 +336,8 @@ arch_configure_cuda_host_object(arch_cuda_backend_hydro_control
     src/cuda/runtime/hydro/CudaBackendHydroControl.cpp -g1)
 arch_configure_cuda_host_object(arch_cuda_backend_microphysics_control
     src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp -g1)
+arch_configure_cuda_host_object(arch_cuda_backend_macro
+    src/cuda/runtime/control/CudaBackendMacroStep.cpp -g1)
 arch_configure_cuda_host_object(arch_cuda_backend_store
     src/cuda/runtime/control/CudaBackendStore.cpp -g1)
 arch_configure_cuda_host_object(arch_cuda_backend_indicators
@@ -355,6 +359,7 @@ arch_order_cuda_targets(
     arch_cuda_backend_factory
     arch_cuda_backend_hydro_control
     arch_cuda_backend_microphysics_control
+    arch_cuda_backend_macro
     arch_cuda_backend_store)
 
 # Finish host control before the bounded device-template pool. Broad outer
@@ -384,6 +389,8 @@ add_library(arch_cuda_backend STATIC
     $<TARGET_OBJECTS:arch_cuda_backend_hydro_control>
     $<TARGET_OBJECTS:arch_cuda_backend_microphysics_control>
     $<TARGET_OBJECTS:arch_cuda_backend_store>
+    $<TARGET_OBJECTS:arch_cuda_backend_macro>
+    $<TARGET_OBJECTS:arch_cuda_backend_macro_validation>
     $<TARGET_OBJECTS:arch_cuda_backend_burn_ideal>
     $<TARGET_OBJECTS:arch_cuda_backend_burn_helm>
     $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular3d>

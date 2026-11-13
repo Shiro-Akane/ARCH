@@ -270,6 +270,67 @@ G2-1 基线 a786735b 的双方 CI 已核对全部成功：
 之后依次验证 Device 迁移、重网格、容量和输出/重启。当前没有完整 GPU MPI-AMR、
 多 GPU、多节点、长程守恒或性能扩展结论。
 
+## G2-2b：原 Runtime 宏步与 Device 失败恢复（2026-11-13）
+
+原 Runtime 的 HydroAttempt 现在同时保护 Host 与 Device 路径。CPU 保留原字段、
+slot permutation、ledger、FluxRegister、边界上下文和控制器快照；CUDA 后端用原
+DeviceStateStorage 和同一有序流保存三个槽。所有分配完成后才复制并发布快照。
+失败时先排空流，恢复原物理分配与槽位，再恢复 Runtime 元数据；成功时释放快照。
+没有独立的 MPI 时间推进器、内存池或 ownership 管理器。
+
+DriverStages 继续调用原 Euler/RK2/RK3 scheduler。每个真实阶段执行 GPU 求解后，
+按原 descriptor 权重把紧凑面通量交给原 MPI FluxRegister；旋转后的粗网格 Current
+接受原 CUDA reflux。所有本地失败先共同结束，再进入下一次通信。最终 EOS 验证
+在 Device 单元上调用原 state::validate_eos，只读回每块状态码，未改任何物理公式
+或容差。三个槽的备份是设备内复制，不用于 Host 计算替代。
+
+各 rank 的初始化上传次数不同；宏步开始及失败恢复时取已发出 scheduler 标识的
+全局高水位，避免重用或把本地上传次数误当物理时间。实际 dt、时间、step、epoch、
+species 和 Host/Device 身份仍必须一致。物理时间只在原控制器接受步骤后推进。
+宏步内禁止重建 backend 绑定、替换 flux plan、改变拓扑、暴露未接受 Host 字段。
+
+新增 mpi_cuda_macro_2 使用原五叶二维 Cartesian 拓扑、HLLC/PCM/IdealGas，
+两个 rank 分别持有一个 coarse leaf 和四个 fine leaf。三种积分器 ×
+species 1/4/37 × outflow/periodic 共 18 个布局，每个布局接受 16 个连续时间步，
+穿插 15 种失败后在同一个 Runtime 重试，不重置字段。Current 逐字段对照原串行
+CPU 积分器；周期守恒沿用 CPU 的 2e-11 绝对加 2e-12 相对门槛。
+Host/Device 算术对照仍为原有 2e-13 尺度门槛。
+
+失败覆盖真实 stage 写入后、reflux/rotation 后、无效密度与组分、通量凭据丢失、
+提前改变物理时间、不同 dt、非法 solver、重复事务、强制 materialization、
+重网格、重新绑定和设备 store/flux plan 替换。恢复验证三个 Device 槽的逻辑字段、
+完整 Host 镜像逐位不变，另检查 ledger、通量凭据、边界上下文、repair、
+控制器及存储 generation。每种构建的预期计数为 306 次字段对照和 270 次共同拒绝。
+
+旧 mixed-level 测试的“所有分布式 flux 准备必须拒绝”属于已过时结构约束，
+现替换为 stale topology identity 拒绝，保留未准备 register 的拒绝与全部字段检查。
+CPU 原来的失败原因断言仅同步去掉 Host 专属措辞，22 类宏步失败和动态迁移/
+重网格组合检查均保留。原数学库、物理目录、CUDA hydro/AMR 数值主体未修改。
+
+故障测试开发时，Euler 最后阶段不执行输出 ghost 回调，原注入点未触发。
+改用原 scheduler 已有的阶段完成回调，确认实际 kernel 执行后再注入失败。
+所有原失败日志保留；未删失败项或放宽门槛。工具测试使用既有完整服务器环境，
+系统 Python 缺依赖和 conda Python 缺 pidfd 的环境失败也单独保留。
+
+Release/Debug 的 GPU MPI 与原 CUDA AMR exchange/regrid 共 14 项 CTest 通过；
+CPU Release/Debug × MPI ON/OFF 的 residency、scheduler、flux/reflux 和完整宏步/
+迁移/重网格组合共 22 项通过；629 项 tooling 通过，全部无跳过。
+两种 GPU 构建均完成 306 次字段对照和 270 次共同拒绝。最终 JUnit 保存全部
+18 个布局的输出，不沿用早期成功日志的截断摘要。
+
+验收记录见 [结构化摘要](../../validation/backend/results/mpi-gpu-macro-20261113/summary.json)；
+原始构建、失败、最终 JUnit 和哈希保存在
+/home/ubuntu/projects/ARCH-mpi-evidence-gpu-macro-20261113。
+基线 48958aa3 的双方 CI 已成功：
+[朋友仓库](https://github.com/Shiro-Akane/ARCH/actions/runs/43333249921)、
+[自有仓库](https://github.com/Arsenic-er/ARCH/actions/runs/43333298110)。
+新提交必须另行核对，不能继承基线结论。
+
+此阶段开放的是原 Runtime 的 native 宏步路径，应用 ExecutionPreflight 仍关闭。
+单张 H100 上两个 rank 的结果不代表多 GPU、多节点或长期扩展结论。下一步在
+原 StoreTransaction 内拆分退休事件准备与不可抛异常的发布，让所有 rank
+共同确认后再改变 ownership；随后验证迁移、重网格、接收容量、分布式输出和重启。
+
 ## 服务器资源与恢复
 
 代码、构建、测试和证据位于 gpu-273312；Windows 仅发送控制命令。

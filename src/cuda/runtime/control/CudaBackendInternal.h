@@ -273,6 +273,24 @@ std::unique_ptr<CudaAmrFluxPlanRuntime> make_cuda_amr_flux_plan_runtime(
 std::array<CudaAmrFluxDirectionRouteView, 3> make_cuda_amr_route_views(
     const CudaAmrFluxPlanRuntime* plan, amr::BlockHandle source);
 
+/** Private field backup for the original Runtime macro transaction.
+ * Physical allocations stay in the active store. Copies cover all three
+ * logical slots, including ghosts/padding, before the first stage can rotate.
+ */
+struct CudaHydroAttempt {
+    struct Block {
+        backend::BackendStateAccess access;
+        CudaBlockRuntime* owner = nullptr;
+        std::array<DeviceStateView,3> original_slots;
+        std::array<DeviceStateStorage,3> saved;
+    };
+    std::vector<std::unique_ptr<Block>> blocks;
+    CudaAmrFluxPlanRuntime* flux = nullptr;
+    state::RepairBudget stage_repairs, reflux_repairs;
+    explicit CudaHydroAttempt(int species)
+        : stage_repairs(species), reflux_repairs(species) {}
+};
+
 struct CudaBackend::Impl {
     struct RetiredCudaResources {
         DeviceRetirementFence fence{};
@@ -371,6 +389,7 @@ struct CudaBackend::Impl {
     std::map<DeviceArenaSlot, std::unique_ptr<CudaBlockRuntime>>
         active_resources;
     std::unique_ptr<CudaAmrFluxPlanRuntime> active_amr_flux;
+    std::unique_ptr<CudaHydroAttempt> hydro_attempt;
     std::list<RetiredCudaResources> retired_resources;
 
     static std::vector<DeviceStoreEntry> make_initial_entries(

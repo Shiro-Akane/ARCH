@@ -121,6 +121,8 @@ CudaBackend::StoreTransaction CudaBackend::begin_store_transaction(
     amr::AmrPlanScope scope,
     std::span<const CudaBlockBinding> bindings)
 {
+    if (impl_->hydro_attempt)
+        throw std::logic_error("CUDA Hydro attempt excludes topology mutation");
     if (bindings.empty())
         throw std::invalid_argument("CUDA staged block set is empty");
 
@@ -421,6 +423,9 @@ void CudaBackend::prepare_amr_flux_plan(
     const amr::AmrFluxTopologyPlan& topology,
     const amr::RefluxPlan& reflux)
 {
+    if (impl_->hydro_attempt)
+        throw std::logic_error("CUDA Hydro attempt excludes flux-plan replacement");
+
     if (impl_->active_amr_flux
         && impl_->active_amr_flux->epoch == topology.epoch
         && impl_->active_amr_flux->topology_fingerprint

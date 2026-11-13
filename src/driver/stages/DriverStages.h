@@ -540,18 +540,35 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
     if (compute_backend) {
         runtime.ensure_fluid_ghosts(StateSlot::Current);
         auto& currents = workspace.hydro_currents;
-        currents.clear();
-        currents.reserve(stage_handles.size());
-        for (std::size_t index = 0; index < stage_handles.size(); ++index)
-            currents.push_back(runtime.backend_access(index, StateSlot::Current));
+        scheduler::complete_hydro_local_phase(stage_context,[&] {
+            currents.clear();
+            currents.reserve(stage_handles.size());
+            for (std::size_t index = 0; index < stage_handles.size(); ++index)
+                currents.push_back(runtime.backend_access(index, StateSlot::Current));
+        });
         const auto before = compute_backend->counters();
         const auto executor = [&] (
             const arch::scheduler::StageDescriptor& descriptor,
             arch::state::CompletionToken token) {
-            if (descriptor.stage == 1)
-                (void)compute_backend->clear_amr_flux_register(token);
-            return compute_backend->execute_hydro_stage_batch(
-                currents, descriptor, dt, token);
+            std::vector<std::vector<double>> values;
+            state::CompletionToken completed{};
+            scheduler::complete_hydro_local_phase(stage_context,[&] {
+                if (descriptor.stage == 1) {
+                    if(runtime.distributed_hydro_topology())amr_ctrl.flux_register.Clear();
+                    (void)compute_backend->clear_amr_flux_register(token);
+                }
+                completed=compute_backend->execute_hydro_stage_batch(
+                    currents, descriptor, dt, token);
+                if(runtime.distributed_hydro_topology())
+                    values=compute_backend->download_amr_flux_stage(
+                        amr_ctrl.RequireFluxTopologyPlan(runtime.species().count()),completed);
+            });
+            if(runtime.distributed_hydro_topology())
+                amr_ctrl.flux_register.ApplyDistributedRegistrationStage(
+                    *amr_ctrl.pool,*amr_ctrl.tree,stage_handles,
+                    amr_ctrl.RequireFluxTopologyPlan(runtime.species().count()),
+                    values,descriptor.stage-1,descriptor.flux_register_weight);
+            return completed;
         };
         const auto boundary = [&] (
             StateSlot slot, arch::state::StateVersion version,
@@ -565,11 +582,21 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
                     runtime.backend_access(index, StateSlot::Current), value);
             }
         };
-        const auto reflux = [&] (const arch::scheduler::HydroPlan&,
+        const auto reflux = [&] (const arch::scheduler::HydroPlan& plan,
                                 StateSlot slot,
                                 arch::state::CompletionToken token) {
-            return compute_backend->execute_amr_reflux(
-                slot, dt, token);
+            if(!runtime.distributed_hydro_topology())
+                return compute_backend->execute_amr_reflux(slot,dt,token);
+            state::CompletionToken completed{};
+            amr_ctrl.flux_register.ExecuteDistributedReflux(
+                amr_ctrl.pool,*amr_ctrl.tree,stage_handles,dt,&amr::Block::fluid_state,
+                plan.stages.size(),[&](const amr::RefluxPlan&) {
+                    compute_backend->upload_amr_flux_register(
+                        amr_ctrl.RequireFluxTopologyPlan(runtime.species().count()),
+                        amr_ctrl.flux_register,plan.stages.size());
+                    completed=compute_backend->execute_amr_reflux(slot,dt,token);
+                });
+            return completed;
         };
         switch (resolved_plan->time_integrator) {
         case arch::dispatch::TimeIntegratorId::Euler:

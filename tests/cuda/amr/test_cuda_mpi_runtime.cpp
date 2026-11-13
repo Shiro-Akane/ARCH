@@ -8,8 +8,12 @@
 #include "amr/AMRControl.h"
 #include "cuda/runtime/CudaBackend.h"
 #include "driver/runtime/DriverRuntime.h"
+#include "numerics/integrator/TimeIntegratorEuler.h"
+#include "numerics/integrator/TimeIntegratorRK2.h"
+#include "numerics/integrator/TimeIntegratorRK3.h"
 #include "driver/schedule/DriverControl.h"
 #include "physics/boundary/PhysicalBoundaryHandler.h"
+#include "driver/stages/DriverMacroStep.h"
 #include "physics/eos/IdealGas.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
 
@@ -35,7 +39,8 @@ using Side = state::ExecutionSide;
 constexpr std::array slots{Slot::Current, Slot::Next, Slot::Scratch};
 constexpr std::array members{&amr::Block::fluid_state, &amr::Block::state_next, &amr::Block::state_scratch};
 int rank = 0, checks = 0, rejections = 0;
-bool mixed = false, flux_mode = false;
+bool mixed = false, flux_mode = false, macro_mode = false;
+dispatch::TimeIntegratorId macro_method=dispatch::TimeIntegratorId::Euler;
 std::uint64_t boundary_h2d = 0, boundary_d2h = 0, observed_device_used = 0;
 void require(bool ok, const char* message) { if (!ok) throw std::runtime_error(message); }
 bool same(double a, double b) { return std::bit_cast<std::uint64_t>(a) == std::bit_cast<std::uint64_t>(b); }
@@ -58,13 +63,14 @@ SimConfig config_for(int dim, bool periodic) {
     c.grid.x1l_boundary_type=c.grid.x1r_boundary_type=bc;
     c.grid.x2l_boundary_type=c.grid.x2r_boundary_type=bc;
     c.grid.x3l_boundary_type=c.grid.x3r_boundary_type=bc;
+    c.io.tmax=1.;c.numerics.dt_min=1.e-20;c.numerics.dt_max=0.;c.numerics.tstep_change_factor=2.;
     c.physics.burn.use_burn=false;c.physics.diffusion.use_diffusion=false;
     return c;
 }
 cuda::CudaLaunchConfig launch(const SimConfig& c) {
     using namespace dispatch;
-    return cuda::make_cuda_launch_config({FluxId::Hllc,flux_mode?ReconstructionId::Pcm:ReconstructionId::Ppm,LimiterId::MinMod,
-        TimeIntegratorId::Euler,EosId::Ideal,NetworkId::None,OdeSolverId::None,
+    return cuda::make_cuda_launch_config({FluxId::Hllc,(flux_mode||macro_mode)?ReconstructionId::Pcm:ReconstructionId::Ppm,LimiterId::MinMod,
+        macro_method,EosId::Ideal,NetworkId::None,OdeSolverId::None,
         LinearSolverId::None,DiffusionIntegratorId::None},c);
 }
 void seed(amr::Block& b,int slot,int round);
@@ -293,8 +299,13 @@ void run(int dim,int species,bool periodic) {
     Run actual(dim,species,periodic,true);
     Reference oracle(dim,species,periodic);
     if(mixed) {
-        // Boundary readiness must not imply that remote reflux is supported.
-        rejected([&]{actual.runtime.prepare_device_flux_plans();});
+        // A valid native plan is now supported; stale identity is still rejected.
+        rejected([&] {
+            auto stale=actual.control.RequireFluxTopologyPlan(species);
+            ++stale.epoch.value;
+            actual.runtime.backend()->prepare_amr_flux_plan(stale,
+                actual.control.RequireRefluxTopologyPlan(species));
+        });
         rejected([&]{actual.runtime.backend()->clear_amr_flux_register(
             {1000,state::CompletionState::Complete});});
     }
@@ -651,6 +662,221 @@ void run_flux(int n, bool periodic) {
     require(control.pool->GetNumActiveBlocks()==(rank?4:1),"flux transport allocated remote fluid blocks");
 }
 
+
+// Full macro witness: the production Runtime/scheduler owns every GPU stage,
+// while the reference calls the original serial CPU integrator independently.
+struct HostMacro {
+    Reference& reference;
+    Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> solver;
+    state::StateResidencyLedger ledger;
+    scheduler::MonotonicSchedulerClock clock{2,1};
+    scheduler::StageExecutionContext context{Side::Host,ledger,clock};
+    explicit HostMacro(Reference& r):reference(r),solver(r.eos),ledger(r.handles.front().epoch) {
+        for(auto h:r.handles)ledger.register_block(h,{1},{1,state::CompletionState::Complete});
+        context.configure_boundary_context=[&](double time,boundary::BoundaryPurpose purpose) {
+            reference.bc.configure_stage(time,purpose);
+        };
+    }
+    void ghosts() {
+        reference.bc.configure_stage(context.step_start_time,boundary::BoundaryPurpose::Hydro);
+        const auto version=ledger.inspect({reference.handles.front(),Slot::Current}).interior.version;
+        scheduler::detail::execute_completed_boundary(context,reference.handles,Slot::Current,version,
+            [&](Slot,state::StateVersion,state::CompletionToken token) {
+                reference.ensure_fluid_ghosts(Slot::Current);return token;
+            });
+    }
+    void step(double dt) {
+        scheduler::ScopedStageBinding binding(context,reference.handles);
+        context.step_dt=dt;ghosts();
+        if(macro_method==dispatch::TimeIntegratorId::Euler)
+            SolverEuler::solve(reference.control,dt,reference.bc,nullptr,&solver,reference.config.numerics);
+        else if(macro_method==dispatch::TimeIntegratorId::Rk2)
+            SolverRK2::solve(reference.control,dt,reference.bc,nullptr,&solver,reference.config.numerics);
+        else SolverRK3::solve(reference.control,dt,reference.bc,nullptr,&solver,reference.config.numerics);
+        context.step_start_time+=dt;ghosts();
+    }
+};
+struct DeviceMacro {
+    Run& run;
+    driver::DriverStageWorkspace workspace;
+    Numerics::HydroSolverImpl<IdealGas,FluxHLLC<PCMReconstruction>> solver;
+    double burn_advice=123.;
+    explicit DeviceMacro(Run& r):run(r),solver(r.eos) {}
+    double step(int fault=0) {
+        auto& runtime=run.runtime;
+        dispatch::ResolvedExecutionPlan plan;
+        plan.time_integrator=macro_method;
+        const double cap=rank==1&&fault==10?2.e-6:1.e-6;
+        const auto dt=driver::execute_driver_macro_attempts(runtime,run.controller,burn_advice,cap,
+            &solver,run.eos,[&](double actual_dt,std::uint64_t attempt) {
+                require(attempt==1,"Device macro changed retry policy");
+                auto context=runtime.stage_context();
+                const auto kernels=runtime.backend()->counters().kernel_count;
+                scheduler::complete_hydro_local_phase(context,[&] {
+                    context.step_start_time=run.controller.t_current;context.step_dt=actual_dt;
+                    context.configure_boundary_context=[&](double time,boundary::BoundaryPurpose purpose) {
+                        run.bc.configure_stage(time,purpose);
+                    };
+                    if(fault==14)context.hydro_flux_capture_accept=[&](const scheduler::StageDescriptor&) {
+                        require(runtime.backend()->counters().kernel_count>kernels,"fault did not follow GPU writes");
+                        if(rank==1)throw std::runtime_error("injected rejection after GPU stage writes");
+                    };
+                    run.bc.configure_stage(run.controller.t_current,boundary::BoundaryPurpose::Hydro);
+                });
+                scheduler::ScopedStageBinding binding(context,runtime.handles());
+                driver::execute_driver_macro_step(runtime,context,&solver,false,
+                    [](driver::BurnHalf,double,state::CompletionToken token){return token;},
+                    [](double){throw std::runtime_error("unexpected diffusion");},
+                    [&](double value) {
+                        driver::advance_hydro(runtime,workspace,context,rank==1&&fault==9?nullptr:&plan,
+                            value,nullptr,nullptr,&solver);
+                    },[](driver::CpuStage,auto&& work){work();});
+                if(fault==12)runtime.begin_distributed_hydro_attempt(&solver,run.controller);
+                if(rank!=1)return;
+                if(fault==1) {
+                    run.controller.repairs.values[0]=7.;
+                    throw std::runtime_error("injected rejection after reflux and rotation");
+                }
+                if(fault==2||fault==3) {
+                    const auto& b=run.control.pool->GetBlock(run.control.tree->GetActiveBlocks().front());
+                    auto damaged=b.fluid_state;
+                    const auto access=runtime.backend_access(0,Slot::Current);
+                    runtime.backend()->enqueue_materialize_host_current(access,Region::Interior,view(damaged));
+                    runtime.backend()->quiesce();
+                    const int cell=b.grid.GetIndex(b.grid.Is()+1,b.grid.Js()+1,b.grid.Ks());
+                    if(fault==2)damaged.rho[cell]=-1.;else damaged.X(0,cell)=-.5;
+                    runtime.backend()->enqueue_upload_slot(access,Region::Interior,view(damaged));
+                    runtime.backend()->quiesce();
+                }
+                if(fault==4)run.control.flux_register.Clear();
+                if(fault==5){run.controller.t_current+=actual_dt;++run.controller.step_count;}
+                if(fault==6)runtime.materialize_current_for_host();
+                if(fault==7)(void)runtime.perform_regrid(run.controller.step_count,run.controller.t_current);
+                if(fault==8) {
+                    (void)context.clock.next_publication();
+                    throw std::runtime_error("injected rejection after issued identity");
+                }
+                if(fault==13)(void)runtime.prepare_backend_bindings();
+                if(fault==15)(void)static_cast<cuda::CudaBackend*>(runtime.backend())->begin_store_transaction({},{});
+                // Local backend replacement rejects before its original plan can retire.
+                if(fault==11)runtime.backend()->prepare_amr_flux_plan(
+                    run.control.RequireFluxTopologyPlan(run.species.count()),
+                    run.control.RequireRefluxTopologyPlan(run.species.count()));
+            });
+        run.controller.advance(dt);return dt;
+    }
+};
+std::vector<long double> macro_compare(Run& actual,Reference& reference) {
+    std::vector<long double> local(5+actual.species.count()),total(local.size());
+    for(std::size_t index=0;index<actual.runtime.handles().size();++index) {
+        const auto& b=actual.control.pool->GetBlock(actual.control.tree->GetActiveBlocks()[index]);
+        auto values=b.fluid_state;
+        const auto access=actual.runtime.backend_access(index,Slot::Current);
+        actual.runtime.backend()->enqueue_materialize_host_current(access,Region::Interior,view(values));
+        actual.runtime.backend()->enqueue_materialize_host_current(access,Region::Ghost,view(values));
+        actual.runtime.backend()->quiesce();
+        const auto id=reference.control.tree->FindBlock(b.level,b.logical_x1,b.logical_x2,b.logical_x3);
+        auto& expected=reference.control.pool->GetBlock(id).fluid_state;
+        const auto got=fields(values),want=fields(expected);
+        for(int k=0;k<b.grid.GetTotalZ();++k)for(int j=0;j<b.grid.GetTotalY();++j)
+            for(int i=0;i<b.grid.GetTotalX();++i) {
+                const int cell=b.grid.GetIndex(i,j,k);
+                for(std::size_t field=0;field<6;++field)
+                    require(field_equal((*got[field])[cell],(*want[field])[cell],true),
+                        "macro Current differs from original serial CPU");
+                for(int n=0;n<actual.species.count();++n)
+                    require(field_equal(values.X(n,cell),expected.X(n,cell),true),"macro species differs from CPU");
+                if(i>=b.grid.Is()&&i<b.grid.Ie()&&j>=b.grid.Js()&&j<b.grid.Je()&&k>=b.grid.Ks()&&k<b.grid.Ke()) {
+                    const long double volume=GridMetrics::CellVolume(b.grid,i,j,k);
+                    for(int field=0;field<5;++field)local[field]+=volume*(*got[field])[cell];
+                    for(int n=0;n<actual.species.count();++n)local[5+n]+=volume*values.rho[cell]*values.X(n,cell);
+                }
+            }
+    }
+    MPI_Allreduce(local.data(),total.data(),total.size(),MPI_LONG_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+    ++checks;return total;
+}
+void run_macro(int n,bool periodic) {
+    Run actual(2,n,periodic,true);Reference reference(2,n,periodic);
+    actual.reset(0);reference.reset(0);actual.refresh();reference.ensure_fluid_ghosts(Slot::Current);
+    actual.runtime.prepare_device_flux_plans();
+    DeviceMacro device(actual);HostMacro host(reference);
+    const auto initial=macro_compare(actual,reference);
+    const auto accepted_step=[&] {
+        const double dt=device.step();host.step(dt);
+        const auto totals=macro_compare(actual,reference);
+        if(periodic)for(std::size_t field=0;field<totals.size();++field)
+            require(std::abs(totals[field]-initial[field])<=2.e-11L+2.e-12L*std::abs(initial[field]),
+                "GPU macro periodic conservation failed");
+    };
+    accepted_step();
+    for(int fault:{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}) {
+        auto context=actual.runtime.stage_context();
+        const auto ledger=context.ledger.snapshot_metadata(Side::Device);
+        const auto flux=actual.control.flux_register.snapshot_host();
+        const auto bc=actual.bc.snapshot_stage_context();
+        const auto old_controller=actual.controller;
+        const auto old_advice=device.burn_advice;
+        const auto old_handles=actual.runtime.handles();
+        std::vector<backend::BackendStateAccess> accesses;
+        for(std::size_t i=0;i<old_handles.size();++i)accesses.push_back(actual.runtime.backend_access(i,Slot::Current));
+        const auto old_token=context.clock.last_token(),old_version=context.clock.last_version();
+        std::array<std::vector<double>,6> before;
+        for(int slot=0;slot<3;++slot)for(int region=0;region<2;++region)
+            before[2*slot+region]=snapshot(actual,slots[slot],region?Region::Ghost:Region::Interior);
+        std::vector<std::array<FluidState,3>> mirrors;
+        for(int id:actual.control.tree->GetActiveBlocks()) {
+            auto& b=actual.control.pool->GetBlock(id);
+            mirrors.push_back({b.fluid_state,b.state_next,b.state_scratch});
+        }
+        if(!rank)std::cout<<"macro fault method="<<static_cast<int>(macro_method)<<" case="<<fault<<std::endl;
+        bool expected_rejection=true;
+        rejected([&] {
+            try {device.step(fault);}
+            catch(const std::exception& error) {
+                std::cout<<"macro rejected rank="<<rank<<" case="<<fault<<" reason="<<error.what()<<std::endl;
+                if(rank==1) {
+                    constexpr std::array<const char*,16> reasons{"","after reflux and rotation","final EOS rejected",
+                        "final EOS rejected","Current/reflux incomplete","changed physical time",
+                        "Cannot expose","Cannot regrid","after issued identity","requires its selected plan",
+                        "interval/identity mismatch","excludes flux-plan replacement","attempt already active",
+                        "Cannot prepare backend bindings","after GPU stage writes","excludes topology mutation"};
+                    expected_rejection=std::string(error.what()).find(reasons[fault])!=std::string::npos;
+                }
+                throw;
+            }
+        });
+        require(expected_rejection,"GPU macro rejected for the wrong reason");
+        for(int slot=0;slot<3;++slot)for(int region=0;region<2;++region)
+            unchanged(snapshot(actual,slots[slot],region?Region::Ghost:Region::Interior),before[2*slot+region]);
+        for(std::size_t b=0;b<mirrors.size();++b)for(int slot=0;slot<3;++slot) {
+            auto live=fields(actual.control.pool->GetBlock(actual.control.tree->GetActiveBlocks()[b]).*members[slot]);
+            auto saved=fields(mirrors[b][slot]);
+            for(int field=0;field<7;++field)unchanged(*live[field],*saved[field]);
+        }
+        require(context.ledger.metadata_snapshot_matches(ledger),"Device macro rollback changed ledger");
+        require(actual.control.flux_register.host_snapshot_matches(flux),"Device macro rollback changed flux receipt");
+        require(actual.bc.stage_context_matches(bc),"Device macro rollback changed boundary context");
+        require(actual.runtime.handles()==old_handles,"Device macro rollback changed topology");
+        for(std::size_t i=0;i<accesses.size();++i) {
+            const auto live=actual.runtime.backend_access(i,Slot::Current);
+            require(live.block==accesses[i].block&&live.storage==accesses[i].storage
+                &&actual.runtime.backend()->contains(accesses[i]),"Device macro rollback changed storage lease");
+        }
+        require(same(actual.controller.t_current,old_controller.t_current)
+            &&same(actual.controller.dt_old,old_controller.dt_old)
+            &&actual.controller.step_count==old_controller.step_count
+            &&same(device.burn_advice,old_advice),"Device macro rollback changed clock/advice");
+        unchanged(actual.controller.repairs.values,old_controller.repairs.values);
+        require(context.clock.last_token()>=old_token&&context.clock.last_version()>=old_version,
+            "Device macro reused scheduler identity");
+        require(!actual.runtime.backend()->hydro_attempt_layout_matches(),"Device macro retained recovery storage");
+        accepted_step(); // Same Runtime, original CPU oracle, no reseeding or reset.
+    }
+    if(!rank)std::cout<<"macro PASS method="<<static_cast<int>(macro_method)
+        <<" species="<<n<<" periodic="<<periodic<<" accepted_steps=16 rollback_cases=15"<<std::endl;
+}
+
 }
 int main(int argc,char** argv) {
     int provided=0;MPI_Init_thread(&argc,&argv,MPI_THREAD_FUNNELED,&provided);
@@ -661,18 +887,25 @@ int main(int argc,char** argv) {
         int ready=0;MPI_Allreduce(&local,&ready,1,MPI_INT,MPI_MIN,MPI_COMM_WORLD);
         if(!ready){if(!rank)std::cout<<"SKIP no CUDA device\n";MPI_Finalize();return 77;}
         flux_mode=argc==2&&std::string(argv[1])=="--flux";
-        mixed=flux_mode||(argc==2&&std::string(argv[1])=="--mixed");
-        if(flux_mode)for(int species:{1,4,37})for(bool periodic:{false,true})run_flux(species,periodic);
+        macro_mode=argc==2&&std::string(argv[1])=="--macro";
+        mixed=macro_mode||flux_mode||(argc==2&&std::string(argv[1])=="--mixed");
+        if(macro_mode)for(auto method:{dispatch::TimeIntegratorId::Euler,dispatch::TimeIntegratorId::Rk2,
+                dispatch::TimeIntegratorId::Rk3}) {
+            macro_method=method;
+            for(int species:{1,4,37})for(bool periodic:{false,true})run_macro(species,periodic);
+        }
+        else if(flux_mode)for(int species:{1,4,37})for(bool periodic:{false,true})run_flux(species,periodic);
         else if(mixed)for(int species:{1,4,37})for(bool periodic:{false,true})run(2,species,periodic);
         else for(int dim:{1,2,3})for(int species:{1,4,37})for(bool periodic:{false,true})run(dim,species,periodic);
         std::array<std::uint64_t,3> traffic{boundary_h2d,boundary_d2h,observed_device_used};
         std::array<std::uint64_t,6> all{};
         MPI_Gather(traffic.data(),3,MPI_UINT64_T,all.data(),3,MPI_UINT64_T,0,MPI_COMM_WORLD);
-        if(!rank&&!flux_mode)for(int r=0;r<2;++r)std::cout<<"boundary traffic rank="<<r
+        if(!rank&&!flux_mode&&!macro_mode)for(int r=0;r<2;++r)std::cout<<"boundary traffic rank="<<r
             <<" h2d_including_metadata="<<all[3*r]<<" d2h="<<all[3*r+1]
             <<" observed_device_used_including_test_and_contexts="<<all[3*r+2]<<std::endl;
         if(!rank) {
-            if(flux_mode)std::cout<<"PASS CUDA MPI flux layouts=6 weighted_stages=24 flux_reflux_checks="<<checks;
+            if(macro_mode)std::cout<<"PASS CUDA MPI macro layouts=18 comparisons="<<checks;
+            else if(flux_mode)std::cout<<"PASS CUDA MPI flux layouts=6 weighted_stages=24 flux_reflux_checks="<<checks;
             else std::cout<<"PASS CUDA MPI Runtime mixed="<<mixed<<" layouts="<<(mixed?6:18)
                 <<" full_state_checks="<<checks;
             std::cout<<" collective_rejections="<<rejections<<std::endl;

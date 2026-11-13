@@ -1,0 +1,332 @@
+{
+  "stage": "G2-2b",
+  "status": "native Runtime macrostep and rollback accepted; application remains gated",
+  "base_commit": "48958aa3ea23595607260e06ef3c87013c6eb554",
+  "branch": "MPI/gpu-amr-integration",
+  "scope": {
+    "rank_count": 2,
+    "gpu": "one visible H100-20C shared by both ranks",
+    "dimension": 2,
+    "geometry": "Cartesian",
+    "leaves": 5,
+    "rank_leaf_counts": [
+      1,
+      4
+    ],
+    "species": [
+      1,
+      4,
+      37
+    ],
+    "boundaries": [
+      "outflow",
+      "periodic"
+    ],
+    "flux": "HLLC",
+    "reconstruction": "PCM",
+    "eos": "IdealGas",
+    "integrators": [
+      "Euler",
+      "RK2",
+      "RK3"
+    ],
+    "arithmetic_gate": "2e-13 * max(1, abs(a), abs(b))",
+    "periodic_conservation_gate": "2e-11 absolute + 2e-12 relative"
+  },
+  "implementation": [
+    "Original Runtime HydroAttempt protects Host mirrors, ledger, flux register, boundary context and controller.",
+    "Existing CUDA DeviceStateStorage backs up all three slots on the original stream; restore physical buffers before metadata.",
+    "Original StageScheduler descriptors and weighted FluxRegister own all stages; original CUDA reflux applies accepted coarse-owner surfaces.",
+    "Device endpoint validation calls unchanged state::validate_eos and returns per-block status only.",
+    "Scheduler identity high-watermarks align at entry/recovery; physical time and acceptance thresholds are unchanged.",
+    "Topology and backend-binding changes are forbidden during an active attempt."
+  ],
+  "validation": {
+    "cuda": 14,
+    "cpu": 22,
+    "tooling": 629,
+    "failed": 0,
+    "skipped": 0,
+    "results": {
+      "cuda-release-final": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [
+          "mpi_cuda_runtime_2",
+          "mpi_cuda_mixed_2",
+          "mpi_cuda_flux_2",
+          "mpi_cuda_macro_2",
+          "mpi_cuda_staging_2",
+          "cuda_regrid_transaction",
+          "cuda_amr_exchange"
+        ],
+        "junit_sha256": "056628d7ec69318c039fde025257ddeb464af401d94b16ea88a1289645c0693b",
+        "macro": {
+          "layouts": 18,
+          "accepted_steps_per_layout": 16,
+          "rollback_cases_per_layout": 15,
+          "field_comparisons": 306,
+          "collective_rejections": 270,
+          "seconds": 168.257
+        }
+      },
+      "cuda-debug-final": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [
+          "mpi_cuda_runtime_2",
+          "mpi_cuda_mixed_2",
+          "mpi_cuda_flux_2",
+          "mpi_cuda_macro_2",
+          "mpi_cuda_staging_2",
+          "cuda_regrid_transaction",
+          "cuda_amr_exchange"
+        ],
+        "junit_sha256": "ee25abfcb22d0ee84654e977ba40ba8958b59ddd01c84ec8042ea8f0755cd50c",
+        "macro": {
+          "layouts": 18,
+          "accepted_steps_per_layout": 16,
+          "rollback_cases_per_layout": 15,
+          "field_comparisons": 306,
+          "collective_rejections": 270,
+          "seconds": 129.726
+        }
+      },
+      "build-gpu-release-final-test": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [
+          "state_residency",
+          "shared_stage_scheduler",
+          "flux_reflux_exchange",
+          "mpi_flux_reflux_exchange_2",
+          "distributed_hydro_stage",
+          "mpi_distributed_hydro_stage_2_omp1",
+          "mpi_distributed_hydro_stage_2_omp2"
+        ],
+        "junit_sha256": "59470b17d060ee1f091d3609f213c8463e40547ff4f8cd2785bd6b013bc26f53"
+      },
+      "build-gpu-debug-final-test": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [
+          "state_residency",
+          "shared_stage_scheduler",
+          "flux_reflux_exchange",
+          "mpi_flux_reflux_exchange_2",
+          "distributed_hydro_stage",
+          "mpi_distributed_hydro_stage_2_omp1",
+          "mpi_distributed_hydro_stage_2_omp2"
+        ],
+        "junit_sha256": "9b8b6e9bc6da31b4046265bab94773218d688cdaae5544d4fbe8cd9ac45acc6d"
+      },
+      "build-gpu-release-serial-final-test": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [
+          "state_residency",
+          "shared_stage_scheduler",
+          "flux_reflux_exchange",
+          "distributed_hydro_stage"
+        ],
+        "junit_sha256": "b72d6e20c400a3ff885d7b1f530485407a2280ddcce6dd86476786db4df4f479"
+      },
+      "build-gpu-debug-serial-final-test": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [
+          "state_residency",
+          "shared_stage_scheduler",
+          "flux_reflux_exchange",
+          "distributed_hydro_stage"
+        ],
+        "junit_sha256": "0334e295e313d5c3f9aae7d1b49e9e745b874184488b9a6a931ce189aa5bb091"
+      }
+    }
+  },
+  "source_sha256": {
+    "cmake/cuda/CudaBackend.cmake": "be25f6477b2c8e1499635f7d0bc1c1e3a93e36fd156cd5e3358778578cc753da",
+    "cmake/tests/CudaTests.cmake": "bfbe301ffec0f8a08bf749e1df81e0c9e71ebf031f24c9df4dc3c8d98dc9785e",
+    "src/cuda/runtime/CudaBackend.h": "2f8c3690346b965f3f252ed9de1b09eabaeb8471712aaa8914b408827a25e4e2",
+    "src/cuda/runtime/control/CudaBackendInternal.h": "97e3df8339399bea4707f3dc08afcc267e2b7f674bfae60917408bf500a99bb9",
+    "src/cuda/runtime/control/CudaBackendStore.cpp": "a6bdcca384a801747c494e8189c66397d138847302b87051e19b939930b020fa",
+    "src/driver/runtime/ComputeBackend.h": "7e4b20e0e2cbd22fe88213600ad5a3a3c021c1eccd1c01ce312275a92c51a33a",
+    "src/driver/runtime/DriverBoundary.cpp": "6b46886edbe8847f163135f1f61f3dfee822eb39e61749d075c8db9b5d3bca21",
+    "src/driver/runtime/DriverRegrid.cpp": "7b2c6ccc08de14e55cdbf769de7f97b3200b63e8dcf4f23db660091a64d7296c",
+    "src/driver/runtime/DriverRuntime.cpp": "104a4e4b3ffdd894bd41613b037effcdf48abe0c4873a5b2f443a719bae43017",
+    "src/driver/runtime/DriverRuntime.h": "a6aa1e19e94fc327e763f44f99f0e018f1b4dc0519db8aaff224d41c07fa8a61",
+    "src/driver/stages/DriverMacroStep.h": "842bcc6a7d36ab037a4f333020d43904a0fcc5ff1d1c212cb11b90cd57283e4d",
+    "src/driver/stages/DriverStages.h": "8f697fcbe028762e51b2abafdb0329bcc18f2bec66c5fb7c07f7e8a8d69a44c7",
+    "tests/cuda/README.md": "87691a66fc184fd7b8d71a8b306abeae9bb35323f200cddb6137da0bcfdfcc35",
+    "tests/cuda/amr/test_cuda_mpi_runtime.cpp": "d22ee45768dfdd2d213bb860a16f1a07960bcad3c5c7e75bff33e2de723c26b2",
+    "tests/host/amr/test_distributed_hydro_stage.cpp": "aa5b6da8d3415b9c5d5e46bcea418a1ae4c4fb4d27eb7df97fb99e260a6386aa",
+    "tools/audit_architecture.py": "875a7a616c9f049c6482bd318142b65ec02d079257c4cd74317474a91e951c22",
+    "src/cuda/runtime/control/CudaBackendMacroStep.cpp": "277be4ba13776d38ffe35466e44703db5728a1fcc94d7484e9139937a9ab85f0",
+    "src/cuda/runtime/control/CudaBackendMacroStep.cu": "da45ca75f72e62f0c65acd71e4f8bcec307db3d13a510c36378302b36a6bebb9",
+    "src/cuda/runtime/control/CudaBackendMacroStep.h": "5df30ea0927aff18c36d063f1a4c6c81bcb3dab3cb5290f71685cd14237b0f27"
+  },
+  "binary_sha256": {
+    "build-mpi-cuda-release/arch_cuda_mpi_runtime": {
+      "sha256": "533e0781fd755e8e6512a15e6f8c408cfc7bf85a0064adf4991a9b854e185ec5",
+      "bytes": 199805208
+    },
+    "build-mpi-cuda-release/arch_cuda_mpi_staging": {
+      "sha256": "0bdef685763525a6015849b5b45b7ddce7946b7612c569a201d535e6245baa1e",
+      "bytes": 92864
+    },
+    "build-mpi-cuda-release/arch_cuda_amr_exchange": {
+      "sha256": "e2b37f0485ce87de51238b944d8b341500b43e64f2f94726270ac8d9f59b4a37",
+      "bytes": 198745728
+    },
+    "build-mpi-cuda-release/arch_cuda_regrid_transaction": {
+      "sha256": "2ac97f46c6adb18727fc6cc0f69dbf312500472bc958af7d6625c6e01e906c89",
+      "bytes": 199340888
+    },
+    "build-mpi-cuda-debug/arch_cuda_mpi_runtime": {
+      "sha256": "66a019e696ffe833b3f7be2d01f15c5032a757df70b2f2e10741d368407cc356",
+      "bytes": 236239064
+    },
+    "build-mpi-cuda-debug/arch_cuda_mpi_staging": {
+      "sha256": "e8641b82c4305fefa0954885f295984cb4f27cacec879c4fdbbd234c33d6f969",
+      "bytes": 872960
+    },
+    "build-mpi-cuda-debug/arch_cuda_amr_exchange": {
+      "sha256": "2ed16a4d3ca86e543a5d87b20b6090e217300c0b11917c5c13fedec439130769",
+      "bytes": 219191608
+    },
+    "build-mpi-cuda-debug/arch_cuda_regrid_transaction": {
+      "sha256": "4245831c77bb89502d6e7c7f33685eb109124b0c0ab0bf078037337ebd79f176",
+      "bytes": 232156584
+    },
+    "build-gpu-release/arch_distributed_hydro_stage": {
+      "sha256": "95bc770070d5eeaaa27e7b3251c9705f7127dc54050f9e2d5282f0eea61d9263",
+      "bytes": 1547824
+    },
+    "build-gpu-release/arch_state_residency": {
+      "sha256": "acaba0c1c3b10460443b9aa4638e9a0b88ce7cbca3488c2d4973deb3670181b9",
+      "bytes": 110760
+    },
+    "build-gpu-release/arch_shared_stage_scheduler": {
+      "sha256": "ae4bf46bdd3ba18491ef71d530565a840f9c02fd12a161571bb7bfeb6981e3d6",
+      "bytes": 599080
+    },
+    "build-gpu-release/arch_flux_reflux_exchange": {
+      "sha256": "f89d4d77a68facff99f34468bee8d3589b4c98cfb7c7354ef673ed67200a3bfe",
+      "bytes": 567416
+    },
+    "build-gpu-debug/arch_distributed_hydro_stage": {
+      "sha256": "0931db88a56f076c6e4bf4647b12dbcaf7e3d1dfc795646c105b209b1ac2bdcb",
+      "bytes": 22104360
+    },
+    "build-gpu-debug/arch_state_residency": {
+      "sha256": "889fac9144963a63aa6227e4ec25e86c0bc2d6445316ff77b5ee9d22ca97bf2f",
+      "bytes": 472200
+    },
+    "build-gpu-debug/arch_shared_stage_scheduler": {
+      "sha256": "a37c344cd7ae07e3bca55f8e3268e2678de3d9a8dd00a2d43ccebc4f12d8ed1c",
+      "bytes": 6043112
+    },
+    "build-gpu-debug/arch_flux_reflux_exchange": {
+      "sha256": "399fb05948b8434935ecf5de6f6c9e15f41506637583bec77c8f3c15a7c9dde1",
+      "bytes": 6931280
+    },
+    "build-gpu-release-serial/arch_distributed_hydro_stage": {
+      "sha256": "0ece2830221afecb8b86a60451eaa9da76b420ff73979423e08ff23843b5622e",
+      "bytes": 1141064
+    },
+    "build-gpu-release-serial/arch_state_residency": {
+      "sha256": "9777083f64193bcd29393d3dc4c265c15411d6615e56cf15060d2eb9f1d8b2f4",
+      "bytes": 110760
+    },
+    "build-gpu-release-serial/arch_shared_stage_scheduler": {
+      "sha256": "43840c861199729e2ac068190c433ed72c40152d0ba87a03ed8b5f702efb01aa",
+      "bytes": 599080
+    },
+    "build-gpu-release-serial/arch_flux_reflux_exchange": {
+      "sha256": "d9beed22e1089a3809255c6fd100d217698ea48bcaec526409200977da1610c6",
+      "bytes": 467160
+    },
+    "build-gpu-debug-serial/arch_distributed_hydro_stage": {
+      "sha256": "d9fe910afeacf9575e9641b8928b460e966db633328d3fc8bae0ba84ebba48ed",
+      "bytes": 19041760
+    },
+    "build-gpu-debug-serial/arch_state_residency": {
+      "sha256": "356d123f643beeccb53874bee2e4dd25d5b7fa4b9809f7b72482afeff24154f4",
+      "bytes": 472208
+    },
+    "build-gpu-debug-serial/arch_shared_stage_scheduler": {
+      "sha256": "a3e375766a1e293f58a8741989b51c1e2ce1c8d62052c7de0310c5ceb835d56e",
+      "bytes": 6043112
+    },
+    "build-gpu-debug-serial/arch_flux_reflux_exchange": {
+      "sha256": "de3389f7c56f86208f7095c9dd9f4ec3382f7fa11b347417d1a4da1bf53c0493",
+      "bytes": 6345472
+    }
+  },
+  "math_and_application_gate_identity": {
+    "src/numerics": {
+      "tracked_files": 73,
+      "unchanged_from_base": true
+    },
+    "src/physics": {
+      "tracked_files": 106,
+      "unchanged_from_base": true
+    },
+    "src/cuda/hydro": {
+      "tracked_files": 14,
+      "unchanged_from_base": true
+    },
+    "src/cuda/amr": {
+      "tracked_files": 8,
+      "unchanged_from_base": true
+    },
+    "src/driver/dispatch/ExecutionPreflight.cpp": {
+      "tracked_files": 1,
+      "unchanged_from_base": true
+    },
+    "src/driver/dispatch/ExecutionPreflight.h": {
+      "tracked_files": 1,
+      "unchanged_from_base": true
+    }
+  },
+  "retained_failures": [
+    "Wrong initial build target; corrected to existing arch_cuda_mpi_runtime.",
+    "New launcher incomplete EOS definitions and incorrect test transfer method/callback signature; corrected compilation.",
+    "System Python missing validation dependencies; conda Python lacked pidfd. Final tooling uses existing server tooling environment.",
+    "New CUDA source owners absent from architecture allowlist; exact source/owner declarations added without relaxing audit.",
+    "CPU rejection string retained Host-only wording; assertion updated while keeping all 22 failure categories.",
+    "Euler has no final output-ghost callback, so the original injected fault was not reached; moved injection to existing completed-stage callback.",
+    "Initial successful CTest output was truncated; final JUnit retains all layout markers with explicit 2 MiB output limit."
+  ],
+  "base_commit_hosted_ci": {
+    "Shiro-Akane/ARCH": {
+      "headSha": "48958aa3ea23595607260e06ef3c87013c6eb554",
+      "conclusion": "success",
+      "url": "https://github.com/Shiro-Akane/ARCH/actions/runs/43333249921"
+    },
+    "Arsenic-er/ARCH": {
+      "headSha": "48958aa3ea23595607260e06ef3c87013c6eb554",
+      "conclusion": "success",
+      "url": "https://github.com/Arsenic-er/ARCH/actions/runs/43333298110"
+    }
+  },
+  "this_commit_hosted_ci": "Dispatch after publication; exact head IDs and results in server publication.json",
+  "limits": [
+    "Native fixed five-leaf topology; no GPU ownership migration or dynamic regrid acceptance yet.",
+    "Single-node, shared-GPU result; no multi-GPU, multi-node, scaling or long-time conclusion.",
+    "No compute-sanitizer result; existing toolchain does not include that executable.",
+    "Full application MPI-AMR, distributed output/restart and source coupling remain gated."
+  ],
+  "next": [
+    "A1: split fallible store-publication preparation from noexcept commit, then ownership and regrid failure/retry.",
+    "A2: qualify startup, capacity and AMR application scheduling.",
+    "A3: shard completeness/publication and restart before opening supported application configurations."
+  ],
+  "server_evidence": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-macro-20261113"
+}

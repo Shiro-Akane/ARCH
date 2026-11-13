@@ -160,7 +160,7 @@ void DriverRuntime::migrate_host_leaves(std::span<const amr::AmrEndpoint> source
     state::StateVersion accepted{};
     prepare([&] {
         if (size<2 || rank!=amr_ctrl.tree->PartitionRank()
-            || size!=amr_ctrl.tree->PartitionSize() || compute_backend || host_hydro_attempt_
+            || size!=amr_ctrl.tree->PartitionSize() || compute_backend || hydro_attempt_
             || config.grid.geometry!="cartesian" || config.physics.burn.use_burn
             || config.physics.diffusion.use_diffusion || config.physics.gravity.type!="none"
             || bc_handler.has_user() || !distributed_hydro_topology())
@@ -559,7 +559,7 @@ bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_r
     std::vector<std::uint64_t> controls;
     prepare([&] {
         if(size<2 || rank!=amr_ctrl.tree->PartitionRank() || size!=amr_ctrl.tree->PartitionSize()
-            || compute_backend || host_hydro_attempt_ || config.grid.geometry!="cartesian"
+            || compute_backend || hydro_attempt_ || config.grid.geometry!="cartesian"
             || config.grid.dim!=2 || config.amr.lrefinemin!=0
             || config.amr.lrefinemax<1 || config.amr.lrefinemax>2
             || config.physics.burn.use_burn || config.physics.diffusion.use_diffusion
@@ -1173,7 +1173,7 @@ bool DriverRuntime::perform_regrid(int step, double time, bool jeans_repair_only
 bool DriverRuntime::perform_regrid_impl(int step,double time,bool jeans_repair_only,
     const std::function<void(RegridPhase)>& observer)
 {
-    if(host_hydro_attempt_)throw std::logic_error("Cannot regrid during Host Hydro attempt");
+    if(hydro_attempt_)throw std::logic_error("Cannot regrid during Hydro attempt");
     const auto started = std::chrono::steady_clock::now();
     const auto before = compute_backend ? compute_backend->counters()
         : arch::backend::BackendCounters{};

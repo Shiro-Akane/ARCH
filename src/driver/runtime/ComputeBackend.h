@@ -587,6 +587,19 @@ public:
     {
         throw std::logic_error("backend staged device ghosts are unavailable");
     }
+    /** Runtime owns one macro attempt; the backend protects its resident fields.
+     * Preparation is synchronous and may allocate. Restore and release drain
+     * before retiring the backup; neither changes topology or scheduler time.
+     */
+    virtual void begin_hydro_attempt(std::span<const BackendStateAccess>) {
+        throw std::logic_error("backend Hydro recovery is unavailable");
+    }
+    virtual bool hydro_attempt_layout_matches() const noexcept { return false; }
+    virtual void restore_hydro_attempt_noexcept() noexcept { std::terminate(); }
+    virtual void release_hydro_attempt_noexcept() noexcept {}
+    virtual void validate_hydro_current(std::span<const BackendStateAccess>) {
+        throw std::logic_error("backend Hydro endpoint validation is unavailable");
+    }
     /** Prepare all throwing AMR flux allocations for the active topology. */
     virtual void prepare_amr_flux_plan(
         const amr::AmrFluxTopologyPlan&, const amr::RefluxPlan&)

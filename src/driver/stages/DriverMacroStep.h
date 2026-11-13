@@ -11,7 +11,7 @@
  *    callables and CPU measurement intervals; no time tableau is introduced.
  * 4. Complete real Current ghosts/EOS at Hydro(t_n+dt), check exact ledger and
  *    BC identity, then publish both boundary budgets and repair/source receipts.
- * 5. On distributed Host rejection the original Runtime/boundary owners restore the failed
+ * 5. On distributed rejection the original Runtime/boundary owners restore the failed
  *    attempt; no completed I/O is reused by a later attempt.
  */
 #pragma once
@@ -76,6 +76,14 @@ double execute_driver_macro_attempts(DriverRuntime& runtime,SimulationController
         });
         runtime.ensure_fluid_ghosts();
         scheduler::complete_hydro_local_phase(context,[&] {
+            if(runtime.backend()) {
+                std::vector<backend::BackendStateAccess> current;
+                current.reserve(runtime.handles().size());
+                for(std::size_t i=0;i<runtime.handles().size();++i)
+                    current.push_back(runtime.backend_access(i,state::StateSlot::Current));
+                runtime.backend()->validate_hydro_current(current);
+                return;
+            }
             const auto& limits=runtime.configuration().numerics;
             std::vector<double> fractions(runtime.species().count());
             for (int id:runtime.control().tree->GetActiveBlocks()) {
@@ -100,7 +108,7 @@ double execute_driver_macro_attempts(DriverRuntime& runtime,SimulationController
         runtime.discard_distributed_hydro_attempt();
         burn_advice=saved_burn_advice;
         // No next attempt/output may observe a peer that has not restored yet.
-        runtime.complete_distributed_hydro_recovery();
+        runtime.synchronize_distributed_hydro_clock();
         throw;
     }
 }

@@ -60,6 +60,8 @@ _CUDA_DEVICE_OBJECT_SOURCES = {
         "src/cuda/amr/refinementindicators.cu",
     "arch_cuda_backend_amr_migration":
         "src/cuda/amr/regridmigration.cu",
+    "arch_cuda_backend_macro_validation":
+        "src/cuda/runtime/control/cudabackendmacrostep.cu",
     "arch_cuda_backend_grid_metrics":
         "src/cuda/common/gridmetricscache.cu",
 }
@@ -101,6 +103,8 @@ _CUDA_HOST_OBJECT_SPECS = {
         "src/cuda/runtime/hydro/cudabackendhydrocontrol.cpp", "-g1"),
     "arch_cuda_backend_microphysics_control": (
         "src/cuda/runtime/control/cudabackendmicrophysicscontrol.cpp", "-g1"),
+    "arch_cuda_backend_macro": (
+        "src/cuda/runtime/control/cudabackendmacrostep.cpp", "-g1"),
     "arch_cuda_backend_store": (
         "src/cuda/runtime/control/cudabackendstore.cpp", "-g1"),
     "arch_cuda_backend_indicators": (

@@ -1604,7 +1604,7 @@ void runtime_macro_cases() {
                     "injected final macro rejection","final EOS rejected","Current/reflux incomplete",
                     "final EOS rejected","interval/identity mismatch","dt too small",
                     "changed physical time","Cannot regrid","Cannot expose","final EOS rejected",
-                    "injected macro preparation failure","requires static Cartesian",
+                    "injected macro preparation failure","requires Cartesian",
                     "std::bad_alloc","std::bad_alloc","std::bad_alloc","consuming a scheduler identity",
                     "requires its selected plan","std::bad_alloc","acceptance already has another owner",
                     "controller owner mismatch"};

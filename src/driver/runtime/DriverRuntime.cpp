@@ -30,11 +30,11 @@
 #include "numerics/integrator/IHydroSolver.h"
 
 namespace arch::driver {
-/** Private backup owned by the existing Runtime, valid only for fixed Host storage.
+/** Private backup owned by the existing Runtime, protecting fixed host and resident device storage.
  * Restore original slot allocations before payload/ledger, after all workers join.
  * Issued scheduler identities remain monotonic; they are never recycled on rejection.
  */
-struct DriverRuntime::HostHydroAttempt {
+struct DriverRuntime::HydroAttempt {
     using Field=std::vector<double> FluidState::*;
     static constexpr std::array<Field,7> fields{&FluidState::rho,&FluidState::mom_u,
         &FluidState::mom_v,&FluidState::mom_w,&FluidState::eng,&FluidState::enuc_rate,
@@ -97,10 +97,11 @@ struct DriverRuntime::HostHydroAttempt {
     BCHandler::StageContextSnapshot boundary;
     state::StateVersion entry_version;
     std::vector<BlockBackup> blocks;
-    bool flux_frozen=false,ledger_frozen=false;
-    explicit HostHydroAttempt(DriverRuntime& runtime)
+    bool flux_frozen=false,ledger_frozen=false,device_frozen=false;
+    explicit HydroAttempt(DriverRuntime& runtime)
         :owner(runtime),flux(runtime.amr_ctrl.flux_register.snapshot_host()),
-         ledger(runtime.residency_ledger->snapshot_metadata(state::ExecutionSide::Host)),
+         ledger(runtime.residency_ledger->snapshot_metadata(runtime.compute_backend
+              ?state::ExecutionSide::Device:state::ExecutionSide::Host)),
          controller(runtime.ctrl),boundary(runtime.bc_handler.snapshot_stage_context()),
          entry_version(runtime.current_interior_version()) {
         const auto& ids=runtime.amr_ctrl.tree->GetActiveBlocks();
@@ -108,16 +109,26 @@ struct DriverRuntime::HostHydroAttempt {
         for(int id:ids)blocks.emplace_back(runtime.amr_ctrl.pool->GetBlock(id),id);
     }
     void freeze() {
+        if(owner.compute_backend) {
+            std::vector<backend::BackendStateAccess> current;
+            current.reserve(owner.stage_handles.size());
+            for(std::size_t i=0;i<owner.stage_handles.size();++i)
+                current.push_back(owner.backend_access(i,state::StateSlot::Current));
+            owner.compute_backend->begin_hydro_attempt(current);
+            device_frozen=true;
+        }
         owner.residency_ledger->freeze_metadata_snapshot(ledger);ledger_frozen=true;
         owner.amr_ctrl.flux_register.freeze_host_snapshot(flux);flux_frozen=true;
     }
     void release() noexcept {
         if(flux_frozen)owner.amr_ctrl.flux_register.release_host_snapshot(flux);
         if(ledger_frozen)owner.residency_ledger->release_metadata_snapshot(ledger);
-        flux_frozen=ledger_frozen=false;
+        if(device_frozen)owner.compute_backend->release_hydro_attempt_noexcept();
+        flux_frozen=ledger_frozen=device_frozen=false;
     }
     void restore() noexcept {
-        if(!ledger_frozen&&!flux_frozen)return;
+        if(!ledger_frozen&&!flux_frozen&&!device_frozen)return;
+        if(device_frozen)owner.compute_backend->restore_hydro_attempt_noexcept();
         const auto& active=owner.amr_ctrl.tree->GetActiveBlocks();
         if(active.size()!=blocks.size())std::terminate();
         for(std::size_t i=0;i<blocks.size();++i) {
@@ -134,11 +145,11 @@ struct DriverRuntime::HostHydroAttempt {
         c.next_plt_time=controller.next_plt_time;c.next_chk_time=controller.next_chk_time;
         c.dt_old=controller.dt_old;c.suppress_step_io_once=controller.suppress_step_io_once;
     }
-    ~HostHydroAttempt() { release(); }
+    ~HydroAttempt() { release(); }
 };
 
 bool DriverRuntime::distributed_hydro_topology() const {
-    return amr_ctrl.tree->PartitionSize()>1&&topology_registry.has_refined_blocks();
+    return amr_ctrl.tree->PartitionSize()>1&&(compute_backend||topology_registry.has_refined_blocks());
 }
 
 /** Prepare every fallible allocation before any rank proposes/writes a step. */
@@ -146,14 +157,14 @@ void DriverRuntime::begin_distributed_hydro_attempt(const Numerics::IHydroSolver
     std::exception_ptr failure;
     bool prepared_here=false;
     try {
-        if(host_hydro_attempt_)throw std::logic_error("Host Hydro attempt already active");
+        if(hydro_attempt_)throw std::logic_error("Hydro attempt already active");
         if(&controller!=&ctrl)throw std::logic_error("Distributed Hydro controller owner mismatch");
-        if(!distributed_hydro_topology()||compute_backend||config.grid.geometry!="cartesian"
+        if(!distributed_hydro_topology()||config.grid.geometry!="cartesian"
             ||config.physics.burn.use_burn||config.physics.diffusion.use_diffusion
             ||config.physics.gravity.type!="none"||bc_handler.has_user())
-            throw std::logic_error("Distributed macro requires static Cartesian Host Hydro without sources/user BC");
-        if(!hydro||hydro->host_storage_contract()!=
-                Numerics::HostHydroStorageContract::FixedExtentSlotPermutation)
+            throw std::logic_error("Distributed macro requires Cartesian Hydro without sources/user BC");
+        if(!hydro||(!compute_backend&&hydro->host_storage_contract()!=
+                Numerics::HostHydroStorageContract::FixedExtentSlotPermutation))
             throw std::logic_error("Distributed macro requires fixed-extent Host Hydro storage");
         const char* capture=std::getenv("ARCH_BOUNDARY_FLUX_DIAGNOSTICS");
         if(capture&&std::string_view(capture)!="0")
@@ -162,35 +173,40 @@ void DriverRuntime::begin_distributed_hydro_attempt(const Numerics::IHydroSolver
         const auto version=current_interior_version();
         for(auto handle:stage_handles)
             residency_ledger->require_readable({handle,state::StateSlot::Current},
-                {state::ExecutionSide::Host,version,true,true});
+                {compute_backend?state::ExecutionSide::Device:state::ExecutionSide::Host,version,true,true});
         for(int id:amr_ctrl.tree->GetActiveBlocks())
-            for(auto* slot:HostHydroAttempt::slots(amr_ctrl.pool->GetBlock(id)))
+            for(auto* slot:HydroAttempt::slots(amr_ctrl.pool->GetBlock(id)))
                 if(slot->boundary_flux_capture)
                     throw std::logic_error("Distributed macro cannot borrow mutable boundary capture");
-        host_hydro_attempt_=std::make_unique<HostHydroAttempt>(*this);
+        if(compute_backend)amr_ctrl.flux_register.RequireOwnershipTransferBoundary();
+        hydro_attempt_=std::make_unique<HydroAttempt>(*this);
         prepared_here=true;
-        host_hydro_attempt_->freeze();
+        hydro_attempt_->freeze();
     } catch(...) { failure=std::current_exception(); }
-    try {amr_ctrl.CompleteDistributedHydroPhase(failure);}
+    try {
+        amr_ctrl.CompleteDistributedHydroPhase(failure);
+        synchronize_distributed_hydro_clock();
+    }
     catch(...) {if(prepared_here)discard_distributed_hydro_attempt();throw;}
 }
 
 /** Same accepted clock and proposed interval on every rank, without changing dt arithmetic. */
 void DriverRuntime::agree_distributed_hydro_interval(double dt) const {
 #if ARCH_MPI_ENABLED
-    std::array<std::uint64_t,8> local{},minimum{},maximum{};
+    std::array<std::uint64_t,9> local{},minimum{},maximum{};
     amr::flux_mpi_detail::prepare([&] {
-        if(!host_hydro_attempt_||!std::isfinite(dt)||dt<=0.
+        if(!hydro_attempt_||!std::isfinite(dt)||dt<=0.
             ||!std::isfinite(ctrl.t_current+dt)||!(ctrl.t_current+dt>ctrl.t_current)
             ||ctrl.step_count==std::numeric_limits<int>::max())
             throw std::logic_error("Invalid distributed Hydro interval");
         local={std::bit_cast<std::uint64_t>(ctrl.t_current),std::bit_cast<std::uint64_t>(dt),
             static_cast<std::uint64_t>(ctrl.step_count),topology_registry.epoch().value,
             scheduler_clock.last_token(),scheduler_clock.last_version(),
-            std::bit_cast<std::uint64_t>(ctrl.dt_old),static_cast<std::uint64_t>(specs.count())};
+            std::bit_cast<std::uint64_t>(ctrl.dt_old),static_cast<std::uint64_t>(specs.count()),
+            compute_backend?1u:0u};
     });
-    amr::flux_mpi_detail::check(MPI_Allreduce(local.data(),minimum.data(),8,MPI_UINT64_T,MPI_MIN,MPI_COMM_WORLD));
-    amr::flux_mpi_detail::check(MPI_Allreduce(local.data(),maximum.data(),8,MPI_UINT64_T,MPI_MAX,MPI_COMM_WORLD));
+    amr::flux_mpi_detail::check(MPI_Allreduce(local.data(),minimum.data(),9,MPI_UINT64_T,MPI_MIN,MPI_COMM_WORLD));
+    amr::flux_mpi_detail::check(MPI_Allreduce(local.data(),maximum.data(),9,MPI_UINT64_T,MPI_MAX,MPI_COMM_WORLD));
     if(minimum!=maximum)throw std::runtime_error("Distributed Hydro interval/identity mismatch");
 #else
     (void)dt;throw std::logic_error("Distributed Hydro requires MPI");
@@ -201,8 +217,8 @@ void DriverRuntime::agree_distributed_hydro_interval(double dt) const {
 void DriverRuntime::commit_distributed_hydro_attempt(double dt) {
     std::exception_ptr failure;
     try {
-        if(!host_hydro_attempt_)throw std::logic_error("No distributed Hydro attempt");
-        const auto& saved=*host_hydro_attempt_;
+        if(!hydro_attempt_)throw std::logic_error("No distributed Hydro attempt");
+        const auto& saved=*hydro_attempt_;
         topology_registry.validate_committed_snapshot(observe_topology());
         if(ctrl.t_current!=saved.controller.t_current||ctrl.step_count!=saved.controller.step_count)
             throw std::logic_error("Distributed Hydro changed physical time before acceptance");
@@ -216,19 +232,21 @@ void DriverRuntime::commit_distributed_hydro_attempt(double dt) {
             throw std::logic_error("Distributed Hydro final Current/reflux incomplete");
         for(auto handle:stage_handles)
             residency_ledger->require_readable({handle,state::StateSlot::Current},
-                {state::ExecutionSide::Host,version,true,true});
+                {compute_backend?state::ExecutionSide::Device:state::ExecutionSide::Host,version,true,true});
+        if(compute_backend&&!compute_backend->hydro_attempt_layout_matches())
+            throw std::logic_error("Distributed Device Hydro storage contract violated");
         for(const auto& block:saved.blocks)
             if(!block.layout_matches(amr_ctrl.pool->GetBlock(block.id)))
                 throw std::logic_error("Distributed Hydro storage contract violated");
     } catch(...) {failure=std::current_exception();}
     amr_ctrl.CompleteDistributedHydroPhase(failure);
     agree_distributed_hydro_interval(dt);
-    host_hydro_attempt_.reset(); // Prepared release only: no allocation, math or I/O.
+    hydro_attempt_.reset(); // Prepared release only: no allocation, math or I/O.
     amr_ctrl.CompleteDistributedHydroPhase(nullptr);
 }
 
-/** Retain the largest issued identity after all ranks have restored physical state. */
-void DriverRuntime::complete_distributed_hydro_recovery() {
+/** Align issued identities before a macrostep and after collective recovery. */
+void DriverRuntime::synchronize_distributed_hydro_clock() {
     amr_ctrl.CompleteDistributedHydroPhase(nullptr);
 #if ARCH_MPI_ENABLED
     const std::array<std::uint64_t,2> local{scheduler_clock.last_token(),scheduler_clock.last_version()};
@@ -239,9 +257,9 @@ void DriverRuntime::complete_distributed_hydro_recovery() {
 }
 
 void DriverRuntime::discard_distributed_hydro_attempt() noexcept {
-    if(!host_hydro_attempt_)return;
-    host_hydro_attempt_->restore();
-    host_hydro_attempt_.reset();
+    if(!hydro_attempt_)return;
+    hydro_attempt_->restore();
+    hydro_attempt_.reset();
 }
 
 /** Return the shared floor-repair budget for the active run. */
@@ -583,6 +601,7 @@ void DriverRuntime::initialize_topology()
 /** Build topology bindings for backend storage allocation. */
 std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bindings()
 {
+    if(hydro_attempt_)throw std::logic_error("Cannot prepare backend bindings during Hydro attempt");
     const auto& active = amr_ctrl.tree->GetActiveBlocks();
     if (active.empty() || stage_handles.size() != active.size()) {
         throw std::logic_error(
@@ -622,7 +641,7 @@ std::vector<backend::BackendTopologyBinding> DriverRuntime::prepare_backend_bind
 /** Install a validated compute backend and its resident block views. */
 void DriverRuntime::install_backend(std::unique_ptr<backend::ComputeBackend> backend)
 {
-    if(host_hydro_attempt_)throw std::logic_error("Cannot install backend during Host Hydro attempt");
+    if(hydro_attempt_)throw std::logic_error("Cannot install backend during Hydro attempt");
     compute_backend = std::move(backend);
 }
 
@@ -645,12 +664,15 @@ void DriverRuntime::prepare_device_flux_plans()
 {
     if (!compute_backend)
         throw std::logic_error("Device flux preparation requires an installed backend");
-    // The committed global registry gives every rank the same support boundary.
-    // Ghost transport readiness alone cannot authorize a numerical macrostep.
-    if (distributed_hydro_topology())
-        throw std::logic_error("distributed Device flux/reflux preparation is not yet available");
-    compute_backend->prepare_amr_flux_plan(
-        amr_ctrl.RequireFluxTopologyPlan(specs.count()),
-        amr_ctrl.RequireRefluxTopologyPlan(specs.count()));
+    std::exception_ptr failure;
+    try {
+        if(hydro_attempt_)throw std::logic_error("Cannot replace Device flux plan during Hydro attempt");
+        amr_ctrl.flux_register.EnsureSpecies(specs.count());
+        compute_backend->prepare_amr_flux_plan(
+            amr_ctrl.RequireFluxTopologyPlan(specs.count()),
+            amr_ctrl.RequireRefluxTopologyPlan(specs.count()));
+    } catch(...) {failure=std::current_exception();}
+    if(distributed_hydro_topology())amr_ctrl.CompleteDistributedHydroPhase(failure);
+    else if(failure)std::rethrow_exception(failure);
 }
 } // namespace arch::driver

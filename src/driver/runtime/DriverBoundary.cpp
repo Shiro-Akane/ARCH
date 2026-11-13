@@ -242,7 +242,7 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
 /** Download accepted resident state only when host output needs it. */
 void DriverRuntime::materialize_current_for_host()
 {
-    if(host_hydro_attempt_)throw std::logic_error("Cannot expose unaccepted Host Hydro state");
+    if(hydro_attempt_)throw std::logic_error("Cannot expose unaccepted Hydro state");
     ensure_fluid_ghosts(StateSlot::Current);
     if (!compute_backend) return;
     const auto& active = amr_ctrl.tree->GetActiveBlocks();

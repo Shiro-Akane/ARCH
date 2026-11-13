@@ -103,13 +103,13 @@ public:
     void prepare_device_flux_plans();
 
     scheduler::StageExecutionContext stage_context();
-    /** Native static mixed-level Host lane; application preflight remains separate. */
+    /** Native distributed Hydro transaction; application preflight remains separate. */
     bool distributed_hydro_topology() const;
     void begin_distributed_hydro_attempt(const Numerics::IHydroSolver*, const SimulationController&);
     void agree_distributed_hydro_interval(double dt) const;
     void commit_distributed_hydro_attempt(double dt);
     void discard_distributed_hydro_attempt() noexcept;
-    void complete_distributed_hydro_recovery();
+    void synchronize_distributed_hydro_clock();
 
     const std::vector<amr::BlockHandle>& handles() const { return stage_handles; }
     backend::ComputeBackend* backend() const { return compute_backend.get(); }
@@ -141,8 +141,8 @@ public:
         diffusion_activity_totals_=value;
     }
 private:
-    struct HostHydroAttempt;
-    std::unique_ptr<HostHydroAttempt> host_hydro_attempt_;
+    struct HydroAttempt;
+    std::unique_ptr<HydroAttempt> hydro_attempt_;
     bool diffusion_activity_enabled_=false;
     std::optional<backend::DiffusionActivityReceipt> diffusion_activity_half_;
     DiffusionActivityTotals diffusion_activity_totals_{};

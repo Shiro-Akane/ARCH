@@ -221,6 +221,12 @@ public:
         backend::BackendTopologyStoreTransaction& transaction,
         backend::BackendStateAccess access, state::StateRegion region,
         backend::HostStateTransferView host) override;
+    void begin_hydro_attempt(std::span<const backend::BackendStateAccess>) override;
+    bool hydro_attempt_layout_matches() const noexcept override;
+    void restore_hydro_attempt_noexcept() noexcept override;
+    void release_hydro_attempt_noexcept() noexcept override;
+    void validate_hydro_current(std::span<const backend::BackendStateAccess>) override;
+
     void prepare_amr_flux_plan(
         const amr::AmrFluxTopologyPlan& topology,
         const amr::RefluxPlan& reflux) override;

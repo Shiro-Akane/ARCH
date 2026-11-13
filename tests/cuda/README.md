@@ -58,6 +58,22 @@ methods and numerical budgets. Completed production checks and separate
 experimental-provider capacity results are indexed in the
 [HPC-CUDA campaign summary](../../validation/backend/results/hpc-cuda-optimization/README.md).
 
-The mpi_cuda_mixed_2 mode of [the Runtime witness](amr/test_cuda_mpi_runtime.cpp) covers a two-rank, five-leaf Cartesian ghost exchange. It retains the original CUDA AMR arithmetic tolerance and rejects unqualified distributed flux/reflux preparation. It does not validate a GPU Hydro macrostep.
+The mpi_cuda_mixed_2 mode of [the Runtime witness](amr/test_cuda_mpi_runtime.cpp) covers a two-rank, five-leaf Cartesian ghost exchange. It retains the original CUDA AMR arithmetic tolerance and rejects stale flux-plan identity before Device mutation. The ghost mode itself does not validate a GPU Hydro macrostep.
 
-The mpi_cuda_flux_2 mode uses the same five-leaf fixture for native GPU source-face capture, the existing MPI FluxRegister protocol, and original CUDA reflux. Six layouts cover 1/4/37 species and outflow/periodic boundaries. A zero-weight stage and three nonzero weights test registration against original Host flux/reflux, with failed and repeated completion checks. These are repeated Euler operator evaluations on fixed input, not RK macrosteps or Device rollback acceptance. Full Runtime flux preparation and application preflight remain gated.
+The mpi_cuda_flux_2 mode uses the same five-leaf fixture for native GPU source-face capture, the existing MPI FluxRegister protocol, and original CUDA reflux. Six layouts cover 1/4/37 species and outflow/periodic boundaries. A zero-weight stage and three nonzero weights test registration against original Host flux/reflux, with failed and repeated completion checks. These are repeated Euler operator evaluations on fixed input, not RK macrosteps or Device rollback acceptance. The separate macro witness below qualifies Runtime flux preparation; application preflight remains gated.
+
+
+The mpi_cuda_macro_2 mode executes the original Runtime macro transaction and
+Euler/RK2/RK3 scheduler with CUDA HLLC/PCM/IdealGas. Eighteen layouts cover
+1/4/37 species and outflow/periodic boundaries on the same five-leaf topology.
+Each layout accepts 16 consecutive steps against the original serial CPU
+integrator and rejects 15 injected failures, retrying the same Runtime without
+reseeding. Current uses the existing 2e-13 arithmetic gate; periodic conserved
+integrals use the original CPU 2e-11 absolute plus 2e-12 relative gate.
+Recovery checks all three Device slots and Host mirrors bitwise, along with
+ledger, flux receipt, boundary context, physical clock, and storage generations.
+Issued scheduler identities remain monotonic. The failures include completed
+stage writes, post-reflux rotation, invalid density/composition, interval and
+owner errors, plus forbidden field materialization and topology mutation.
+This is native single-node, shared-GPU acceptance; migration, dynamic regrid,
+distributed output/restart and application capability are separate gates.

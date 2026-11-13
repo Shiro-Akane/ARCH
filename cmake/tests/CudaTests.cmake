@@ -81,6 +81,11 @@ if(ARCH_ENABLE_MPI)
             ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_cuda_mpi_runtime> ${MPIEXEC_POSTFLAGS} --flux)
     set_tests_properties(mpi_cuda_flux_2 PROPERTIES
         SKIP_RETURN_CODE 77 TIMEOUT 300 PROCESSORS 2 LABELS "mpi;cuda")
+    add_test(NAME mpi_cuda_macro_2
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_cuda_mpi_runtime> ${MPIEXEC_POSTFLAGS} --macro)
+    set_tests_properties(mpi_cuda_macro_2 PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 600 PROCESSORS 2 LABELS "mpi;cuda")
     add_executable(arch_cuda_mpi_staging
         tests/cuda/amr/test_cuda_mpi_staging.cu
         tests/cuda/amr/CudaMpiStagingPlan.cpp)
