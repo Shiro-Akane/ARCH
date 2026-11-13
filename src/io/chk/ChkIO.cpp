@@ -144,7 +144,17 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
               const io::CheckpointProvenance &expected_provenance,
               const io::CheckpointGeometryIdentity &expected_geometry)
 {
-    io::CheckpointData checkpoint = io::read_hdf5_chk_impl(filepath);
+    const auto checkpoint = io::read_hdf5_chk_impl(filepath);
+    restore_chk(checkpoint, amr_ctrl, run_state, config, specs, expected_provenance, expected_geometry);
+    std::cout << "[IO] Restored CHK: " << filepath << " at step " << run_state.step
+              << " with " << amr_ctrl.tree->GetActiveBlocks().size() << " AMR leaves." << std::endl;
+}
+
+void restore_chk(const io::CheckpointData& checkpoint, amr::AMRControl& amr_ctrl,
+    RunState& run_state, const SimConfig& config, const SpeciesManager& specs,
+    const io::CheckpointProvenance& expected_provenance,
+    const io::CheckpointGeometryIdentity& expected_geometry)
+{
     io::require_checkpoint_geometry_compatible(checkpoint.dim, checkpoint.geometry,
                                                checkpoint.geometry_identity, expected_geometry);
     if (checkpoint.state_controls != arch::config::StateControlIdentity(config))
@@ -214,6 +224,4 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
     run_state.resume_after_regrid = checkpoint.resume_after_regrid;
     run_state.checkpoint_provenance_verified = verified_identity;
     run_state.verified_eos_table_sha256 = checkpoint.provenance.eos_table_sha256;
-    std::cout << "[IO] Restored CHK: " << filepath << " at step " << run_state.step
-              << " with " << active_blocks.size() << " AMR leaves." << std::endl;
 }

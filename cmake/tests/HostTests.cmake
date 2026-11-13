@@ -304,8 +304,28 @@ target_link_libraries(arch_device_block_store_lifecycle PRIVATE
 add_test(NAME device_block_store_lifecycle
     COMMAND arch_device_block_store_lifecycle)
 
+add_executable(arch_output_collection
+    tests/host/io/test_output_collection.cpp
+    src/io/OutputCollection.cpp src/core/files/FileFingerprint.cpp)
+arch_configure_host_test(arch_output_collection)
+target_link_libraries(arch_output_collection PRIVATE arch_build_contract)
+add_test(NAME output_collection COMMAND arch_output_collection)
+
 # These targets require HDF5/HighFive and the resolved KLU provider.
 function(arch_register_io_regression_tests)
+    if(TARGET arch_cuda_mpi_runtime)
+        # Native MPI output exercises the same serializers as application DriverIO.
+        target_sources(arch_cuda_mpi_runtime PRIVATE
+            src/io/OutputCollection.cpp
+            src/io/chk/ChkIO.cpp src/io/chk/DistributedRestart.cpp
+            src/io/chk/CheckpointCompatibility.cpp src/io/plot/PlotIO.cpp
+            src/io/hdf5/HDF5Writer.cpp src/core/files/FileFingerprint.cpp
+            src/physics/eos/eosdispatch.cpp src/physics/eos/sources/TabularBaryonSource.cpp)
+        target_include_directories(arch_cuda_mpi_runtime PRIVATE
+            "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
+        target_link_libraries(arch_cuda_mpi_runtime PRIVATE arch_solver_dispatch
+            ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+    endif()
     add_executable(arch_preview_mesh_checkpoint tests/api/preview/read_mesh_checkpoint.cpp)
     arch_configure_host_test(arch_preview_mesh_checkpoint
         "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})

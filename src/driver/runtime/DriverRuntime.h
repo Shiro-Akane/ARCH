@@ -109,7 +109,7 @@ public:
     void agree_distributed_hydro_interval(double dt) const;
     void commit_distributed_hydro_attempt(double dt);
     void discard_distributed_hydro_attempt() noexcept;
-    void synchronize_distributed_hydro_clock();
+    void synchronize_distributed_clock();
 
     const std::vector<amr::BlockHandle>& handles() const { return stage_handles; }
     backend::ComputeBackend* backend() const { return compute_backend.get(); }

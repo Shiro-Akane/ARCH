@@ -44,12 +44,34 @@ def run(executable, problem, par, log, ranks, mpiexec, threads=1):
 
 def snapshots(directory):
     # Multi-rank files are shards; never confuse one shard with a full domain.
-    pieces = sorted(directory.glob("rank-*")) or [directory]
-    groups = [sorted(p.glob("*_plt_*.h5")) for p in pieces]
-    assert groups and groups[0], f"no plots: {directory}"
-    assert all(len(g) == len(groups[0]) for g in groups), "rank output count mismatch"
+    published = sorted(directory.glob("*_plt_*.collection"))
+    if published:
+        frames = []
+        for collection in published:
+            lines = (collection / "manifest.txt").read_text().splitlines()
+            assert lines[0] == "ARCH_OUTPUT_COLLECTION 1" and lines[-1] == "end"
+            records = [line.split() for line in lines[1:-1]]
+            headers = {row[0]: row[1] for row in records if row[0] != "shard"}
+            shards = [row for row in records if row[0] == "shard"]
+            assert headers["kind"] == "plot" and int(headers["ranks"]) == len(shards) >= 2
+            frame = []
+            for rank, row in enumerate(shards):
+                assert len(row) == 5 and int(row[1]) == rank and int(row[2]) > 0
+                path = collection / f"rank-{rank}" / "state.h5"
+                assert path.is_file() and not path.is_symlink()
+                assert path.stat().st_size == int(row[3])
+                assert hashlib.sha256(path.read_bytes()).hexdigest() == row[4], "shard integrity mismatch"
+                frame.append(path)
+            frames.append(frame)
+    else:
+        # Preserve readback of sealed historical evidence and serial files.
+        pieces = sorted(directory.glob("rank-*")) or [directory]
+        groups = [sorted(p.glob("*_plt_*.h5")) for p in pieces]
+        assert groups and groups[0], f"no plots: {directory}"
+        assert all(len(g) == len(groups[0]) for g in groups), "rank output count mismatch"
+        frames = zip(*groups)
     assembled = []
-    for frame in zip(*groups):
+    for frame in frames:
         data, coordinates, measures, roots, times = {}, [], [], [], []
         for filename in frame:
             with h5py.File(filename) as f:

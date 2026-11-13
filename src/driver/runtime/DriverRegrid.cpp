@@ -239,6 +239,9 @@ void DriverRuntime::migrate_leaves(std::span<const amr::AmrEndpoint> sources, in
     });
     agree(signature(amr_ctrl.tree->GetRootGrid(),specs.count(),topology_registry.epoch(),
         4,next_amr_transaction_id,ctrl.t_current,0));
+    // Local uploads/materialization may issue different token counts per rank.
+    // Retain their high-watermarks; accepted version, time and epoch still agree below.
+    synchronize_distributed_clock();
     std::array<std::uint64_t,21> batch{
         sources.size(),static_cast<std::uint64_t>(destination_rank),accepted.value,
         scheduler_clock.last_token(),scheduler_clock.last_version(),
@@ -689,6 +692,9 @@ bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_r
     });
     agree(signature(amr_ctrl.tree->GetRootGrid(),specs.count(),topology_registry.epoch(),
         5,next_amr_transaction_id,time,0));
+    // Local uploads/materialization may issue different token counts per rank.
+    // Retain their high-watermarks; accepted version, time and epoch still agree below.
+    synchronize_distributed_clock();
     std::array<std::uint64_t,21> identity{
         static_cast<std::uint64_t>(step),accepted.value,scheduler_clock.last_token(),
         scheduler_clock.last_version(),next_amr_transaction_id,controls.size(),

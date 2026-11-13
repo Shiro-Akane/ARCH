@@ -315,13 +315,13 @@ void DispatchSolver(ProblemGenerator &problem,
                   << "\nglobal_root_blocks=" << static_cast<std::int64_t>(config.grid.nblockx1)
                       * std::max(1, config.grid.nblockx2) * std::max(1, config.grid.nblockx3)
                   << "\nlocal_pool_capacity=" << max_blocks
-                  << "\noutput_scope=rank-local\nrestart_supported=false\n";
+                  << "\noutput_scope=published-collection\nrestart_supported=false\n";
         partition.close();
         if (!partition)
             throw std::runtime_error("cannot finish MPI partition metadata");
         std::cout << "[MPI] rank=" << rank << '/' << rank_count << " owned roots=["
                   << amr_ctrl.tree->RootBegin() << ',' << amr_ctrl.tree->RootEnd()
-                  << ") pool=" << max_blocks << "; rank-local plots, no checkpoints" << std::endl;
+                  << ") pool=" << max_blocks << "; complete plot/checkpoint collections; application restart gated" << std::endl;
     }
     std::cout << "[Dispatch] Resolving Gravity Policy..." << std::endl;
     std::string grav_type = config.physics.gravity.type;

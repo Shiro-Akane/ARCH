@@ -31,6 +31,7 @@ namespace amr {
 
 namespace io {
     struct CheckpointProvenance;
+    struct CheckpointData;
     struct PlotSourceIdentity;
     struct PlotScalarField { std::string_view name; std::span<const double> values; };
 }
@@ -81,3 +82,14 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
               const SpeciesManager &specs,
               const io::CheckpointProvenance &expected_provenance,
               const io::CheckpointGeometryIdentity &expected_geometry = {1, "existing"});
+
+
+// Restore an already parsed native payload after the original strict scientific checks.
+void restore_chk(const io::CheckpointData& checkpoint, amr::AMRControl& amr_ctrl,
+    RunState& run_state, const SimConfig& config, const SpeciesManager& specs,
+    const io::CheckpointProvenance& expected_provenance,
+    const io::CheckpointGeometryIdentity& expected_geometry);
+void read_distributed_chk(const std::string& directory, amr::AMRControl& amr_ctrl,
+    RunState& run_state, const SimConfig& config, const SpeciesManager& specs,
+    const io::CheckpointProvenance& expected_provenance,
+    const io::CheckpointGeometryIdentity& expected_geometry);

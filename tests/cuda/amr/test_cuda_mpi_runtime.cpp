@@ -8,6 +8,18 @@
 #include "amr/AMRControl.h"
 #include "cuda/runtime/CudaBackend.h"
 #include "driver/runtime/DriverRuntime.h"
+#include "driver/io/DriverIO.h"
+#include "io/OutputCollection.h"
+#include "core/files/RunIdentity.h"
+#include "io/chk/CheckpointCompatibility.h"
+#include "core/files/FileFingerprint.h"
+#include "core/files/RunIdentity.h"
+#include "core/MpiCollective.h"
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <highfive/H5File.hpp>
 #include "numerics/integrator/TimeIntegratorEuler.h"
 #include "numerics/integrator/TimeIntegratorRK2.h"
 #include "numerics/integrator/TimeIntegratorRK3.h"
@@ -39,7 +51,9 @@ using Region = state::StateRegion;
 using Side = state::ExecutionSide;
 constexpr std::array slots{Slot::Current, Slot::Next, Slot::Scratch};
 constexpr std::array members{&amr::Block::fluid_state, &amr::Block::state_next, &amr::Block::state_scratch};
-int rank = 0, checks = 0, rejections = 0;
+int rank = 0, ranks = 2, checks = 0, rejections = 0;
+bool root_mode = false, io_mode = false;
+std::string io_directory;
 bool mixed = false, flux_mode = false, macro_mode = false, ownership_mode = false, regrid_mode = false;
 dispatch::TimeIntegratorId macro_method=dispatch::TimeIntegratorId::Euler;
 std::uint64_t boundary_h2d = 0, boundary_d2h = 0, observed_device_used = 0;
@@ -57,11 +71,11 @@ std::array<std::vector<double>*,7> fields(FluidState& s) {
 SimConfig config_for(int dim, bool periodic) {
     SimConfig c{};
     c.grid.dim=dim;c.grid.geometry="cartesian";
-    c.grid.nblockx1=mixed?2:3;c.grid.nblockx2=dim>=2?(mixed?1:2):0;c.grid.nblockx3=dim==3?2:0;
-    c.grid.x1_min=0.;c.grid.x1_max=3.;c.grid.x2_min=0.;c.grid.x2_max=2.;c.grid.x3_min=0.;c.grid.x3_max=2.;
+    c.grid.nblockx1=root_mode?2*ranks-1:(mixed?2:3);c.grid.nblockx2=dim>=2?(mixed?1:2):0;c.grid.nblockx3=dim==3?2:0;
+    c.grid.x1_min=0.;c.grid.x1_max=root_mode?double(c.grid.nblockx1):3.;c.grid.x2_min=0.;c.grid.x2_max=2.;c.grid.x3_min=0.;c.grid.x3_max=2.;
     c.grid.amr_max_blocks=12;c.amr.lrefinemin=0;c.amr.lrefinemax=mixed?1:0;
     if(regrid_mode) {
-        c.grid.amr_max_blocks=48;c.amr.lrefinemax=2;
+        c.grid.amr_max_blocks=root_mode?64*ranks:48;c.amr.lrefinemax=2;
         c.amr.refine_threshold=.02;c.amr.derefine_threshold=.001;
         c.amr.refine_on_rho=true;
         c.amr.refine_on_p=c.amr.refine_on_temp=c.amr.refine_on_velx=c.amr.refine_on_vely=false;
@@ -73,7 +87,7 @@ SimConfig config_for(int dim, bool periodic) {
     c.grid.x2l_boundary_type=c.grid.x2r_boundary_type=bc;
     c.grid.x3l_boundary_type=c.grid.x3r_boundary_type=bc;
     c.io.tmax=1.;c.numerics.dt_min=1.e-20;c.numerics.dt_max=0.;c.numerics.tstep_change_factor=2.;
-    c.physics.burn.use_burn=false;c.physics.diffusion.use_diffusion=false;
+    c.physics.gamma=1.4;c.physics.burn.use_burn=false;c.physics.diffusion.use_diffusion=false;
     return c;
 }
 cuda::CudaLaunchConfig launch(const SimConfig& c) {
@@ -87,9 +101,9 @@ void seed(amr::Block& b,int slot,int round);
 // The fixed-root constructor and application preflight keep their existing gates.
 std::vector<amr::BlockHandle> initialize_tree(
     amr::AMRControl& control,const SimConfig& config,int n,bool distributed) {
-    auto root=config;root.amr.lrefinemax=0;
+    auto root=config;if(!root_mode)root.amr.lrefinemax=0;
     control.tree->InitRootGrid(root,n);
-    if(!mixed)return {};
+    if(root_mode||!mixed)return {};
     const int owner=distributed?rank:0, count=distributed?2:1;
     topology::TopologyIdentityRegistry registry({2,{2,1,1},config.amr.lrefinemax},owner,count);
     const auto observations=[&](std::span<const int> ids) {
@@ -171,13 +185,13 @@ struct Reference {
         return species;
     }
     Reference(int dim,int n,bool periodic)
-        :config(config_for(dim,periodic)),eos(1.4,populate(n)),control(regrid_mode?48:12,dim),bc(config) {
+        :config(config_for(dim,periodic)),eos(1.4,populate(n)),control(regrid_mode?config.grid.amr_max_blocks:12,dim),bc(config) {
         bc.bind(eos,species);handles=initialize_tree(control,config,n,false);
         if(!mixed)for(std::size_t i=0;i<control.tree->GetActiveBlocks().size();++i)
             handles.push_back({{i+1},{1}});
         if(regrid_mode) {
             regrid_registry=std::make_unique<topology::TopologyIdentityRegistry>(
-                topology::TopologyDomainBounds{2,{2,1,1},2},0,1);
+                topology::TopologyDomainBounds{2,{static_cast<unsigned>(config.grid.nblockx1),1,1},2},0,1);
             std::vector<topology::TopologyObservation> observations;
             for(int id:control.tree->GetActiveBlocks()) {
                 const auto& b=control.pool->GetBlock(id);
@@ -212,27 +226,37 @@ struct Run {
         for(int i=0;i<n;++i)species.add_species("s"+std::to_string(i),1.,1.,1.4,1.);
         return species;
     }
-    amr::AMRControl& initialize_control(bool distributed,int n) {
-        if(distributed)control.tree->SetRootPartition(rank,2);
-        initialize_tree(control,config,n,distributed);
-        for(int id:control.tree->GetActiveBlocks())for(int s=0;s<3;++s)seed(control.pool->GetBlock(id),s,0);
-        return control;
+    RunState initialize_control(bool distributed,int n,const std::string& checkpoint) {
+        if(distributed)control.tree->SetRootPartition(rank,ranks);
+        RunState state;
+        if(!checkpoint.empty()) {
+            config.io.restart=true;
+            const auto provenance=io::inspect_checkpoint_provenance(config,species,
+                dispatch::EosId::Ideal,false,"none",false);
+            read_distributed_chk(checkpoint,control,state,config,species,provenance,
+                io::checkpoint_geometry_identity(config.grid.dim,config.grid.geometry));
+        } else {
+            initialize_tree(control,config,n,distributed);
+            for(int id:control.tree->GetActiveBlocks())for(int s=0;s<3;++s)seed(control.pool->GetBlock(id),s,0);
+        }
+        return state;
     }
-    Run(int dim,int n,bool periodic,bool distributed)
-        :config(config_for(dim,periodic)),eos(1.4,populate(n)),control(regrid_mode?(distributed?24:48):(ownership_mode&&distributed?6:12),dim),
-         bc(config),controller(config,RunState{}),
-         runtime(initialize_control(distributed,n),bc,config,species,controller) {
+    Run(int dim,int n,bool periodic,bool distributed,const std::string& checkpoint={})
+        :config(config_for(dim,periodic)),eos(1.4,populate(n)),control(regrid_mode?(distributed?config.grid.amr_max_blocks/ranks:config.grid.amr_max_blocks):(ownership_mode&&distributed?6:12),dim),
+         bc(config),controller(config,initialize_control(distributed,n,checkpoint)),
+         runtime(control,bc,config,species,controller) {
         bc.bind(eos,species);
         runtime.initialize_topology();
         runtime.ensure_fluid_ghosts();
-        if(distributed) {
-            const auto topology=runtime.prepare_backend_bindings();
-            std::vector<cuda::CudaBlockBinding> bindings;
-            for(const auto& b:topology)bindings.push_back({b.block,b.handle,b.storage,b.physical_boundary,b.hydro_boundary});
-            runtime.install_backend(cuda::make_cuda_backend(bindings,0,launch(config),species,eos));
-            runtime.upload_initial_state();
-            if(!mixed)runtime.prepare_device_flux_plans();
-        }
+        if(distributed&&!root_mode)install_device();
+    }
+    void install_device() {
+        const auto topology=runtime.prepare_backend_bindings();
+        std::vector<cuda::CudaBlockBinding> bindings;
+        for(const auto& b:topology)bindings.push_back({b.block,b.handle,b.storage,b.physical_boundary,b.hydro_boundary});
+        runtime.install_backend(cuda::make_cuda_backend(bindings,0,launch(config),species,eos));
+        runtime.upload_initial_state();
+        if(!mixed)runtime.prepare_device_flux_plans();
     }
     void reset(int round) {
         const auto& active=control.tree->GetActiveBlocks();
@@ -316,7 +340,7 @@ struct Run {
 template<class Action> void rejected(Action&& action) {
     bool caught=false;try{action();}catch(const std::exception&){caught=true;}
     int local=caught?1:0,total=0;MPI_Allreduce(&local,&total,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
-    require(total==2,"one-sided boundary rejection did not reach both ranks");++rejections;
+    require(total==ranks,"one-sided boundary rejection did not reach all ranks");++rejections;
 }
 void run(int dim,int species,bool periodic) {
     Run actual(dim,species,periodic,true);
@@ -1043,17 +1067,22 @@ void seed_device_regrid(Run& actual,Reference& reference) {
     };
     wave(actual.control);wave(reference.control);
     const auto& ids=actual.control.tree->GetActiveBlocks();
-    for(std::size_t i=0;i<ids.size();++i)for(int slot=0;slot<3;++slot)for(auto region:{Region::Interior,Region::Ghost})
-        actual.runtime.backend()->enqueue_upload_slot(actual.runtime.backend_access(i,slots[slot]),
-            region,view(actual.control.pool->GetBlock(ids[i]).*members[slot]));
-    actual.runtime.backend()->quiesce();
+    if(actual.runtime.backend()) {
+        for(std::size_t i=0;i<ids.size();++i)for(int slot=0;slot<3;++slot)for(auto region:{Region::Interior,Region::Ghost})
+            actual.runtime.backend()->enqueue_upload_slot(actual.runtime.backend_access(i,slots[slot]),
+                region,view(actual.control.pool->GetBlock(ids[i]).*members[slot]));
+        actual.runtime.backend()->quiesce();
+    }
     auto context=actual.runtime.stage_context();
     for(auto slot:slots)scheduler::publish_completed_interior(context,actual.runtime.handles(),slot);
-    for(int id:ids)for(auto member:members)for(auto* f:fields(actual.control.pool->GetBlock(id).*member))
-        std::fill(f->begin(),f->end(),-123456789.);
-    actual.refresh();reference.ensure_fluid_ghosts(Slot::Current);
+    if(actual.runtime.backend()) {
+        for(int id:ids)for(auto member:members)for(auto* f:fields(actual.control.pool->GetBlock(id).*member))
+            std::fill(f->begin(),f->end(),-123456789.);
+        actual.refresh();
+    } else actual.runtime.ensure_fluid_ghosts();
+    reference.ensure_fluid_ghosts(Slot::Current);
 }
-void serial_device_regrid_reference(Reference& reference,std::unique_ptr<HostMacro>& macro,double time) {
+bool serial_device_regrid_reference(Reference& reference,std::unique_ptr<HostMacro>& macro,double time) {
     macro.reset();
     auto& tree=*reference.control.tree;
     auto prepared=tree.PrepareRegrid(reference.config);
@@ -1065,14 +1094,17 @@ void serial_device_regrid_reference(Reference& reference,std::unique_ptr<HostMac
     auto& registry=*reference.regrid_registry;
     auto candidate=registry.stage_reconciliation(observations);
     auto next=candidate.reconciliation().handles_in_observation_order;
-    require(prepared.topology_changed(),"serial density criterion did not change topology");
-    prepared.BuildMigrationPlans(reference.handles,next,
-        {registry.epoch().value,registry.epoch(),candidate.reconciliation().epoch});
-    prepared.ExecuteMigration();prepared.ActivateForFinalization(candidate.blocks());
-    prepared.PublishNoexcept();registry.commit(std::move(candidate));reference.handles=std::move(next);
-    reference.control.BindActiveHandles(reference.handles);prepared.ReleaseRetiredNoexcept();
+    const bool changed=prepared.topology_changed();
+    if(changed) {
+        prepared.BuildMigrationPlans(reference.handles,next,
+            {registry.epoch().value,registry.epoch(),candidate.reconciliation().epoch});
+        prepared.ExecuteMigration();prepared.ActivateForFinalization(candidate.blocks());
+        prepared.PublishNoexcept();registry.commit(std::move(candidate));reference.handles=std::move(next);
+        reference.control.BindActiveHandles(reference.handles);prepared.ReleaseRetiredNoexcept();
+    } else prepared.PublishNoChangeNoexcept();
     macro=std::make_unique<HostMacro>(reference);macro->context.step_start_time=time;
     scheduler::ScopedStageBinding binding(macro->context,reference.handles);macro->ghosts();
+    return changed;
 }
 void run_regrid(int n,bool periodic) {
     Run actual(2,n,periodic,true);Reference reference(2,n,periodic);
@@ -1090,6 +1122,12 @@ void run_regrid(int n,bool periodic) {
         return actual.runtime.perform_regrid(actual.controller.step_count,actual.controller.t_current,false,observer);
     };
     step();
+    actual.runtime.materialize_current_for_host();
+    const auto issued=actual.runtime.stage_context().clock.last_token();
+    std::uint64_t low=0,high=0;
+    MPI_Allreduce(&issued,&low,1,MPI_UINT64_T,MPI_MIN,MPI_COMM_WORLD);
+    MPI_Allreduce(&issued,&high,1,MPI_UINT64_T,MPI_MAX,MPI_COMM_WORLD);
+    require(low<high,"materialization did not exercise unequal local token counts");
     // The original sum-of-pool-capacities gate includes both ranks.
     const auto capacity_handles=actual.runtime.handles();
     std::vector<OwnershipImage> capacity_fields;
@@ -1224,26 +1262,266 @@ void run_regrid(int n,bool periodic) {
         <<" periodic="<<periodic<<" accepted_regrids=4 rejected_phases=56 capacity_rejections=1 accepted_steps=5"<<std::endl;
 }
 
+// Match Driver startup: real partitioned roots, deferred Host refinement,
+// initial Device upload, then resident evolution/regrids with intervening output reads.
+void run_root(int n,bool periodic) {
+    Run actual(2,n,periodic,true);Reference reference(2,n,periodic);
+    seed_device_regrid(actual,reference);
+    auto host=std::make_unique<HostMacro>(reference);
+    int host_changes=0;
+    for(int pass=0;pass<actual.config.amr.lrefinemax;++pass) {
+        const bool changed=actual.runtime.perform_regrid(0,0.);
+        require(changed==serial_device_regrid_reference(reference,host,0.),
+            "deferred Host refinement differs from serial selection");
+        host_changes+=changed;
+        if(!changed)break;
+    }
+    require(host_changes>0,"root startup did not exercise initial refinement");
+    actual.install_device();actual.runtime.prepare_device_flux_plans();
+    DeviceMacro device(actual);
+    const auto initial=macro_compare(actual,reference);
+    const auto check=[&] {
+        const auto totals=macro_compare(actual,reference);
+        if(periodic)for(std::size_t f=0;f<totals.size();++f)
+            require(std::abs(totals[f]-initial[f])<=2.e-11L+2.e-12L*std::abs(initial[f]),
+                "root-start Device periodic conservation failed");
+        const auto store=static_cast<cuda::CudaBackend*>(actual.runtime.backend())->store_snapshot();
+        require(store.active_blocks==actual.runtime.handles().size()&&!store.staged_blocks
+            &&!store.retirement_batches&&actual.control.pool->GetNumReservedBlocks()==0,
+            "root-start Device lifecycle retained resources");
+    };
+    int device_changes=0;
+    for(int cycle=0;cycle<4;++cycle) {
+        const double dt=device.step();host->step(dt);check();
+        actual.runtime.materialize_current_for_host();
+        actual.config.amr.refine_threshold=reference.config.amr.refine_threshold=(cycle==1||cycle==2)?.9:.02;
+        actual.config.amr.derefine_threshold=reference.config.amr.derefine_threshold=(cycle==1||cycle==2)?.8:.001;
+        const bool changed=actual.runtime.perform_regrid(actual.controller.step_count,actual.controller.t_current);
+        require(changed==serial_device_regrid_reference(reference,host,actual.controller.t_current),
+            "resident root-start regrid differs from serial selection");
+        device_changes+=changed;check();
+        if(cycle==2)require(reference.handles.size()==static_cast<std::size_t>(actual.config.grid.nblockx1),
+            "root-start coarsening did not restore the whole root mesh");
+    }
+    const double dt=device.step();host->step(dt);check();
+    require(device_changes>=3,"root-start did not exercise refine/coarsen evolution");
+    if(!rank)std::cout<<"root PASS ranks="<<ranks<<" method="<<static_cast<int>(macro_method)
+        <<" species="<<n<<" periodic="<<periodic<<" initial_host_regrids="<<host_changes
+        <<" device_regrids="<<device_changes<<" accepted_steps=5"<<std::endl;
+}
+
+// Exact native interiors, independent of restored UID/pool ordering and ghosts.
+void same_interiors(Run& left,Run& right) {
+    left.runtime.materialize_current_for_host();right.runtime.materialize_current_for_host();
+    for(int id:left.control.tree->GetActiveBlocks()) {
+        auto& a=left.control.pool->GetBlock(id);
+        const int found=right.control.tree->FindBlock(a.level,a.logical_x1,a.logical_x2,a.logical_x3);
+        require(found>=0,"restart lost an owned logical leaf");
+        auto& b=right.control.pool->GetBlock(found);
+        auto af=fields(a.fluid_state),bf=fields(b.fluid_state);
+        for(int k=a.grid.Ks();k<a.grid.Ke();++k)for(int j=a.grid.Js();j<a.grid.Je();++j)
+            for(int i=a.grid.Is();i<a.grid.Ie();++i) {
+                const int cell=a.grid.GetIndex(i,j,k);
+                for(int f=0;f<6;++f)require(same((*af[f])[cell],(*bf[f])[cell]),"restart native fluid changed bits");
+                for(int n=0;n<left.species.count();++n)
+                    require(same(a.fluid_state.X(n,cell),b.fluid_state.X(n,cell)),"restart native species changed bits");
+            }
+    }
+    unchanged(left.controller.repairs.values,right.controller.repairs.values);
+    require(same(left.controller.t_current,right.controller.t_current)
+        &&same(left.controller.dt_old,right.controller.dt_old)
+        &&left.controller.step_count==right.controller.step_count,"restart controller drifted");
+}
+
+void run_io(int n,bool periodic,bool faults) {
+    namespace fs=std::filesystem;
+    Run actual(2,n,periodic,true);Reference reference(2,n,periodic);
+    // The hand-seeded admissible fixture has zero initialization repairs.
+    // The production converter sizes this ledger before Driver combines it.
+    for(int id:actual.control.tree->GetActiveBlocks()) {
+        auto& repairs=actual.control.pool->GetBlock(id).fluid_state.stage_repairs;
+        require(std::all_of(repairs.values.begin(),repairs.values.end(),[](double value){return value==0.;}),
+            "IO fixture unexpectedly has initialization repairs");
+        repairs.reset(n);
+        actual.controller.repairs.combine(repairs);
+    }
+    seed_device_regrid(actual,reference);auto host=std::make_unique<HostMacro>(reference);
+    for(int pass=0;pass<2;++pass) {
+        const bool changed=actual.runtime.perform_regrid(0,0.);
+        require(changed==serial_device_regrid_reference(reference,host,0.),"IO startup selection mismatch");
+    }
+    actual.install_device();actual.runtime.prepare_device_flux_plans();DeviceMacro device(actual);
+    const auto initial=macro_compare(actual,reference);
+    const auto directory=fs::path(io_directory)/("r"+std::to_string(ranks)+"-m"+std::to_string(int(macro_method))
+        +"-n"+std::to_string(n)+"-p"+std::to_string(periodic));
+    actual.config.io.out_dir=directory.string();actual.config.io.base_name="native";
+    const auto provenance=io::inspect_checkpoint_provenance(actual.config,actual.species,
+        dispatch::EosId::Ideal,false,"none",false);
+    // This deliberately named native harness is not a loaded application case.
+    // Actual application output later uses make_plot_source_identity unchanged.
+    io::PlotSourceIdentity identity;
+    identity.formal=true;identity.binary_sha256=core::running_executable_sha256();
+    identity.effective_config_sha256=core::string_sha256("SyntheticCudaMpiCheckpoint-v1\n"
+        +io::output_domain_sha256(actual.config)+"\n"+std::to_string(int(macro_method))+"\n"
+        +std::to_string(n)+"\n"+std::to_string(periodic));
+    identity.eos_identity_sha256=core::string_sha256("SyntheticIdealGas-gamma1.4-species"+std::to_string(n));
+    const auto pressure=+[](const FluidVector& u,const double* x,const void* eos) {
+        return static_cast<const IdealGas*>(eos)->get_pressure(u,x);
+    };
+    const auto temperature=+[](const FluidVector& u,const double* x,const void* eos) {
+        return static_cast<const IdealGas*>(eos)->get_temperature(u.rho,state::recover(u).internal,x);
+    };
+    const auto gamma=+[](const FluidVector&,const double*,const void*){return 1.4;};
+    driver::DriverIO output(actual.runtime,actual.controller,provenance,identity,pressure,temperature,gamma,&actual.eos);
+    // Match production's initial output, before the first macro can align
+    // the unequal per-rank upload token high-watermarks.
+    output.write_checkpoint(123.,false);
+    for(int step=0;step<2;++step){const double dt=device.step();host->step(dt);macro_compare(actual,reference);}
+    // Distinct per-rank accounting values exercise original serialization.
+    actual.controller.repairs.values[1]=.125+rank;
+    const int index=actual.controller.chk_file_index;
+    std::ostringstream name;name<<"native_chk_"<<std::setw(4)<<std::setfill('0')<<index<<".collection";
+    const auto accepted=directory/name.str();
+    if(faults) {
+        using Phase=driver::DriverIO::OutputPhase;
+        for(int victim:{0,ranks-1})for(auto phase:{Phase::Prepared,Phase::ShardWritten,Phase::Verified,Phase::ReadyToPublish}) {
+            const auto before=snapshot(actual,Slot::Current,Region::Interior);
+            bool reached=false;
+            rejected([&]{try { output.write_checkpoint(123.,true,[&](Phase current){
+                if(rank==victim&&current==phase){reached=true;throw std::runtime_error("injected output rejection");}
+            }); } catch(const std::exception& error) {
+                std::cout<<"output rejected rank="<<rank<<" victim="<<victim<<" phase="<<int(phase)
+                    <<" reason="<<error.what()<<std::endl;throw;
+            }});
+            require(rank!=victim||reached,"output failed before its injected phase");
+            require(actual.controller.chk_file_index==index&&!fs::exists(accepted),"failed output consumed or published identity");
+            unchanged(snapshot(actual,Slot::Current,Region::Interior),before);
+        }
+    }
+    output.write_checkpoint(123.,true);
+    require(actual.controller.chk_file_index==index+1,"accepted output index did not advance once");
+    const auto manifest=io::read_output_collection(accepted);
+    require(manifest.shards.size()==static_cast<std::size_t>(ranks)&&manifest.kind=="checkpoint",
+        "native checkpoint collection is incomplete");
+    if(faults) {
+        for(int fault=0;fault<7;++fault) {
+            const auto broken=directory/("broken-"+std::to_string(fault)+".collection");
+            mpi::prepare([&] {
+                if(rank)return;
+                fs::copy(accepted,broken,fs::copy_options::recursive);
+                auto altered=io::read_output_collection(broken);
+                const auto first=io::output_shard_path(broken,0),last=io::output_shard_path(broken,ranks-1);
+                if(fault==0)fs::remove(last);
+                if(fault==1) {
+                    std::fstream file(first,std::ios::in|std::ios::out|std::ios::binary);
+                    char byte=0;file.read(&byte,1);file.seekp(0);byte^=1;file.write(&byte,1);file.close();
+                    require(bool(file),"could not corrupt test shard");
+                }
+                if(fault==2) {
+                    const auto temp=broken/"swap.h5";fs::rename(first,temp);fs::rename(last,first);fs::rename(temp,last);
+                }
+                if(fault>=3) {
+                    if(fault==3)altered.domain_sha256=std::string(64,'0');
+                    if(fault==4||fault==5) {
+                        {
+                            HighFive::File file(first.string(),HighFive::File::ReadWrite);
+                            if(fault==4)file.getAttribute("time").write(actual.controller.t_current+1.);
+                            else {
+                                auto field=file.getDataSet("Data/rho");
+                                std::vector<double> values(field.getElementCount());field.read(values.data());
+                                values.front()=0.;field.write_raw(values.data());
+                            }
+                            file.flush();
+                        }
+                        altered.shards[0].bytes=fs::file_size(first);
+                        altered.shards[0].sha256=core::file_sha256(first.string());
+                    }
+                    if(fault==6)altered.topology_sha256=std::string(64,'0');
+                    fs::remove(broken/"manifest.txt");io::write_output_collection(broken,altered);
+                }
+            });
+            rejected([&] {
+                try {Run invalid(2,n,periodic,true,broken.string());}
+                catch(const std::exception&error) {
+                    std::cout<<"restart rejected rank="<<rank<<" case="<<fault<<" reason="<<error.what()<<std::endl;throw;
+                }
+            });
+        }
+        const auto partial=directory/"unpublished.partial";
+        mpi::prepare([&]{if(!rank)fs::copy(accepted,partial,fs::copy_options::recursive);});
+        rejected([&]{Run invalid(2,n,periodic,true,partial.string());});
+    }
+    Run restored(2,n,periodic,true,accepted.string());
+    restored.install_device();restored.runtime.prepare_device_flux_plans();DeviceMacro resumed(restored);
+    same_interiors(actual,restored);macro_compare(restored,reference);
+    // Original controller advances checkpoint index when constructing continuation.
+    require(restored.controller.chk_file_index==actual.controller.chk_file_index,"restored output sequence differs");
+    for(int step=0;step<3;++step) {
+        const double dt=device.step();require(same(dt,resumed.step()),"restart changed the selected timestep");
+        host->step(dt);macro_compare(actual,reference);const auto totals=macro_compare(restored,reference);
+        same_interiors(actual,restored);
+        if(periodic)for(std::size_t f=0;f<totals.size();++f)
+            require(std::abs(totals[f]-initial[f])<=2.e-11L+2.e-12L*std::abs(initial[f]),
+                "restart periodic conservation failed");
+        if(step==1) {
+            actual.config.amr.refine_threshold=restored.config.amr.refine_threshold=reference.config.amr.refine_threshold=.9;
+            actual.config.amr.derefine_threshold=restored.config.amr.derefine_threshold=reference.config.amr.derefine_threshold=.8;
+            const auto time=actual.controller.t_current;
+            const bool changed=actual.runtime.perform_regrid(actual.controller.step_count,time);
+            require(changed==restored.runtime.perform_regrid(restored.controller.step_count,time)
+                &&changed==serial_device_regrid_reference(reference,host,time),"restart regrid changed selection");
+            same_interiors(actual,restored);macro_compare(actual,reference);macro_compare(restored,reference);
+        }
+    }
+    if(!rank)std::cout<<"io PASS ranks="<<ranks<<" method="<<int(macro_method)<<" species="<<n
+        <<" periodic="<<periodic<<" faults="<<faults<<" resumed_steps=3"<<std::endl;
+}
+
 }
 int main(int argc,char** argv) {
     int provided=0;MPI_Init_thread(&argc,&argv,MPI_THREAD_FUNNELED,&provided);
-    MPI_Comm_rank(MPI_COMM_WORLD,&rank);int size=0;MPI_Comm_size(MPI_COMM_WORLD,&size);
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);int size=0;MPI_Comm_size(MPI_COMM_WORLD,&size);ranks=size;
+    io_mode=argc==3&&(std::string(argv[1])=="--io"||std::string(argv[1])=="--io-smoke");
+    if(io_mode)io_directory=argv[2];
+    root_mode=io_mode||(argc==2&&(std::string(argv[1])=="--root"||std::string(argv[1])=="--root-smoke"));
     try {
-        require(size==2&&provided>=MPI_THREAD_FUNNELED,"test requires two FUNNELED ranks");
+        require((size==2||(root_mode&&size==4))&&provided>=MPI_THREAD_FUNNELED,"test requires two or four qualified FUNNELED ranks");
         int devices=0;const int local=cudaGetDeviceCount(&devices)==cudaSuccess&&devices>0?1:0;
         int ready=0;MPI_Allreduce(&local,&ready,1,MPI_INT,MPI_MIN,MPI_COMM_WORLD);
         if(!ready){if(!rank)std::cout<<"SKIP no CUDA device\n";MPI_Finalize();return 77;}
         flux_mode=argc==2&&std::string(argv[1])=="--flux";
         macro_mode=argc==2&&std::string(argv[1])=="--macro";
         ownership_mode=argc==2&&std::string(argv[1])=="--ownership";
-        regrid_mode=argc==2&&(std::string(argv[1])=="--regrid"||std::string(argv[1])=="--regrid-smoke");
+        regrid_mode=root_mode||(argc==2&&(std::string(argv[1])=="--regrid"||std::string(argv[1])=="--regrid-smoke"));
         mixed=regrid_mode||ownership_mode||macro_mode||flux_mode||(argc==2&&std::string(argv[1])=="--mixed");
-        if(regrid_mode&&std::string(argv[1])=="--regrid-smoke")run_regrid(1,false);
+        if(io_mode) {
+            std::array<char,36> identity{};
+            mpi::prepare([&] {
+                require(std::filesystem::path(io_directory).is_absolute(),"IO witness output must be absolute");
+                if(!rank) {
+                    const auto value=core::new_run_identity();std::copy_n(value.data(),identity.size(),identity.data());
+                }
+            });
+            mpi::check(MPI_Bcast(identity.data(),identity.size(),MPI_CHAR,0,MPI_COMM_WORLD));
+            mpi::prepare([&] {
+                const auto parent=std::filesystem::path(io_directory);
+                io_directory=(parent/std::string(identity.data(),identity.size())).string();
+                if(!rank) {
+                    std::filesystem::create_directories(parent);
+                    require(std::filesystem::create_directory(io_directory),"IO witness identity already exists");
+                    std::cout<<"checkpoint evidence="<<io_directory<<std::endl;
+                }
+            });
+        }
+        if(io_mode&&std::string(argv[1])=="--io-smoke"){macro_method=dispatch::TimeIntegratorId::Rk2;run_io(4,true,true);}
+        else if(root_mode&&std::string(argv[1])=="--root-smoke")run_root(1,false);
+        else if(regrid_mode&&std::string(argv[1])=="--regrid-smoke")run_regrid(1,false);
         else if(macro_mode||ownership_mode||regrid_mode)for(auto method:{dispatch::TimeIntegratorId::Euler,dispatch::TimeIntegratorId::Rk2,
                 dispatch::TimeIntegratorId::Rk3}) {
             macro_method=method;
             for(int species:{1,4,37})for(bool periodic:{false,true}) {
-                if(regrid_mode)run_regrid(species,periodic);
+                if(io_mode)run_io(species,periodic,method==dispatch::TimeIntegratorId::Euler&&species==1&&!periodic);
+                else if(root_mode)run_root(species,periodic);else if(regrid_mode)run_regrid(species,periodic);
                 else if(ownership_mode)run_ownership(species,periodic);else run_macro(species,periodic);
             }
         }
@@ -1251,13 +1529,15 @@ int main(int argc,char** argv) {
         else if(mixed)for(int species:{1,4,37})for(bool periodic:{false,true})run(2,species,periodic);
         else for(int dim:{1,2,3})for(int species:{1,4,37})for(bool periodic:{false,true})run(dim,species,periodic);
         std::array<std::uint64_t,3> traffic{boundary_h2d,boundary_d2h,observed_device_used};
-        std::array<std::uint64_t,6> all{};
+        std::vector<std::uint64_t> all(3*ranks);
         MPI_Gather(traffic.data(),3,MPI_UINT64_T,all.data(),3,MPI_UINT64_T,0,MPI_COMM_WORLD);
-        if(!rank&&!flux_mode&&!macro_mode)for(int r=0;r<2;++r)std::cout<<"boundary traffic rank="<<r
+        if(!rank&&!flux_mode&&!macro_mode&&!root_mode)for(int r=0;r<ranks;++r)std::cout<<"boundary traffic rank="<<r
             <<" h2d_including_metadata="<<all[3*r]<<" d2h="<<all[3*r+1]
             <<" observed_device_used_including_test_and_contexts="<<all[3*r+2]<<std::endl;
         if(!rank) {
-            if(regrid_mode)std::cout<<"PASS CUDA MPI regrid comparisons="<<checks;
+            if(io_mode)std::cout<<"PASS CUDA MPI checkpoint ranks="<<ranks<<" comparisons="<<checks;
+            else if(root_mode)std::cout<<"PASS CUDA MPI root ranks="<<ranks<<" comparisons="<<checks;
+            else if(regrid_mode)std::cout<<"PASS CUDA MPI regrid comparisons="<<checks;
             else if(ownership_mode)std::cout<<"PASS CUDA MPI ownership layouts=18 comparisons="<<checks;
             else if(macro_mode)std::cout<<"PASS CUDA MPI macro layouts=18 comparisons="<<checks;
             else if(flux_mode)std::cout<<"PASS CUDA MPI flux layouts=6 weighted_stages=24 flux_reflux_checks="<<checks;

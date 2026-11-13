@@ -185,7 +185,7 @@ void DriverRuntime::begin_distributed_hydro_attempt(const Numerics::IHydroSolver
     } catch(...) { failure=std::current_exception(); }
     try {
         amr_ctrl.CompleteDistributedHydroPhase(failure);
-        synchronize_distributed_hydro_clock();
+        synchronize_distributed_clock();
     }
     catch(...) {if(prepared_here)discard_distributed_hydro_attempt();throw;}
 }
@@ -246,7 +246,7 @@ void DriverRuntime::commit_distributed_hydro_attempt(double dt) {
 }
 
 /** Align issued identities before a macrostep and after collective recovery. */
-void DriverRuntime::synchronize_distributed_hydro_clock() {
+void DriverRuntime::synchronize_distributed_clock() {
     amr_ctrl.CompleteDistributedHydroPhase(nullptr);
 #if ARCH_MPI_ENABLED
     const std::array<std::uint64_t,2> local{scheduler_clock.last_token(),scheduler_clock.last_version()};
@@ -545,20 +545,34 @@ void DriverRuntime::trace_backend_operation(backend::BackendOperation operation,
 /** Register initial block identities and their state residency. */
 void DriverRuntime::initialize_topology()
 {
-    for (int id:amr_ctrl.tree->GetActiveBlocks())
-        (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
-    auto initial_candidate =
-        topology_registry.stage_adoption(topology::collect_topology_observations(
-            observe_topology(), amr_ctrl.tree->PartitionRank(),
-            amr_ctrl.tree->PartitionSize()));
-    const auto initial_blocks=initial_candidate.blocks();
-    const bool distributed=amr_ctrl.tree->PartitionSize()>1&&std::any_of(
-        initial_blocks.begin(),initial_blocks.end(),[](const auto& b){return b.logical.level>0;});
-    amr_ctrl.tree->UpdateNeighbors(config, initial_blocks);
+    const bool distributed=amr_ctrl.tree->PartitionSize()>1;
+    const auto complete=[&](std::exception_ptr failure) {
+        if(distributed)amr_ctrl.CompleteDistributedHydroPhase(failure);
+        else if(failure)std::rethrow_exception(failure);
+    };
+    // Local boundary/observation allocation must finish everywhere before
+    // collecting ownership, including roots and checkpoint reconstruction.
+    std::vector<topology::TopologyObservation> observations;
+    std::exception_ptr preparation_failure;
+    try {
+        for(int id:amr_ctrl.tree->GetActiveBlocks())
+            (void)bc_handler.logical_plan(amr_ctrl.pool->GetBlock(id).grid);
+        observations=observe_topology();
+    } catch(...) {preparation_failure=std::current_exception();}
+    complete(preparation_failure);
+    observations=topology::collect_topology_observations(observations,
+        amr_ctrl.tree->PartitionRank(),amr_ctrl.tree->PartitionSize());
+    std::optional<topology::TopologyIdentityRegistry::Candidate> initial_candidate;
+    preparation_failure=nullptr;
+    try {
+        initial_candidate.emplace(topology_registry.stage_adoption(observations));
+        amr_ctrl.tree->UpdateNeighbors(config,initial_candidate->blocks());
+    } catch(...) {preparation_failure=std::current_exception();}
+    complete(preparation_failure);
     std::unique_ptr<StateResidencyLedger> staged_initial_ledger;
     std::vector<amr::BlockHandle> staged_initial_handles;
     const auto initial_topology = topology_registry.commit_after_success(
-        std::move(initial_candidate), [&](const auto& proposed) {
+        std::move(*initial_candidate), [&](const auto& proposed) {
             std::unique_ptr<StateResidencyLedger> replacement;
             scheduler::PublicationWitness initial_witness{};
             std::exception_ptr failure;
@@ -589,7 +603,7 @@ void DriverRuntime::initialize_topology()
                 [](StateSlot, arch::state::StateVersion,
                    arch::state::CompletionToken token) { return token; });
             staged_initial_ledger = std::move(replacement);
-        });
+        },complete);
     stage_handles = std::move(staged_initial_handles);
     residency_ledger = std::move(staged_initial_ledger);
     if (initial_topology.handles_in_observation_order != stage_handles)

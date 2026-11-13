@@ -96,6 +96,21 @@ if(ARCH_ENABLE_MPI)
             ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_cuda_mpi_runtime> ${MPIEXEC_POSTFLAGS} --regrid)
     set_tests_properties(mpi_cuda_regrid_2 PROPERTIES
         SKIP_RETURN_CODE 77 TIMEOUT 1200 PROCESSORS 2 LABELS "mpi;cuda")
+    foreach(ranks IN ITEMS 2 4)
+        add_test(NAME mpi_cuda_root_startup_${ranks}
+            COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${ranks}
+                ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_cuda_mpi_runtime> ${MPIEXEC_POSTFLAGS} --root)
+        set_tests_properties(mpi_cuda_root_startup_${ranks} PROPERTIES
+            SKIP_RETURN_CODE 77 TIMEOUT 1800 PROCESSORS ${ranks} LABELS "mpi;cuda"
+            ENVIRONMENT "OMP_NUM_THREADS=1;OMP_DYNAMIC=FALSE")
+        add_test(NAME mpi_cuda_checkpoint_${ranks}
+            COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${ranks}
+                ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_cuda_mpi_runtime> ${MPIEXEC_POSTFLAGS}
+                --io "${CMAKE_CURRENT_BINARY_DIR}/Testing/cuda-checkpoint-r${ranks}")
+        set_tests_properties(mpi_cuda_checkpoint_${ranks} PROPERTIES
+            SKIP_RETURN_CODE 77 TIMEOUT 1800 PROCESSORS ${ranks} LABELS "mpi;cuda;io"
+            ENVIRONMENT "OMP_NUM_THREADS=1;OMP_DYNAMIC=FALSE")
+    endforeach()
     add_executable(arch_cuda_mpi_staging
         tests/cuda/amr/test_cuda_mpi_staging.cu
         tests/cuda/amr/CudaMpiStagingPlan.cpp)

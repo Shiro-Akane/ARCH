@@ -78,8 +78,18 @@ void validate_output_state(DriverRuntime& runtime, PressureFunc pressure,
 }
 }
 /** Complete actual ghosts/materialization and publish a validated native plot. */
-void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
+void DriverIO::validate_current_output()
 {
+    validate_output_state(runtime,p_func,t_func,gamma1_func,eos);
+}
+
+void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields,
+    const std::function<void(OutputPhase)>& observer)
+{
+    if(runtime.control().tree->PartitionSize()>1) {
+        write_distributed_output(false,0.0,false,extra_fields,observer); return;
+    }
+    if(observer)throw std::logic_error("Collective output observers require a distributed topology");
     const auto start = Clock::now();
     auto& amr_ctrl = runtime.control();
     const auto& config = runtime.configuration();
@@ -101,11 +111,13 @@ void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
  * Materialization already performs ensure_fluid_ghosts first; an extra call
  * would resample user BC twice.
  */
-void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
+void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid,
+    const std::function<void(OutputPhase)>& observer)
 {
-    // Distributed restart is not yet qualified. Never emit a partial mesh
-    // using the serial checkpoint schema, even at the implicit terminal write.
-    if(runtime.control().tree->PartitionSize()>1)return;
+    if(runtime.control().tree->PartitionSize()>1) {
+        write_distributed_output(true,dt_burn_global,resume_after_regrid,{},observer); return;
+    }
+    if(observer)throw std::logic_error("Collective output observers require a distributed topology");
     const auto start = Clock::now();
     auto& amr_ctrl = runtime.control();
     const auto& config = runtime.configuration();

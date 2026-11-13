@@ -108,7 +108,7 @@ double execute_driver_macro_attempts(DriverRuntime& runtime,SimulationController
         runtime.discard_distributed_hydro_attempt();
         burn_advice=saved_burn_advice;
         // No next attempt/output may observe a peer that has not restored yet.
-        runtime.synchronize_distributed_hydro_clock();
+        runtime.synchronize_distributed_clock();
         throw;
     }
 }

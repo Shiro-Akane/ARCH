@@ -288,7 +288,7 @@ jobs:
             cmake --preset cpu-release -B "build-ci/mpi/$mode" \
               -DBUILD_TESTING=ON -DARCH_ENABLE_KLU=OFF -DARCH_ENABLE_MPI="$mode" \
               -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-ci/mpi/$mode/bin"
-            targets=(ARCH arch_topology_transaction arch_runtime_probe_capabilities arch_topology_ownership arch_topology_neighbors arch_coarse_fine_exchange arch_flux_reflux_exchange arch_distributed_exchange arch_distributed_hydro_stage)
+            targets=(ARCH arch_output_collection arch_topology_transaction arch_runtime_probe_capabilities arch_topology_ownership arch_topology_neighbors arch_coarse_fine_exchange arch_flux_reflux_exchange arch_distributed_exchange arch_distributed_hydro_stage)
             if test "$mode" = ON; then targets+=(arch_mpi_fixed_grid); fi
             python3 tools/run_memory_guarded.py \
               --min-available-mib 1536 --max-swap-growth-mib 512 --pressure-guard \

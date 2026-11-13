@@ -251,9 +251,18 @@ void DriverRuntime::ensure_fluid_ghosts(StateSlot slot)
 /** Download accepted resident state only when host output needs it. */
 void DriverRuntime::materialize_current_for_host()
 {
+    // A call from inside one rank's Hydro callback is a local contract error;
+    // the active macro owns its collective rejection. Never enter new MPI work.
     if(hydro_attempt_)throw std::logic_error("Cannot expose unaccepted Hydro state");
+    const auto complete = [&](auto&& work) {
+        std::exception_ptr failure;
+        try { work(); } catch (...) { failure = std::current_exception(); }
+        if (amr_ctrl.tree->PartitionSize() > 1) amr_ctrl.CompleteDistributedHydroPhase(failure);
+        else if (failure) std::rethrow_exception(failure);
+    };
     ensure_fluid_ghosts(StateSlot::Current);
     if (!compute_backend) return;
+    complete([&] {
     const auto& active = amr_ctrl.tree->GetActiveBlocks();
     for (std::size_t index = 0; index < stage_handles.size(); ++index) {
         const auto coherence = residency_ledger->inspect(
@@ -276,5 +285,6 @@ void DriverRuntime::materialize_current_for_host()
                 arch::backend::BackendOperation::Materialize);
         }
     }
+    });
 }
 } // namespace arch::driver

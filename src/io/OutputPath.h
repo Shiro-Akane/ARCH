@@ -3,11 +3,22 @@
  */
 #pragma once
 #include <string>
+#include <iomanip>
+#include <sstream>
 #if ARCH_MPI_ENABLED
 #include <mpi.h>
 #endif
 namespace io
 {
+/** Preserve the original native plot filename in serial and shard writers. */
+inline std::string plot_filename(const std::string& base_name,
+    const std::string& solver_name,int index)
+{
+    std::ostringstream name;
+    name << base_name << "_" << solver_name << "_plt_"
+         << std::setw(4) << std::setfill('0') << index << ".h5";
+    return name.str();
+}
 inline std::string output_directory(const std::string &directory)
 {
 #if ARCH_MPI_ENABLED

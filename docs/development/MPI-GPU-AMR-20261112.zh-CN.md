@@ -417,7 +417,8 @@ sum-of-pool-capacities 对 global max_blocks 的拒绝。每种构建共 234 次
 最终回归包含 Release/Debug 的 CUDA MPI 与 store/scheduler 检查、原 CUDA AMR
 exchange，共 22 项；CPU Release/Debug ×
 MPI ON/OFF 共 26 项。另有 629 项 tooling，均通过且无跳过。
-额外 CUDA ON / MPI OFF 的完整后端构建仍在进行，尚未计入执行通过数。
+额外 CUDA ON / MPI OFF 的完整后端构建尚未完成，未计入执行通过数；
+已保留完成的对象缓存，将在 A2/A3 接口整合后继续最终版本构建。
 完整命令、失败记录、JUnit 和哈希保存在
 /home/ubuntu/projects/ARCH-mpi-evidence-gpu-regrid-20261113；
 [结构化摘要](../../validation/backend/results/mpi-gpu-regrid-20261113/summary.json) 随提交保存。
@@ -480,3 +481,55 @@ ec57fab3889ee96777e81883d1acf54be981166f76c9cfb997c862ed55c5be9c。
 完整清单、归档、恢复说明和删除日志保存在
 /home/ubuntu/projects/ARCH-mpi-storage-20261113；
 [清理摘要](../../validation/backend/results/mpi-storage-20261113/summary.json) 随源码发布。
+
+## A2/A3 首个输出增量：根网格、集合发布与原生重启（2026-11-13）
+
+原根网格入口可建立二维 Cartesian、level 0..2 的非空 MPI 分区。原 Driver
+延迟初始化顺序被纳入见证：先完成 Host 初始细化，再建立 Device store，
+随后在原 Runtime 上连续执行宏步、读回、细化与粗化。拓扑采用前的本地
+边界计划、观察记录与分配失败先共同确认，复用原 registry 提交边界。
+
+真实读回曾使不同叶数的 rank 发出不同数量的本地 transfer token。现在迁移、
+重网格和宏步复用同一调度时钟高水位同步；物理时间、已接受版本、epoch 和 dt
+仍必须严格一致。宏步内部单侧 materialize 的拒绝保持本地抛出，由已有宏步
+协调失败，避免在错误路径中额外进入 collective。
+
+DriverIO 调用原科学 HDF5 序列化。每次输出先写入同目录 UUID staging，
+各 rank 的原生文件统一为 rank-N/state.h5。manifest 记录完整 rank 集合、
+叶数、字节数、SHA-256、根域、逻辑所有权、步数、时间以及原正式身份。
+所有分片完整后才以不可覆盖的原子重命名发布 .collection；失败保留 staging，
+不推进输出序号，不覆盖旧集合。该保证是运行期间的完整可见性，不宣称断电持久性。
+原 OutputPath 现在统一拥有原绘图文件名规则，保留求解器名称。
+
+原生恢复先验证集合及本地容量、所有权、时间和 controller 一致性，再调用原
+checkpoint 科学检查和 restore 流程。新 Runtime 重建句柄、真实 EOS/ghost 与
+Device 存储。仅恢复 Current；Next/Scratch 仍由原推进器建立，不假装保存了
+未提交的时间状态。重启限相同 rank 数和共享输出文件系统。
+
+Release/Debug 各自完成 2、4 rank × Euler/RK2/RK3 × species 1/4/37 ×
+outflow/periodic 的根启动与 checkpoint 矩阵。每种构建的 checkpoint 见证
+合计 432 次字段对照、32 次共同拒绝；包含首个宏步前保存、两侧 rank 的四阶段
+发布失败，以及缺失、损坏、交换分片、错误域/拓扑/时钟和重新计算校验和后的
+非法物理字段。恢复后继续三个 Device 时间步及一次重网格，与连续 Device
+原生字段逐位一致，并继续对照原 Host 推进器和原周期守恒门槛。
+
+手工见证曾使用不存在的 HighFive read_raw 接口、无效的小数事件数，以及缺少
+组分布局的初始 repair 行。修正限测试夹具，初始 repair 重建前明确断言为零；
+原科学校验没有放宽。真实 CPU 应用另发现绘图文件名包含 solver，发布层漏算
+这一部分；现由同一原文件名函数解决。全部失败日志保留。
+
+基础回归为 68 项构建/CTest 组合；对初始输出与文件名修正另执行 4 项 checkpoint
+复验，全部通过，无跳过。输出集合单元检查包含 86 次拒绝；该项加入原 CI 的
+CPU 与 MPI ON/OFF 完整性门槛。629 项 tooling 通过。原固定网格生产脚本的
+21 项对照保持逐位一致，并保留 7 项启动拒绝；reader 同时支持新集合和
+已封存的历史/串行文件。数学、物理公式和验收容差没有修改。
+
+证据与逐文件档案在 /home/ubuntu/projects/ARCH-mpi-evidence-gpu-application-20261113；
+[结构化摘要](../../validation/backend/results/mpi-gpu-checkpoint-20261113/summary.json)
+随源码保存。原生 GPU checkpoint 的 producer 身份明确标记为合成夹具；
+CPU 应用输出则使用真实已加载配置和正式身份，二者没有混作应用 GPU 验收。
+
+此增量仍保留应用 GPU MPI/AMR 与重启预检。下一步接入实际应用的共同启动身份、
+集合恢复和支持矩阵，并验证迁移后保存、恢复后同胞共址与重网格的组合。额外
+CUDA ON/MPI OFF 构建仍需完成。单张 H100 证据不扩展为多 GPU、多节点、长期
+物理演化或性能结论。

@@ -96,6 +96,7 @@ set(ARCH_DISPATCH_SOURCES
     src/driver/SolverDispatch.cpp
     src/driver/dispatch/ExecutionPreflight.cpp
     src/driver/io/DriverIO.cpp
+    src/driver/io/DriverDistributedIO.cpp
     src/driver/stages/GravityStage.cpp
     src/amr/elliptic/EllipticMeshAdapter.cpp)
 foreach(dir IN LISTS DISPATCH_SRC_DIRS)

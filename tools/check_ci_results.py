@@ -44,7 +44,7 @@ CPU_COVERAGE_ANCHORS = frozenset({
     "topology_transaction", "burn_mainline_reference",
     "ppm_limiter_math", "conservative_flux_limiter",
     "reduction_contract", "same_level_exchange_plan",
-    "checkpoint_compatibility", "tabular_eos_ideal_gas",
+    "checkpoint_compatibility", "output_collection", "tabular_eos_ideal_gas",
     "sparse_klu_161_equations",
     "shared_stage_scheduler", "gravity_stage_contract", "checkpoint_temporal_comparison",
     "poisson_multigrid_contract", "poisson_multigrid_analytic",
@@ -62,6 +62,7 @@ DRIVER_CUDA_COVERAGE_ANCHORS = frozenset({
     "cuda_conservative_acceptance", "eos_host_device_parity",
 })
 MPI_OFF_COVERAGE_ANCHORS = frozenset({
+    "output_collection",
     "mpi_execution_preflight", "execution_preflight_contract", "runtime_probe_and_capabilities",
     "topology_transaction", "topology_ownership", "topology_neighbors", "coarse_fine_exchange", "flux_reflux_exchange", "distributed_exchange", "distributed_hydro_stage",
 })

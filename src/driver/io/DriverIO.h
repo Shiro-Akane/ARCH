@@ -12,6 +12,7 @@
 #include <chrono>
 #include <cstdint>
 #include <span>
+#include <functional>
 
 #include "io/IO.h"
 
@@ -72,11 +73,18 @@ public:
         : runtime(runtime), ctrl(controller), checkpoint_provenance(provenance),
           plot_source_identity(plot_identity),
           p_func(pressure), t_func(temperature), gamma1_func(gamma1), eos(eos) {}
-    void write_plot(std::span<const io::PlotScalarField> extra_fields = {});
-    void write_checkpoint(double dt_burn_global, bool resume_after_regrid);
+    enum class OutputPhase { Prepared, ShardWritten, Verified, ReadyToPublish };
+    void write_plot(std::span<const io::PlotScalarField> extra_fields = {},
+        const std::function<void(OutputPhase)>& observer = {});
+    void write_checkpoint(double dt_burn_global, bool resume_after_regrid,
+        const std::function<void(OutputPhase)>& observer = {});
     void write_measurements(std::span<const CudaDiffusionScheduleRecord> cuda_diffusion_schedule,
                             const CpuStageTimings& cpu_stages);
 private:
+    void validate_current_output();
+    void write_distributed_output(bool checkpoint, double dt_burn_global, bool resume_after_regrid,
+        std::span<const io::PlotScalarField> extra_fields,
+        const std::function<void(OutputPhase)>& observer);
     using Clock = std::chrono::steady_clock;
     Clock::time_point started_ = Clock::now();
     std::string plot_run_id_; // One output session; new on restart invocation.

@@ -73,11 +73,8 @@ void write_plt(amr::AMRControl &amr_ctrl,
     if (!fs::exists(io::output_directory(config.io.out_dir)))
         fs::create_directories(io::output_directory(config.io.out_dir));
 
-    std::ostringstream oss;
-    oss << io::output_directory(config.io.out_dir) << "/"
-        << config.io.base_name << "_"
-        << config.numerics.solver_name << "_plt_"
-        << std::setw(4) << std::setfill('0') << file_index << ".h5";
+    const auto filename = fs::path(io::output_directory(config.io.out_dir))
+        / io::plot_filename(config.io.base_name,config.numerics.solver_name,file_index);
 
     int dim = 3;
     std::string geom = "cartesian";
@@ -341,5 +338,5 @@ void write_plt(amr::AMRControl &amr_ctrl,
     io::PlotSourceIdentity source_identity=*frozen_source_identity;
     source_identity.run_id=run_id;
     (void)runtime_provenance; // Already incorporated at the immutable freeze boundary.
-    io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map, has_native_grid ? &native_grid : nullptr, &source_identity, &field_metadata);
+    io::write_hdf5_plt_impl(filename.string(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map, has_native_grid ? &native_grid : nullptr, &source_identity, &field_metadata);
 }

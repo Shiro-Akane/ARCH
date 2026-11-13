@@ -1,0 +1,787 @@
+{
+  "stage": "A2/A3 native output integration",
+  "status": "native root startup and checkpoint continuation accepted; application GPU MPI/AMR remains gated",
+  "base_commit": "80695f146fc832aade0ddfa2452010fb8ead828a",
+  "branch": "MPI/gpu-amr-integration",
+  "scope": {
+    "gpu": "one H100-20C shared by ranks",
+    "ranks": [
+      2,
+      4
+    ],
+    "dimension": 2,
+    "geometry": "Cartesian",
+    "levels": [
+      0,
+      1,
+      2
+    ],
+    "integrators": [
+      "Euler",
+      "RK2",
+      "RK3"
+    ],
+    "species": [
+      1,
+      4,
+      37
+    ],
+    "boundaries": [
+      "outflow",
+      "periodic"
+    ],
+    "field_gate": "2e-13 * max(1,abs(a),abs(b))",
+    "conservation_gate": "2e-11 absolute + 2e-12 relative"
+  },
+  "implementation": [
+    "Original root constructor and deferred Host regrids feed the original Device runtime.",
+    "Local materialization token high-watermarks synchronize before migration/regrid; physical versions and clocks still agree exactly.",
+    "Original HDF5 serializers write rank-local native shards; complete immutable collections publish by atomic non-replacing rename.",
+    "Original checkpoint reader and restore retain scientific checks; manifests verify rank count, domain, ownership, hashes and clocks.",
+    "Existing OutputPath owns the plot filename rule for serial and collection writers.",
+    "No new MPI allocator, topology manager or time integration system; no numerical implementation or tolerance changes."
+  ],
+  "validation": {
+    "ctest_executions": 72,
+    "unique_build_test_combinations": 68,
+    "tooling": 629,
+    "failed": 0,
+    "skipped": 0,
+    "results": {
+      "native-release-regression-1": {
+        "passed": 17,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [
+          "shared_stage_scheduler",
+          "device_block_store_lifecycle",
+          "output_collection",
+          "mpi_cuda_runtime_2",
+          "mpi_cuda_mixed_2",
+          "mpi_cuda_flux_2",
+          "mpi_cuda_macro_2",
+          "mpi_cuda_ownership_2",
+          "mpi_cuda_regrid_2",
+          "mpi_cuda_root_startup_2",
+          "mpi_cuda_checkpoint_2",
+          "mpi_cuda_root_startup_4",
+          "mpi_cuda_checkpoint_4",
+          "cuda_regrid_transaction",
+          "cuda_store_lifecycle",
+          "cuda_amr_exchange",
+          "checkpoint_compatibility"
+        ],
+        "junit_sha256": "96ff54913f4e31197a337b64b67d13fe7b09ff08de9f295632b8c27046c460bc"
+      },
+      "native-debug-regression-1": {
+        "passed": 17,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [
+          "shared_stage_scheduler",
+          "device_block_store_lifecycle",
+          "output_collection",
+          "mpi_cuda_runtime_2",
+          "mpi_cuda_mixed_2",
+          "mpi_cuda_flux_2",
+          "mpi_cuda_macro_2",
+          "mpi_cuda_ownership_2",
+          "mpi_cuda_regrid_2",
+          "mpi_cuda_root_startup_2",
+          "mpi_cuda_checkpoint_2",
+          "mpi_cuda_root_startup_4",
+          "mpi_cuda_checkpoint_4",
+          "cuda_regrid_transaction",
+          "cuda_store_lifecycle",
+          "cuda_amr_exchange",
+          "checkpoint_compatibility"
+        ],
+        "junit_sha256": "634f4b7364a5567d3ed31cd19666ba1349412dde6bab38f8e5fdb63cf6215be9"
+      },
+      "cpu-release-regression-1": {
+        "passed": 10,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [
+          "state_residency",
+          "shared_stage_scheduler",
+          "device_block_store_lifecycle",
+          "output_collection",
+          "flux_reflux_exchange",
+          "mpi_flux_reflux_exchange_2",
+          "distributed_hydro_stage",
+          "mpi_distributed_hydro_stage_2_omp1",
+          "mpi_distributed_hydro_stage_2_omp2",
+          "checkpoint_compatibility"
+        ],
+        "junit_sha256": "8e22a92f77b37e43b70991eb93edf7feb81fba2136a3891f2d68da683e8b3024"
+      },
+      "cpu-debug-regression-1": {
+        "passed": 10,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [
+          "state_residency",
+          "shared_stage_scheduler",
+          "device_block_store_lifecycle",
+          "output_collection",
+          "flux_reflux_exchange",
+          "mpi_flux_reflux_exchange_2",
+          "distributed_hydro_stage",
+          "mpi_distributed_hydro_stage_2_omp1",
+          "mpi_distributed_hydro_stage_2_omp2",
+          "checkpoint_compatibility"
+        ],
+        "junit_sha256": "e0b4e3f9e0be0ed87412a79d0a006e6ce23470ada5d251d2964ec53ce1664812"
+      },
+      "cpu-release-serial-regression-1": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [
+          "state_residency",
+          "shared_stage_scheduler",
+          "device_block_store_lifecycle",
+          "output_collection",
+          "flux_reflux_exchange",
+          "distributed_hydro_stage",
+          "checkpoint_compatibility"
+        ],
+        "junit_sha256": "f071e138d9df8dd1608b7ea54ecdd0228136838f786d2c96263d7c4064d4e63d"
+      },
+      "cpu-debug-serial-regression-1": {
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [
+          "state_residency",
+          "shared_stage_scheduler",
+          "device_block_store_lifecycle",
+          "output_collection",
+          "flux_reflux_exchange",
+          "distributed_hydro_stage",
+          "checkpoint_compatibility"
+        ],
+        "junit_sha256": "7b8d6e11059c5f69e9461ab137526873dea619ba7f29c9fb3307ce303fe71fbd"
+      },
+      "checkpoint-release-regression-4": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [
+          "mpi_cuda_checkpoint_2",
+          "mpi_cuda_checkpoint_4"
+        ],
+        "junit_sha256": "883e58d555e3e902b05f4c535fcbc672e5778afb4650a0b339e62eabd3e89314",
+        "checkpoint": {
+          "layouts": 36,
+          "ranks": [
+            2,
+            4
+          ],
+          "initial_output_before_first_macro": true,
+          "comparisons": 432,
+          "collective_rejections": 32,
+          "continued_steps_per_layout": 3,
+          "post_restore_device_regrid": true,
+          "native_continuation_bitwise": true
+        }
+      },
+      "checkpoint-debug-regression-4": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [
+          "mpi_cuda_checkpoint_2",
+          "mpi_cuda_checkpoint_4"
+        ],
+        "junit_sha256": "86dc9ff4ddc5cc711c504c06810697cb41222ca1719a3437a3caa0bf7af9bbca",
+        "checkpoint": {
+          "layouts": 36,
+          "ranks": [
+            2,
+            4
+          ],
+          "initial_output_before_first_macro": true,
+          "comparisons": 432,
+          "collective_rejections": 32,
+          "continued_steps_per_layout": 3,
+          "post_restore_device_regrid": true,
+          "native_continuation_bitwise": true
+        }
+      }
+    },
+    "cpu_application_fixed_grid": {
+      "baseline_sha256": "d46df6360c2f556940465dfcb6044014c6c9efea4deef06793e60ec847f193ab",
+      "candidate_sha256": "ebd514653d842d5124175b16732496809b455b9f9392ba30336e6436223ab013",
+      "cases": [
+        {
+          "case": "Sod-Euler-HLLC",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015621798437273437,
+          "cells": 112
+        },
+        {
+          "case": "Sod-Euler-HLLC",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015621798437273437,
+          "cells": 112
+        },
+        {
+          "case": "Sod-Euler-HLLC",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015621798437273437,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 2,
+          "omp_threads": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC",
+          "ranks": 2,
+          "requested_backend": "auto",
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015695836880643764,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK3-HLL",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015756004964136087,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK3-HLL",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015756004964136087,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK3-HLL",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015756004964136087,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK2-HLLC",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364125473947,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK2-HLLC",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364125473947,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK2-HLLC",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364125473947,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK3-Roe",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364103603608,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK3-Roe",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364103603608,
+          "cells": 112
+        },
+        {
+          "case": "SmoothAdvection-RK3-Roe",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.009225364103603608,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC-reflecting",
+          "ranks": 1,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.011847974860846868,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC-reflecting",
+          "ranks": 2,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.011847974860846868,
+          "cells": 112
+        },
+        {
+          "case": "Sod-RK2-HLLC-reflecting",
+          "ranks": 4,
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.011847974860846868,
+          "cells": 112
+        },
+        {
+          "case": "Sod-Euler-HLLC",
+          "ranks": 5,
+          "global_pool_capacity": 8,
+          "rank_pool_capacities": [
+            1,
+            1,
+            2,
+            1,
+            3
+          ],
+          "snapshots": 17,
+          "fields": [
+            "DENS",
+            "ENER",
+            "ENTR",
+            "PRES",
+            "SodGas",
+            "TEMP",
+            "VELX",
+            "cell_measure",
+            "coordinate",
+            "coordinate_y",
+            "coordinate_z"
+          ],
+          "bitwise_equal": true,
+          "final_time": 0.015621798437273437,
+          "cells": 112
+        }
+      ],
+      "mpiexec": [
+        "/home/ubuntu/projects/ARCH-mpi-toolchain/env/bin/mpiexec"
+      ],
+      "rejections": [
+        {
+          "case": "amr",
+          "returncode": 1
+        },
+        {
+          "case": "empty-rank",
+          "returncode": 1
+        },
+        {
+          "case": "checkpoint",
+          "returncode": 1
+        },
+        {
+          "case": "cuda",
+          "returncode": 1
+        },
+        {
+          "case": "one-sided-periodic",
+          "returncode": 1
+        },
+        {
+          "case": "rank-input-mismatch",
+          "returncode": 1
+        },
+        {
+          "case": "one-rank-missing-input",
+          "returncode": 1
+        }
+      ]
+    }
+  },
+  "source_sha256": {
+    ".github/workflows/ci.yml": "d554d520d329cf36bea14a3d901051d900d32a57bf9cdcf794798d8e82f7799e",
+    "cmake/project/Application.cmake": "e8746705605179bbc2bb1361af937317add4685e5dd5a7b1ae92ca1aa5edf3cf",
+    "cmake/tests/CudaTests.cmake": "2c044d631be68e233a0f3414e9451e0f83ce8bb2a16512cc0b417067d86b8698",
+    "cmake/tests/HostTests.cmake": "69689322d11874ec8313a7e7cbfae151eb152dcdfeaca5a4afb090005b78f79b",
+    "src/amr/topology/AmrTree.h": "7be8cea2d08499cf049d5ae286767418c46823bb6920588d0da4292f07bfec6f",
+    "src/driver/SolverDispatch.cpp": "42cd2e99cfe4a7c54f27e8d517651ed4156bf575bfdd5bcdec7a3e5b66a6b09a",
+    "src/driver/io/DriverDistributedIO.cpp": "55577d65f8aba6517121564e9c4c643c35f3aefa9ed108c7e46d578b3a54c28d",
+    "src/driver/io/DriverIO.cpp": "167618b176bc6f34080a89635daf76cf5524012e9643a128ba93fe5921498c90",
+    "src/driver/io/DriverIO.h": "7857c2eb21e66461d710ee48b09f2eee3b9c06db0c580857776f26c75d7a2d30",
+    "src/driver/runtime/DriverBoundary.cpp": "cf757569f3419e89bf760180ee21d882f5b0f05592dd40defcebd9ee61ce1730",
+    "src/driver/runtime/DriverRegrid.cpp": "5da8d8135579eb7180b2c10bf6eb4711893071927a6e844a04ffaab3f713ce08",
+    "src/driver/runtime/DriverRuntime.cpp": "2cef2d1351d1bf9eea94a7bfb23d5404fe33eb562b512b88ef910026d90698bf",
+    "src/driver/runtime/DriverRuntime.h": "88bbfe9f789d4be0f6d4266dc839304d84255803a0b5463093f89a5a6fa392a8",
+    "src/driver/stages/DriverMacroStep.h": "a7609b49d13956b45ab8850df97e3516cc4cb82fb8e65d60738a61a8cf83789b",
+    "src/io/IO.h": "123de2af6c14afb2771ff89c929db6d079bf13bb4efba68b175572f693fbe254",
+    "src/io/OutputCollection.cpp": "d54d2e2b5a892f96ed61563142e8a6a5e32ff30315e521cca29a41c9fe6559f5",
+    "src/io/OutputCollection.h": "1d31a8763cd94604d5328329e186f49018d80965118b8df33085b5d371c2d439",
+    "src/io/OutputPath.h": "5b7c5d85bb09f764f52ad00bb661872bd2f671fb6261606525cc714215d3936c",
+    "src/io/chk/ChkIO.cpp": "69c8fbd3c2b99b9a95336e43d77303402605ff3ca89edb2dbc185e6a8c10ccf0",
+    "src/io/chk/DistributedRestart.cpp": "bd7f4c4686abbe949f83630583691cbb197dd639d905cbfe1e1b2b3c55eec066",
+    "src/io/plot/PlotIO.cpp": "6a711758f7123aceb688e74c02be0c2b57da8f9da91cf611f0f0473ee9111df6",
+    "tests/cuda/amr/test_cuda_mpi_runtime.cpp": "45f3dadaf064b89981e4a9616025109a1d2217a7a88baf6d988a196f6199dad9",
+    "tests/host/io/test_output_collection.cpp": "207b687ff75974939e30899c9f8aafc427f8cd1752ab67535a472af6e64b53ad",
+    "tests/integration/test_mpi_fixed_grid.py": "0f3acbc24fc12e720d9e94c5291c1f02353694a5f429cbc5b833167466bcec5d",
+    "tests/tooling/build_tools/test_ci_results.py": "e14b6512781c958ca8a9d4fa437f8e8e6d341bde8c4f9a13841e52c310c7bb72",
+    "tools/check_ci_results.py": "76b068199225f23929c8d9fda1cadda0688ac3e695af01fbaba4de3e6d17cdc0"
+  },
+  "binary_sha256": {
+    "build-mpi-cuda-release/arch_output_collection": "4dcc98a1a3ae721650e9f1e00d95c07c5f2fb0d10424510ab849181a5d8395a0",
+    "build-mpi-cuda-release/arch_checkpoint_compatibility": "a6135bae3fed4d8b3bcabb44500079c9d4be0863155259179b1627f282d1c6cb",
+    "build-mpi-cuda-release/arch_cuda_mpi_runtime": "8943a3300e7b073cb1cfc08bd29e052136e6ca741f08d7389817b772cc551319",
+    "build-mpi-cuda-release/arch_cuda_store_lifecycle": "22e1be07db4fa59e238f8d589bd4f4166ff03db0a984b87d7eb9a4106371d1d3",
+    "build-mpi-cuda-release/arch_cuda_regrid_transaction": "a66146f530d8723a086f8101b53b363c6ee64a15228cc48e1106ae53c36521f6",
+    "build-mpi-cuda-release/arch_cuda_amr_exchange": "425fb832fe1d9bc146c8cab4843f6a2b02588c9e0eb6c7c720bf0ad3ad1277f0",
+    "build-mpi-cuda-debug/arch_output_collection": "f8a3091d5444ee26586ec8073ff3242388994d16266899687d214de0ed882e78",
+    "build-mpi-cuda-debug/arch_checkpoint_compatibility": "5757ae27195af774aa8f8b5739d18072ecdfd4dad26cda33e3706fdd2d43668e",
+    "build-mpi-cuda-debug/arch_cuda_mpi_runtime": "44d273dd2bc019031d64018781b069ac448daab3ad15932d6afeb78295036141",
+    "build-mpi-cuda-debug/arch_cuda_store_lifecycle": "4721e4cd5da18162d6e787af23696822442cf64c748b4327024f46ff1d816842",
+    "build-mpi-cuda-debug/arch_cuda_regrid_transaction": "754d348ee6be46edbd724a866a8df24bf35069ccefe71cee91dfa35dca05e5a8",
+    "build-mpi-cuda-debug/arch_cuda_amr_exchange": "54374505e06146350428b2a749b7d62298793cc9f5b267f03f07fe933c317da6",
+    "build-gpu-release/arch_output_collection": "1af4bc8cbe565e616c98b20762b3c996c115cb536b3e8961547493d7514cd525",
+    "build-gpu-release/arch_checkpoint_compatibility": "300384197cf5ec7322fc68c4b47b7d5c6d00af0abdc496c8536c5c97e82afa01",
+    "build-gpu-release/arch_state_residency": "acaba0c1c3b10460443b9aa4638e9a0b88ce7cbca3488c2d4973deb3670181b9",
+    "build-gpu-release/arch_flux_reflux_exchange": "63e2db1c147f4584ca33ecf68152d4ca2363ddf459ff657ee30b65ec3c66ab86",
+    "build-gpu-release/arch_distributed_hydro_stage": "6aef575e34f4d4d0ef358cc41306a9c5ef66552e37e81990e2150155a8ad5b84",
+    "build-gpu-debug/arch_output_collection": "a1dc62f6b0c67594bdc879c1c2290aeaba5c528f66b856ce84fe7e2841c68e76",
+    "build-gpu-debug/arch_checkpoint_compatibility": "3d04f6b484025cc6ff0a31ef4f8f196811f0d267c455d70c3e1bc44e39860b0b",
+    "build-gpu-debug/arch_state_residency": "889fac9144963a63aa6227e4ec25e86c0bc2d6445316ff77b5ee9d22ca97bf2f",
+    "build-gpu-debug/arch_flux_reflux_exchange": "7a7a0b6a1efaa0c9555fe898bbb5efa40b6f8634af15d001a36f729f469c7a28",
+    "build-gpu-debug/arch_distributed_hydro_stage": "537768f22a021498c6765252e89bf5106242e1418c6ab99626fed3c07f92a3db",
+    "build-gpu-release-serial/arch_output_collection": "7834a24e08375a1d776c366094c107f90fd9060a16f3ac6697a7414d23c267e6",
+    "build-gpu-release-serial/arch_checkpoint_compatibility": "fa9c452540c095e3f1296b17f62db557325a1fafdcbe85188687dee35227f86b",
+    "build-gpu-release-serial/arch_state_residency": "9777083f64193bcd29393d3dc4c265c15411d6615e56cf15060d2eb9f1d8b2f4",
+    "build-gpu-release-serial/arch_flux_reflux_exchange": "30c8e52ee33ccd56c7bd81a71497dbdc10c554d35081644afcc75ccf0375d89b",
+    "build-gpu-release-serial/arch_distributed_hydro_stage": "9ea41ff3324d40e7d071df7a90d5ce66efb3fcd76032af2b1893994af13e863a",
+    "build-gpu-debug-serial/arch_output_collection": "88ea30aa116641b075f1338338946cc8eb4c09ba03da5487e601bffb753b5647",
+    "build-gpu-debug-serial/arch_checkpoint_compatibility": "fac07064c80ef8cb90d3056402e68c4c3c7142f1224134fad7d62e6e447d0648",
+    "build-gpu-debug-serial/arch_state_residency": "356d123f643beeccb53874bee2e4dd25d5b7fa4b9809f7b72482afeff24154f4",
+    "build-gpu-debug-serial/arch_flux_reflux_exchange": "43f7125bca3609296305cfa48a23c93ba51f7e029b938d29f388ce56a00d1349",
+    "build-gpu-debug-serial/arch_distributed_hydro_stage": "558ea1ff476183e70a00a3529c4d5be184d8a288be5b6068c74f4c904190e48d",
+    "build-mpi-cuda-release/bin/ARCH": "e10ec9b40d036ad04ac3c2e3ecb29d8e55d6a7768f0fcba824be64f3b2f8bfc6"
+  },
+  "raw_evidence": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-application-20261113",
+  "preserved_development_failures": [
+    "Materialize then regrid used unequal local transfer token high-watermarks; synchronized original clocks at transaction entry.",
+    "Native IO harness used unavailable HighFive read_raw API; corrected to the declared read(pointer) interface.",
+    "Fixture fractional event count was invalid; use valid affected-volume metadata while preserving original repair validation.",
+    "First production plot publication assumed a filename without solver; shared the original filename rule.",
+    "Initial output fixture omitted the species-sized initialization repair ledger; assert it is zero and initialize its layout as production does.",
+    "CI coverage fixture omitted the newly required collection test; retained all previous anchors and added its positive/missing-test controls."
+  ],
+  "limits": [
+    "Public ExecutionPreflight still rejects application GPU MPI/AMR and scheduled checkpoint/restart.",
+    "Native checkpoint identity is explicitly synthetic; production CPU collection plots carry actual loaded formal identities.",
+    "Nonempty ranks, colocated siblings for regrid, same-rank restart, shared output filesystem, Cartesian Hydro without sources/user BC.",
+    "Explicit migration followed by checkpoint/restore and sibling coalescence remains an A3 composition gate.",
+    "CUDA ON/MPI OFF full cached backend build remains pending and is not counted as passing.",
+    "No multi-GPU, multi-node, power-loss durability, sanitizer, long-time physical accuracy or scaling claim."
+  ],
+  "native_checkpoint_archive": {
+    "archive": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-application-20261113/native-checkpoint-data.tar.gz",
+    "sha256": "31314c60b17118569cf26305523e3c8eccef930464307186ef12ec9f4c62ffd8",
+    "archive_bytes": 39439096,
+    "file_count": 1288,
+    "logical_bytes": 540801870,
+    "verified_all_members": true
+  }
+}
