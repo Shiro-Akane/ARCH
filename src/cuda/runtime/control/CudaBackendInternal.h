@@ -478,6 +478,13 @@ struct CudaBackend::StoreTransaction::Impl {
     std::unique_ptr<CudaAmrFluxPlanRuntime> amr_flux;
     bool upload_failed = false;
     bool consumed = false;
+    DeviceRetirementFence publication_fence{};
+    std::optional<std::list<CudaBackend::Impl::RetiredCudaResources>::iterator> prepared_retirement;
+
+    void release_prepared_retirement_noexcept() noexcept {
+        if(prepared_retirement)owner->retired_resources.erase(*prepared_retirement);
+        prepared_retirement.reset();
+    }
 
     Impl(std::shared_ptr<CudaBackend::Impl> requested_owner,
          DeviceBlockStoreLifecycle::Candidate requested_candidate,

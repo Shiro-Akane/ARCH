@@ -472,7 +472,7 @@ void runtime_leaf_transfer_cases() {
     if(ranks==1) {
         Fixture actual(2,0,1,true);seed(actual,true);RuntimeRun run(actual);
         bool rejected=false;
-        try {run.runtime.migrate_host_leaf({{2,1,2,0,0},run.runtime.handles().front()},1);}
+        try {run.runtime.migrate_leaf({{2,1,2,0,0},run.runtime.handles().front()},1);}
         catch(const std::exception&) {rejected=true;}
         require(rejected,"serial runtime accepted a distributed ownership transfer");
         return;
@@ -497,7 +497,7 @@ void runtime_leaf_transfer_cases() {
         };
         mark(actual);mark(reference);
         for(int destination:{0,1}) {
-            a.runtime.migrate_host_leaf(leaf_endpoint(a,1-destination),destination);
+            a.runtime.migrate_leaf(leaf_endpoint(a,1-destination),destination);
             actual.handles=a.runtime.handles();compare(actual,reference);
             for(int id:actual.control.tree->GetActiveBlocks()) {
                 const auto& block=actual.control.pool->GetBlock(id);
@@ -533,7 +533,7 @@ void runtime_leaf_transfer_cases() {
             const auto before_context=a.runtime.stage_context();
             const auto previous_version=before_context.clock.last_version();
             const auto previous_token=before_context.clock.last_token();
-            a.runtime.migrate_host_leaf(endpoint,destination,[&](Phase phase) {
+            a.runtime.migrate_leaf(endpoint,destination,[&](Phase phase) {
                 if(phase==Phase::Reserved||phase==Phase::ReadyToPublish)
                     require(actual.control.pool->GetNumActiveBlocks()==static_cast<int>(
                         before_ids.size()+(rank==destination?1:0)),
@@ -603,7 +603,7 @@ void runtime_leaf_transfer_cases() {
 #endif
         int received=0;bool rejected=false;
         try {
-            a.runtime.migrate_host_leaf(request,0,[&](Phase phase) {
+            a.runtime.migrate_leaf(request,0,[&](Phase phase) {
                 if(rank==0&&phase==Phase::FieldReceived)++received;
                 const bool fail=(fault==5&&rank==0&&phase==Phase::Reserved)
                     ||(fault==6&&rank==0&&phase==Phase::FieldReceived&&received==1)
@@ -638,9 +638,9 @@ void runtime_leaf_transfer_cases() {
         for(const auto& witness:fields)witness.check(actual.control);
         for(const auto& witness:topology)witness.check(actual.control.pool->GetBlock(witness.id));
         compare_transferred(actual,reference);
-        a.runtime.migrate_host_leaf(endpoint,0);actual.handles=a.runtime.handles();
+        a.runtime.migrate_leaf(endpoint,0);actual.handles=a.runtime.handles();
         compare_transferred(actual,reference);
-        a.runtime.migrate_host_leaf(leaf_endpoint(a,0),1);actual.handles=a.runtime.handles();
+        a.runtime.migrate_leaf(leaf_endpoint(a,0),1);actual.handles=a.runtime.handles();
         compare_transferred(actual,reference);
         a.step(2);serial_reference_step(b,2);compare(actual,reference);
     }
@@ -756,7 +756,7 @@ void runtime_sibling_cases(int repetitions) {
     if(ranks==1) {
         Fixture actual(2,0,1,true);seed(actual,true);RuntimeRun a(actual);
         bool rejected=false;
-        try {a.runtime.coalesce_host_siblings(parent,0);}catch(const std::exception&) {rejected=true;}
+        try {a.runtime.coalesce_siblings(parent,0);}catch(const std::exception&) {rejected=true;}
         require(rejected,"serial runtime accepted distributed sibling colocation");
         return;
     }
@@ -764,7 +764,7 @@ void runtime_sibling_cases(int repetitions) {
         for(int child=0;child<count;++child) {
             const amr::LogicalBlockKey key{2,1,static_cast<std::uint32_t>(2+child%2),
                 static_cast<std::uint32_t>(child/2),0};
-            a.runtime.migrate_host_leaf(leaf_endpoint(a,1,key),0);
+            a.runtime.migrate_leaf(leaf_endpoint(a,1,key),0);
             a.f.handles=a.runtime.handles();
         }
     };
@@ -796,7 +796,7 @@ void runtime_sibling_cases(int repetitions) {
                 children[child]=leaf_endpoint(a,child<count?0:1,
                     {2,1,static_cast<std::uint32_t>(2+child%2),static_cast<std::uint32_t>(child/2),0});
             int receipts=0;
-            require(a.runtime.coalesce_host_siblings(parent,1,[&](Phase phase) {
+            require(a.runtime.coalesce_siblings(parent,1,[&](Phase phase) {
                 if(phase==Phase::FieldReceived)++receipts;
                 if(phase==Phase::Reserved||phase==Phase::ReadyToPublish) {
                     int live=actual.control.pool->GetNumActiveBlocks(),total=0;
@@ -824,7 +824,7 @@ void runtime_sibling_cases(int repetitions) {
             require(stale,"family publication kept old handles readable");
             compare(actual,reference);require_conservation(actual,initial);
             RegridWitness colocated(a);
-            require(!a.runtime.coalesce_host_siblings(parent,1),"colocated family was not an exact no-op");
+            require(!a.runtime.coalesce_siblings(parent,1),"colocated family was not an exact no-op");
             colocated.check(a);
             request_coarsening(actual);request_coarsening(reference);
             bool rejected=false;
@@ -880,7 +880,7 @@ void runtime_sibling_cases(int repetitions) {
         }
 #endif
         int received=0;bool rejected=false,observed=false;
-        try {a.runtime.coalesce_host_siblings(requested,destination,[&](Phase phase) {
+        try {a.runtime.coalesce_siblings(requested,destination,[&](Phase phase) {
             if(phase==Phase::FieldReceived)++received;
             const int victim=fault%2;
             const bool phase_failure=fault<6&&rank==victim
@@ -905,7 +905,7 @@ void runtime_sibling_cases(int repetitions) {
         original.check(a);
         require(context.ledger.metadata_snapshot_matches(snapshot),"family failure modified accepted ledger");
         compare(actual,reference);
-        require(a.runtime.coalesce_host_siblings(parent,1),"same-runtime family retry failed");
+        require(a.runtime.coalesce_siblings(parent,1),"same-runtime family retry failed");
         actual.handles=a.runtime.handles();compare(actual,reference);
         request_coarsening(actual);request_coarsening(reference);
         require(runtime_regrid(a),"family retry could not coarsen");
@@ -922,12 +922,12 @@ void runtime_sibling_cases(int repetitions) {
         require(runtime_regrid(a),"quota setup did not refine");
         serial_reference_regrid(reference,b,a.controller.t_current);split(a,2);
         const amr::LogicalBlockKey root{2,0,0,0,0};
-        a.runtime.migrate_host_leaf(leaf_endpoint(a,0,root),1);actual.handles=a.runtime.handles();
+        a.runtime.migrate_leaf(leaf_endpoint(a,0,root),1);actual.handles=a.runtime.handles();
         RegridWitness before(a);bool rejected=false;
-        try {a.runtime.coalesce_host_siblings(parent,0);}catch(const std::exception&) {rejected=true;}
+        try {a.runtime.coalesce_siblings(parent,0);}catch(const std::exception&) {rejected=true;}
         require(rejected,"family exceeded destination local pool quota");before.check(a);compare(actual,reference);
-        a.runtime.migrate_host_leaf(leaf_endpoint(a,1,root),0);actual.handles=a.runtime.handles();
-        require(a.runtime.coalesce_host_siblings(parent,1),"feasible family destination could not retry");
+        a.runtime.migrate_leaf(leaf_endpoint(a,1,root),0);actual.handles=a.runtime.handles();
+        require(a.runtime.coalesce_siblings(parent,1),"feasible family destination could not retry");
         actual.handles=a.runtime.handles();compare(actual,reference);++rejections;
     }
     if(rank==0)std::cout<<"Siblings: "<<cycles<<" evolved split/colocate/coarsen cycles; "
@@ -953,14 +953,14 @@ void runtime_regrid_cases() {
         compare(actual,reference);require_conservation(actual,initial);
         a.step(method);serial_reference_step(*b,method);compare(actual,reference);
         // C2 interoperation: split a family, reject regrid, then return that leaf.
-        a.runtime.migrate_host_leaf(leaf_endpoint(a,1),0);actual.handles=a.runtime.handles();
+        a.runtime.migrate_leaf(leaf_endpoint(a,1),0);actual.handles=a.runtime.handles();
         RegridWitness split(a);
         bool rejected=false;
         try {runtime_regrid(a);}catch(const std::logic_error& error) {
             rejected=std::string(error.what()).find("colocated sibling")!=std::string::npos;
         }
         require(rejected,"split sibling ownership was not rejected");split.check(a);
-        a.runtime.migrate_host_leaf(leaf_endpoint(a,0),1);actual.handles=a.runtime.handles();
+        a.runtime.migrate_leaf(leaf_endpoint(a,0),1);actual.handles=a.runtime.handles();
         compare(actual,reference);
         request_coarsening(actual);request_coarsening(reference);
         require(runtime_regrid(a),"distributed sibling coarsening did not publish");
@@ -1335,7 +1335,7 @@ void runtime_level_two_sibling_cases(int repetitions) {
     const auto split=[&](RuntimeRun& a,amr::LogicalBlockKey parent,int count) {
         for(int child=0;child<count;++child) {
             const auto source=leaf_endpoint(a,1,child_key(parent,child));
-            a.runtime.migrate_host_leaf(source,0);a.f.handles=a.runtime.handles();
+            a.runtime.migrate_leaf(source,0);a.f.handles=a.runtime.handles();
             const auto moved=leaf_endpoint(a,0,source.logical);
             require(moved.handle.uid==source.handle.uid
                 &&moved.handle.epoch.value==source.handle.epoch.value+1,
@@ -1374,7 +1374,7 @@ void runtime_level_two_sibling_cases(int repetitions) {
             for(int child=0;child<4;++child)
                 children[child]=leaf_endpoint(a,child<count?0:1,child_key(parent,child));
             const int moved=destination==1?count:4-count;int receipts=0;
-            require(a.runtime.coalesce_host_siblings(parent,destination,[&](Phase phase) {
+            require(a.runtime.coalesce_siblings(parent,destination,[&](Phase phase) {
                 if(phase==Phase::FieldReceived)++receipts;
                 if(phase==Phase::Reserved||phase==Phase::ReadyToPublish) {
                     int local=actual.control.pool->GetNumActiveBlocks(),total=0;
@@ -1401,7 +1401,7 @@ void runtime_level_two_sibling_cases(int repetitions) {
             require(stale,"deep family retained readable stale handles");
             compare(actual,reference);require_conservation(actual,initial);
             RegridWitness colocated(a);
-            require(!a.runtime.coalesce_host_siblings(parent,destination),"deep colocated family was not a no-op");
+            require(!a.runtime.coalesce_siblings(parent,destination),"deep colocated family was not a no-op");
             colocated.check(a);
             a.step(method);serial_reference_step(*b,method);compare(actual,reference);
             request_coarsening(actual);request_coarsening(reference);
@@ -1419,7 +1419,7 @@ void runtime_level_two_sibling_cases(int repetitions) {
                 try {runtime_regrid(a);}catch(const std::exception&) {rejected=true;}
                 require(rejected,"split level-one parents bypassed family ownership");
                 coarse_split.check(a);++rejections;
-                require(a.runtime.coalesce_host_siblings(root_parent,1),
+                require(a.runtime.coalesce_siblings(root_parent,1),
                     "restricted parent could not join the coarser family");
                 actual.handles=a.runtime.handles();compare(actual,reference);
             }
@@ -1481,7 +1481,7 @@ void runtime_level_two_sibling_cases(int repetitions) {
         }
 #endif
         int receipts=0;bool rejected=false,observed=false;
-        try {a.runtime.coalesce_host_siblings(requested,destination,[&](Phase phase) {
+        try {a.runtime.coalesce_siblings(requested,destination,[&](Phase phase) {
             if(phase==Phase::FieldReceived)++receipts;
             const int victim=fault%2;
             const bool phase_failure=fault<6&&rank==victim
@@ -1514,7 +1514,7 @@ void runtime_level_two_sibling_cases(int repetitions) {
         require(context.ledger.metadata_snapshot_matches(ledger),"deep family rejection changed ledger");
         require(a.bc.stage_context_matches(saved_boundary),"deep family rejection changed boundary context");
         compare(actual,reference);require_conservation(actual,initial);
-        require(a.runtime.coalesce_host_siblings(parent,1),"deep family retry did not publish");
+        require(a.runtime.coalesce_siblings(parent,1),"deep family retry did not publish");
         actual.handles=a.runtime.handles();compare(actual,reference);
         request_coarsening(actual);request_coarsening(reference);
         for(int level=1;level>=0;--level) {
@@ -1539,10 +1539,10 @@ void runtime_level_two_sibling_cases(int repetitions) {
         serial_reference_regrid(reference,b,a.controller.t_current);
         RegridWitness before(a);if(rank==0)actual.config.amr.lrefinemax=1;
         bool rejected=false;
-        try {a.runtime.coalesce_host_siblings(root_parent,1);}catch(const std::exception&) {rejected=true;}
+        try {a.runtime.coalesce_siblings(root_parent,1);}catch(const std::exception&) {rejected=true;}
         require(rejected,"family no-op accepted mismatched maximum levels");
         before.check(a);actual.config.amr.lrefinemax=2;
-        require(!a.runtime.coalesce_host_siblings(root_parent,1),"agreed family no-op changed ownership");
+        require(!a.runtime.coalesce_siblings(root_parent,1),"agreed family no-op changed ownership");
         before.check(a);
         require(runtime_regrid(a),"family control retry could not refine deeper");
         serial_reference_regrid(reference,b,a.controller.t_current);

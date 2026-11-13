@@ -331,6 +331,58 @@ CPU Release/Debug × MPI ON/OFF 的 residency、scheduler、flux/reflux 和完�
 原 StoreTransaction 内拆分退休事件准备与不可抛异常的发布，让所有 rank
 共同确认后再改变 ownership；随后验证迁移、重网格、接收容量、分布式输出和重启。
 
+## A1-1：Device 所有权迁移与共同提交（2026-11-13）
+
+复用原 Runtime 的所有权事务与逐叶二进制协议，将 Host 专属名称改为
+migrate_leaf / migrate_leaves / coalesce_siblings。CPU 路径和容量检查保留；
+Device 路径在发送方读取真实的三个 GPU 槽，完整包含七类字段、ghost 和 padding，
+不把旧 Host 镜像发布成有效状态。接收字段落入原 MemoryPool 的候选块，随后
+上传候选 Device store；未迁出的本地块在 GPU 内复制。Host repair 元数据沿用
+原包格式，Runtime controller 保持物理时间与 repair 累计的所有权。
+
+原 DeviceBlockStoreLifecycle / StoreTransaction 拆分为准备、不可抛异常发布和
+退休三个步骤。所有 CUDA 分配、事件记录、流完成检查和候选 flux/reflux plan
+均发生在准备阶段；所有 rank 确认成功之后才共同切换 Device store、Host topology、
+storage generation 与 ledger。发布后经过 MPI acknowledgement 再释放旧存储。
+准备后放弃也销毁候选事件与分配，旧 store 和句柄继续有效；单进程原调用仍通过
+同一三个步骤完成。没有新建 MPI 存储管理器或另外一套时间推进机制。
+
+mpi_cuda_ownership_2 使用原五叶二维 Cartesian 案例和已演化字段，测试
+Euler/RK2/RK3 × species 1/4/37 × outflow/periodic 共 18 种组合。
+每种组合在同一个 Runtime 上完成 10 次迁出/迁回、6 个接受的物理时间步，
+并分别在保留接收空间、部分字段收到、拓扑激活、Device 发布准备完成和
+最终 ready 阶段注入单侧失败。失败后的 Device 三槽、Host 镜像、ledger、
+flux receipt、控制器时间和旧 storage lease 均核对；成功后所有旧 Device lease
+必须失效，候选和退休资源计数归零。所有物理字段继续对照原串行 CPU 宏步，
+容差与周期守恒门槛不变。三个物理槽的内容被保留；新 ledger 仍只发布已接受
+Current，未把 Next/Scratch 擅自提升为新的可读时间状态。
+
+测试每个 rank 的原池容量为 6，合计 12，与全局 max_blocks 一致。旧固定拓扑
+fixture 每个 rank 各设 12 的安排不能用于迁移；第一次运行被原容量门槛拒绝，
+修正的是 fixture 的分摊容量，生产检查没有放宽。Host staging 的额外临时材料
+仍为发送方的一份三槽叶子影像和原逐叶 packet；其设备来源读回完成后才发送。
+
+旧 scheduler 源码结构检查同步接受 Host/Device 的显式 side 参数，仍要求一次
+真实 scheduler witness，禁止用 block UID 作为版本。存储计数断言显式先读取
+snapshot 再逐字段默认比较，原计数要求不变；首次不一致日志和随后通过结果都保留。
+
+Release/Debug 共 16 项 CUDA 与 store 回归、CPU Release/Debug × MPI ON/OFF
+共 26 项回归，以及 629 项 tooling 全部通过，没有跳过。每种 GPU 构建均完成
+18 个布局、306 次字段对照和 90 次共同拒绝。这里的时间来自并发开发回归，
+不作为性能样本。
+
+本阶段的发布验收结果由
+[结构化摘要](../../validation/backend/results/mpi-gpu-migration-20261113/summary.json)
+记录。原始日志在 /home/ubuntu/projects/ARCH-mpi-evidence-gpu-migration-20261113。
+上一阶段 2039f77c 的双方 CI 已全部成功：
+[朋友仓库](https://github.com/Shiro-Akane/ARCH/actions/runs/43347150374)、
+[自有仓库](https://github.com/Arsenic-er/ARCH/actions/runs/43347162252)。
+
+当前只新增 native Device 所有权迁移证据。动态 refine/coarsen 的 Device MPI
+组合、空 rank、应用调度与初始化、分布式输出/重启仍需分别验证；
+应用 ExecutionPreflight 继续关闭。单张 H100 的两进程结果不扩展为多 GPU、
+多节点或性能结论。下一步把原 Device 重网格和 GhostExchange 接到上述共同提交边界。
+
 ## 服务器资源与恢复
 
 代码、构建、测试和证据位于 gpu-273312；Windows 仅发送控制命令。

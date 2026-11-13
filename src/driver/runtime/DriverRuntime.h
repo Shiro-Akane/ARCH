@@ -72,18 +72,18 @@ public:
     enum class RegridPhase { IndicatorsEvaluated, BalancePrepared, BalanceRound, Balanced, Selected, Constructed, Migrated, TopologyActivated, GhostsSynchronized, ReadyToPublish };
     bool perform_regrid(int step, double time, bool jeans_repair_only = false,
         const std::function<void(RegridPhase)>& observer = {});
-    /** Collective owner-only Host transfer at a quiescent accepted boundary.
+    /** Collective owner-only transfer at a quiescent accepted boundary.
      * Observers see completed local phases and may reject before publication.
      * This narrow native consumer does not enable application MPI-AMR.
      */
-    enum class LeafTransferPhase { Reserved, FieldReceived, TopologyActivated, ReadyToPublish };
-    void migrate_host_leaf(amr::AmrEndpoint source, int destination_rank,
+    enum class LeafTransferPhase { Reserved, FieldReceived, TopologyActivated, DevicePrepared, ReadyToPublish };
+    void migrate_leaf(amr::AmrEndpoint source, int destination_rank,
         const std::function<void(LeafTransferPhase)>& observer = {});
     /** Atomically colocate a complete level-one/two sibling family. Call perform_regrid
      * separately to apply the original indicators and restriction. Returns false
      * for an already colocated family, preserving its epoch and accepted state.
      */
-    bool coalesce_host_siblings(amr::LogicalBlockKey parent, int destination_rank,
+    bool coalesce_siblings(amr::LogicalBlockKey parent, int destination_rank,
         const std::function<void(LeafTransferPhase)>& observer = {});
     void ensure_jeans_resolution(int step, double time);
     // Explicit diagnostic/enforcement request; never invoked for disabled JENS.
@@ -159,7 +159,7 @@ private:
         std::span<const backend::BackendStateAccess>,
         std::span<const amr::BlockHandle>, state::StateSlot,
         state::StateVersion, state::CompletionToken);
-    void migrate_host_leaves(std::span<const amr::AmrEndpoint>, int destination_rank,
+    void migrate_leaves(std::span<const amr::AmrEndpoint>, int destination_rank,
         const std::function<void(LeafTransferPhase)>& observer);
     bool execute_regrid(bool jeans_repair_only);
     bool perform_regrid_impl(int step,double time,bool jeans_repair_only,

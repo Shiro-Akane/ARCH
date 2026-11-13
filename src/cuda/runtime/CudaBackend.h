@@ -221,6 +221,11 @@ public:
         backend::BackendTopologyStoreTransaction& transaction,
         backend::BackendStateAccess access, state::StateRegion region,
         backend::HostStateTransferView host) override;
+    void read_ownership_slots(backend::BackendStateAccess,
+        std::span<backend::HostStateTransferView,3>) override;
+    void stage_ownership_slots(backend::BackendTopologyStoreTransaction&,
+        std::span<const backend::BackendStateAccess>,
+        std::span<const backend::BackendTopologyBinding>) override;
     void begin_hydro_attempt(std::span<const backend::BackendStateAccess>) override;
     bool hydro_attempt_layout_matches() const noexcept override;
     void restore_hydro_attempt_noexcept() noexcept override;
@@ -254,6 +259,9 @@ public:
     state::CompletionToken execute_amr_reflux(
         state::StateSlot slot, double dt,
         state::CompletionToken expected) override;
+    void prepare_topology_store_publication(backend::BackendTopologyStoreTransaction&) override;
+    void publish_prepared_topology_store_transaction(backend::BackendTopologyStoreTransaction&) noexcept override;
+    void finish_topology_store_retirement(backend::BackendTopologyStoreTransaction&) noexcept override;
     void publish_topology_store_transaction(
         std::unique_ptr<backend::BackendTopologyStoreTransaction>
             transaction) override;
@@ -290,7 +298,12 @@ public:
         std::span<const int> = {},
         std::span<const amr::BlockHandle> = {},
         const amr::CoordinateSeamPlan* = nullptr);
+    void stage_ownership_slots(StoreTransaction&,
+        std::span<const backend::BackendStateAccess>,
+        std::span<const backend::BackendTopologyBinding>);
     void abort_store_transaction(StoreTransaction&& transaction);
+    void prepare_store_publication(StoreTransaction&, DeviceRetirementFence);
+    void publish_prepared_store_transaction(StoreTransaction&&) noexcept;
     void publish_store_transaction(
         StoreTransaction&& transaction, DeviceRetirementFence fence);
     bool retirement_ready(DeviceRetirementFence fence) const;

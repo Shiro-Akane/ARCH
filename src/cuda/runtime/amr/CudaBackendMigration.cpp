@@ -47,6 +47,127 @@ std::array<double*, 7> fields(DeviceStateView state)
 
 } // namespace
 
+void CudaBackend::read_ownership_slots(Access current,
+    std::span<backend::HostStateTransferView,3> host)
+{
+    if(impl_->hydro_attempt || current.slot!=state::StateSlot::Current)
+        throw std::logic_error("ownership read requires quiescent Current");
+    auto& block=impl_->require_block(current);
+    for(const auto& slot:host) {
+        backend::validate_host_state_transfer_view(slot);
+        if(slot.species_stride!=slot.cell_count
+            || slot.cell_count!=static_cast<std::size_t>(block.grid.total_size)
+            || slot.species_count!=static_cast<std::size_t>(impl_->species_count))
+            throw std::invalid_argument("ownership read shape mismatch");
+    }
+    impl_->select_device();
+    CudaQuiescenceGuard guard{*impl_};
+    for(std::size_t slot=0;slot<3;++slot) {
+        const auto from=fields(block.slots[slot]);
+        const auto& h=host[slot];
+        const std::array to{h.rho,h.mom_u,h.mom_v,h.mom_w,h.eng,h.enuc_rate,h.species};
+        for(std::size_t field=0;field<7;++field) {
+            const auto bytes=h.cell_count*(field==6?h.species_count:1)*sizeof(double);
+            if(!bytes)continue;
+            check_cuda(cudaMemcpyAsync(to[field],from[field],bytes,cudaMemcpyDeviceToHost,
+                impl_->stream.get()),"read CUDA ownership slot");
+            impl_->runtime_counters.bytes_d2h+=bytes;
+        }
+    }
+    impl_->checked_quiesce("complete CUDA ownership packet");
+    guard.completed=true;
+}
+
+void CudaBackend::stage_ownership_slots(StoreTransaction& transaction,
+    std::span<const Access> source_accesses,
+    std::span<const backend::BackendTopologyBinding> incoming)
+{
+    if(!transaction.impl_ || transaction.impl_->consumed
+        || transaction.impl_->owner.get()!=impl_.get())
+        throw std::invalid_argument("invalid CUDA ownership transaction");
+    auto& staged=*transaction.impl_;
+    if(staged.upload_failed || staged.publication_fence.value
+        || source_accesses.size()!=impl_->store.active_entries().size())
+        throw std::invalid_argument("invalid CUDA ownership source scope");
+    for(const auto& [arena,initialized]:staged.uploaded_current)
+        if(initialized)throw std::logic_error("CUDA ownership destination already initialized");
+    std::map<amr::BlockUid,CudaBlockRuntime*> sources;
+    for(const auto access:source_accesses) {
+        if(access.slot!=state::StateSlot::Current)
+            throw std::invalid_argument("ownership source must name Current");
+        static_cast<void>(impl_->store.migration_record(staged.candidate,
+            {staged.candidate.scope(),access,DeviceMigrationRole::ActiveOldSource}));
+        if(!sources.emplace(access.block.uid,&impl_->require_block(access)).second)
+            throw std::invalid_argument("duplicate CUDA ownership source");
+    }
+    std::map<amr::BlockHandle,const amr::Block*> received;
+    for(const auto& binding:incoming) {
+        if(!binding.block || sources.contains(binding.handle.uid)
+            || !received.emplace(binding.handle,binding.block).second)
+            throw std::invalid_argument("invalid CUDA ownership receipt");
+        static_cast<void>(resolve_staged_block(staged,
+            {binding.handle,binding.storage,state::StateSlot::Current}));
+    }
+    // Resolve every destination and shape before writing any private allocation.
+    for(const auto& entry:staged.candidate.entries()) {
+        auto& destination=resolve_staged_block(staged,
+            {entry.record.handle,entry.record.storage,state::StateSlot::Current});
+        const auto found=sources.find(entry.record.handle.uid);
+        if(found!=sources.end()) {
+            if(found->second->grid.total_size!=destination.grid.total_size
+                || found->second->grid.dim!=destination.grid.dim)
+                throw std::invalid_argument("CUDA ownership survivor shape changed");
+        } else {
+            const auto* block=received.at(entry.record.handle);
+            for(const auto member:{&amr::Block::fluid_state,&amr::Block::state_next,&amr::Block::state_scratch}) {
+                const auto& host=block->*member;
+                const std::array lengths{host.rho.size(),host.mom_u.size(),host.mom_v.size(),
+                    host.mom_w.size(),host.eng.size(),host.enuc_rate.size(),host.mass_fractions.size()};
+                if(host.GetNumSpecies()!=impl_->species_count)
+                    throw std::invalid_argument("CUDA ownership species mismatch");
+                for(std::size_t f=0;f<7;++f)
+                    if(lengths[f]!=static_cast<std::size_t>(destination.grid.total_size)*(f==6?impl_->species_count:1))
+                        throw std::invalid_argument("CUDA ownership field shape mismatch");
+            }
+        }
+    }
+    impl_->select_device();
+    CudaQuiescenceGuard guard{*impl_};
+    try {
+        constexpr std::array members{&amr::Block::fluid_state,&amr::Block::state_next,&amr::Block::state_scratch};
+        for(const auto& entry:staged.candidate.entries()) {
+            auto& destination=resolve_staged_block(staged,
+                {entry.record.handle,entry.record.storage,state::StateSlot::Current});
+            const auto found=sources.find(entry.record.handle.uid);
+            for(std::size_t slot=0;slot<3;++slot) {
+                const auto to=fields(destination.slots[slot]);
+                std::array<const double*,7> from{};
+                if(found!=sources.end()) {
+                    const auto resident=fields(found->second->slots[slot]);
+                    std::copy(resident.begin(),resident.end(),from.begin());
+                } else {
+                    const auto& h=received.at(entry.record.handle)->*members[slot];
+                    from={h.rho.data(),h.mom_u.data(),h.mom_v.data(),h.mom_w.data(),
+                        h.eng.data(),h.enuc_rate.data(),h.mass_fractions.data()};
+                }
+                for(std::size_t field=0;field<7;++field) {
+                    const auto bytes=static_cast<std::size_t>(destination.grid.total_size)
+                        *(field==6?impl_->species_count:1)*sizeof(double);
+                    if(!bytes)continue;
+                    const auto kind=found!=sources.end()?cudaMemcpyDeviceToDevice:cudaMemcpyHostToDevice;
+                    check_cuda(cudaMemcpyAsync(to[field],from[field],bytes,kind,impl_->stream.get()),
+                        "copy CUDA ownership slot");
+                    if(kind==cudaMemcpyHostToDevice)impl_->runtime_counters.bytes_h2d+=bytes;
+                }
+            }
+        }
+        impl_->checked_quiesce("complete staged CUDA ownership");
+        guard.completed=true;
+        for(auto& [arena,initialized]:staged.uploaded_current)
+            initialized=StoreTransaction::Impl::kCompleteCurrent;
+    } catch(...) {staged.upload_failed=true;throw;}
+}
+
 void CudaBackend::migrate_staged_current(
     StoreTransaction& transaction, std::span<const Access> source_accesses,
     const amr::ProlongationPlan& prolongation,

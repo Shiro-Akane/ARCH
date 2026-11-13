@@ -568,6 +568,17 @@ public:
         throw std::logic_error(
             "backend staged Current upload is unavailable");
     }
+    /** Read all three accepted physical slots without publishing Host residency.
+     * Ownership packets include ghosts and padding; the caller retains metadata. */
+    virtual void read_ownership_slots(BackendStateAccess,
+        std::span<HostStateTransferView,3>) {
+        throw std::logic_error("backend ownership read is unavailable");
+    }
+    /** Copy surviving slots on device and import only received ownership packets. */
+    virtual void stage_ownership_slots(BackendTopologyStoreTransaction&,
+        std::span<const BackendStateAccess>, std::span<const BackendTopologyBinding>) {
+        throw std::logic_error("backend ownership staging is unavailable");
+    }
     /** Reconstruct staged interiors from immutable old-device sources. */
     virtual void migrate_staged_current(
         BackendTopologyStoreTransaction&,
@@ -633,6 +644,17 @@ public:
         state::StateSlot, double, state::CompletionToken)
     {
         throw std::logic_error("backend AMR reflux is unavailable");
+    }
+    /** Distributed topology commits agree preparation before any namespace changes. */
+    virtual void prepare_topology_store_publication(BackendTopologyStoreTransaction&) {
+        throw std::logic_error("backend prepared topology publication is unavailable");
+    }
+    virtual void publish_prepared_topology_store_transaction(BackendTopologyStoreTransaction&) noexcept {
+        std::terminate();
+    }
+    /** Release accepted old storage only after the caller's publication acknowledgement. */
+    virtual void finish_topology_store_retirement(BackendTopologyStoreTransaction&) noexcept {
+        std::terminate();
     }
     virtual void publish_topology_store_transaction(
         std::unique_ptr<BackendTopologyStoreTransaction>)

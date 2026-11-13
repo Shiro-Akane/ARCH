@@ -77,3 +77,15 @@ stage writes, post-reflux rotation, invalid density/composition, interval and
 owner errors, plus forbidden field materialization and topology mutation.
 This is native single-node, shared-GPU acceptance; migration, dynamic regrid,
 distributed output/restart and application capability are separate gates.
+
+
+The mpi_cuda_ownership_2 mode reuses Runtime ownership migration for evolved
+Device state. Eighteen layouts each transfer one fine leaf out and back five
+times, reject five preparation phases, and accept six physical steps against
+the original serial CPU macrostep. All three resident slots, including padding,
+are preserved bitwise; stale leases fail after commit and candidate/retirement
+resources drain after either abort or commit. Host mirrors remain nonauthoritative.
+The original pool capacity is six per rank, twelve globally. The store lifecycle
+tests also cover explicit and RAII abort after retirement-event preparation.
+This qualifies native ownership transfer; dynamic regrid and application opening
+remain separate gates.

@@ -352,6 +352,53 @@ void run_region_transfers(int device_count)
     }
 }
 
+void run_prepared_store_lifecycle(int device_count)
+{
+    auto old_block=make_block(0,1.);
+    auto candidate_block=make_block(1,11.);
+    const auto boundary=make_boundary_plan();
+    SpeciesManager species;IdealGas eos(1.4,species);
+    arch::backend::StorageGenerationIssuer issuer{9001};
+    const amr::BlockHandle old_handle{{9001},{1}};
+    const auto old_storage=issuer.issue();
+    auto backend=arch::cuda::make_cuda_backend(old_block,old_handle,old_storage,kBackendDevice,
+        make_launch_config(),species,boundary,eos);
+    const auto old=current(old_handle,old_storage);
+    for(auto region:{arch::state::StateRegion::Interior,arch::state::StateRegion::Ghost})
+        backend->enqueue_upload_slot(old,region,transfer_view(old_block.fluid_state));
+    backend->quiesce();
+    for(int mode=0;mode<3;++mode) {
+        const amr::AmrPlanScope scope{static_cast<std::uint64_t>(901+mode),{1},{2}};
+        const amr::BlockHandle next{{9002},{2}};
+        const auto storage=issuer.issue();
+        const std::array bindings{arch::cuda::CudaBlockBinding{&candidate_block,next,storage,&boundary}};
+        {
+            auto transaction=backend->begin_store_transaction(scope,bindings);
+            upload_complete_current(*backend,transaction,staged_access(scope,next,storage),
+                candidate_block.fluid_state,device_count);
+            const arch::cuda::DeviceRetirementFence fence{static_cast<std::uint64_t>(901+mode)};
+            backend->prepare_store_publication(transaction,fence);
+            require(backend->contains(old)&&!backend->contains(current(next,storage)),
+                "prepared CUDA store exposed candidate");
+            require_rejected([&]{backend->prepare_store_publication(transaction,fence);},
+                "duplicate CUDA publication preparation was accepted");
+            require_rejected([&]{backend->complete_store_retirement(fence);},
+                "prepared CUDA store released accepted storage");
+            if(mode==0)backend->abort_store_transaction(std::move(transaction));
+            else if(mode==2) {
+                backend->publish_prepared_store_transaction(std::move(transaction));
+                require(!backend->contains(old)&&backend->contains(current(next,storage)),
+                    "prepared CUDA store did not publish");
+                backend->complete_store_retirement(fence);
+            }
+        }
+        const auto state=backend->store_snapshot();
+        require(state.active_blocks==1&&state.staged_blocks==0&&state.retirement_batches==0,
+            "prepared CUDA store retained temporary resources");
+        if(mode<2)require(backend->contains(old),"prepared abort lost old CUDA lease");
+    }
+}
+
 void run_store_lifecycle(int device_count)
 {
     amr::Block old_block = make_block(0, 1.0);
@@ -604,7 +651,8 @@ bool unchanged_counters_after_query(const arch::backend::ComputeBackend& backend
     arch::backend::BackendCounters expected)
 {
     ++expected.getter_count;
-    return backend.counters()==expected;
+    const auto actual=backend.counters();
+    return actual==expected;
 }
 
 /** Exercise live resident controls, observer planes and all three slots.
@@ -819,6 +867,7 @@ int main()
     try {
         run_region_transfers(device_count);
         run_store_lifecycle(device_count);
+        run_prepared_store_lifecycle(device_count);
         run_resident_controls_and_rotations(device_count);
         run_resident_diffusion_activity();
         std::cout << "CUDA store lifecycle passed\n";

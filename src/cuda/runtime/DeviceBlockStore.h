@@ -16,6 +16,7 @@
 #include <compare>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <limits>
 #include <list>
 #include <map>
@@ -186,10 +187,12 @@ public:
               scope_(other.scope_), entries_(std::move(other.entries_)),
               prepared_retirement_(std::move(other.prepared_retirement_)),
               index_(std::move(other.index_)),
-              commit_attempted_(other.commit_attempted_)
+              commit_attempted_(other.commit_attempted_),
+              publication_prepared_(other.publication_prepared_)
         {
             other.scope_ = {};
             other.commit_attempted_ = true;
+            other.publication_prepared_ = false;
         }
 
         ~Candidate()
@@ -239,6 +242,7 @@ public:
         // counters move, then swapped into place at publication.
         std::unique_ptr<const DeviceBlockStoreIndex> index_;
         bool commit_attempted_ = false;
+        bool publication_prepared_ = false;
     };
 
     explicit DeviceBlockStoreLifecycle(
@@ -401,8 +405,11 @@ public:
         poison(candidate);
     }
 
+    /** Finish every fallible preparation while the old namespace stays active.
+     * A distributed caller agrees this phase before publishing on any rank.
+     */
     template <typename Finalizer>
-    void publish_after_success(Candidate&& candidate,
+    void prepare_publication(Candidate& candidate,
                                DeviceRetirementFence fence,
                                Finalizer&& finalizer)
     {
@@ -427,6 +434,22 @@ public:
         std::forward<Finalizer>(finalizer)(
             std::span<const DeviceStoreEntry>(candidate.entries_));
 
+        candidate.publication_prepared_ = true;
+    }
+
+    /** Consume a successfully prepared candidate without a recoverable failure. */
+    void publish_prepared(Candidate&& candidate) noexcept
+    {
+        try {
+            require_not_mutating();
+            validate_candidate(candidate);
+            if (!candidate.publication_prepared_ || !candidate.commit_attempted_
+                || candidate.prepared_retirement_.size() != 1
+                || candidate.prepared_retirement_.front().fence.value != max_fence_id_)
+                std::terminate();
+        } catch (...) { std::terminate(); }
+        // Validation above proved the guard cannot throw.
+        MutationGuard guard(*this);
         // From here onward publication is allocation-free and non-throwing.
         // The entries and their identity index are swapped together, then the
         // epoch is published; a throwing finalizer above performs neither
@@ -438,6 +461,15 @@ public:
                             candidate.prepared_retirement_);
         staged_transaction_id_ = 0;
         poison(candidate);
+    }
+
+
+    template <typename Finalizer>
+    void publish_after_success(Candidate&& candidate, DeviceRetirementFence fence,
+                               Finalizer&& finalizer)
+    {
+        prepare_publication(candidate, fence, std::forward<Finalizer>(finalizer));
+        publish_prepared(std::move(candidate));
     }
 
     bool has_retirement(DeviceRetirementFence fence) const noexcept
@@ -534,6 +566,7 @@ private:
         candidate.prepared_retirement_.clear();
         candidate.index_.reset();
         candidate.commit_attempted_ = true;
+        candidate.publication_prepared_ = false;
     }
 
     void abandon_candidate_noexcept(Candidate& candidate) noexcept

@@ -92,6 +92,7 @@ CudaBackend::StoreTransaction::~StoreTransaction()
         // without an internal ownership/reentrancy invariant violation.
         std::terminate();
     }
+    impl_->release_prepared_retirement_noexcept();
     impl_->amr_flux.reset();
     impl_->resources.clear();
     impl_->uploaded_current.clear();
@@ -248,6 +249,7 @@ void CudaBackend::abort_store_transaction(StoreTransaction&& transaction)
         throw std::invalid_argument("invalid CUDA store abort");
     impl_->checked_quiesce("synchronize staged CUDA abort");
     impl_->store.abort(std::move(transaction.impl_->candidate));
+    transaction.impl_->release_prepared_retirement_noexcept();
     transaction.impl_->amr_flux.reset();
     transaction.impl_->resources.clear();
     transaction.impl_->uploaded_current.clear();
@@ -255,12 +257,14 @@ void CudaBackend::abort_store_transaction(StoreTransaction&& transaction)
     transaction.impl_->consumed = true;
 }
 
-void CudaBackend::publish_store_transaction(
-    StoreTransaction&& transaction, DeviceRetirementFence fence)
+void CudaBackend::prepare_store_publication(
+    StoreTransaction& transaction, DeviceRetirementFence fence)
 {
     if (!transaction.impl_ || transaction.impl_->consumed
         || transaction.impl_->owner.get() != impl_.get())
         throw std::invalid_argument("invalid CUDA store publication");
+    if(transaction.impl_->publication_fence.value)
+        throw std::logic_error("CUDA store publication is already prepared");
     if (!transaction.impl_->current_upload_complete())
         throw std::logic_error(
             "CUDA store publication requires complete staged Current");
@@ -283,14 +287,28 @@ void CudaBackend::publish_store_transaction(
         // can be introduced later entirely behind this backend contract.
         impl_->checked_quiesce(
             "synchronize recorded CUDA retirement fence");
-        impl_->store.publish_after_success(
-            std::move(transaction.impl_->candidate), fence,
+        impl_->store.prepare_publication(
+            transaction.impl_->candidate, fence,
             [](std::span<const DeviceStoreEntry>) noexcept {});
     } catch (...) {
         impl_->retired_resources.erase(retirement);
         throw;
     }
 
+    transaction.impl_->prepared_retirement=retirement;
+    transaction.impl_->publication_fence=fence;
+}
+
+void CudaBackend::publish_prepared_store_transaction(StoreTransaction&& transaction) noexcept
+{
+    if(!transaction.impl_ || transaction.impl_->consumed
+        || transaction.impl_->owner.get()!=impl_.get()
+        || !transaction.impl_->publication_fence.value
+        || !transaction.impl_->prepared_retirement
+        || !transaction.impl_->current_upload_complete())
+        std::terminate();
+    auto retirement=*transaction.impl_->prepared_retirement;
+    impl_->store.publish_prepared(std::move(transaction.impl_->candidate));
     static_assert(noexcept(impl_->active_resources.swap(
         transaction.impl_->resources)));
     static_assert(noexcept(retirement->resources.swap(
@@ -300,7 +318,14 @@ void CudaBackend::publish_store_transaction(
     impl_->active_amr_flux.swap(transaction.impl_->amr_flux);
     retirement->amr_flux.swap(transaction.impl_->amr_flux);
     impl_->staged_resource_count = 0;
+    transaction.impl_->prepared_retirement.reset(); // The accepted retirement now belongs to the backend.
     transaction.impl_->consumed = true;
+}
+
+void CudaBackend::publish_store_transaction(StoreTransaction&& transaction, DeviceRetirementFence fence)
+{
+    prepare_store_publication(transaction,fence);
+    publish_prepared_store_transaction(std::move(transaction));
 }
 
 bool CudaBackend::retirement_ready(DeviceRetirementFence fence) const
@@ -395,6 +420,15 @@ void CudaBackend::enqueue_upload_staged_current(
         region, host);
 }
 
+void CudaBackend::stage_ownership_slots(
+    backend::BackendTopologyStoreTransaction& transaction,
+    std::span<const backend::BackendStateAccess> sources,
+    std::span<const backend::BackendTopologyBinding> incoming)
+{
+    stage_ownership_slots(require_cuda_topology_transaction(transaction).transaction,
+        sources,incoming);
+}
+
 void CudaBackend::migrate_staged_current(
     backend::BackendTopologyStoreTransaction& transaction,
     std::span<const backend::BackendStateAccess> sources,
@@ -460,7 +494,7 @@ void CudaBackend::stage_amr_flux_plan(
     auto& concrete = selected.transaction;
     if (!concrete.impl_ || concrete.impl_->consumed
         || concrete.impl_->owner.get() != impl_.get()
-        || concrete.impl_->amr_flux
+        || concrete.impl_->amr_flux || concrete.impl_->publication_fence.value
         || concrete.scope().to_epoch != topology.epoch)
         throw std::invalid_argument(
             "invalid staged CUDA AMR flux plan transaction");
@@ -479,34 +513,51 @@ void CudaBackend::stage_amr_flux_plan(
     }
 }
 
+void CudaBackend::prepare_topology_store_publication(
+    backend::BackendTopologyStoreTransaction& transaction)
+{
+    auto& selected=require_cuda_topology_transaction(transaction);
+    if(!selected.transaction.impl_ || !selected.transaction.impl_->amr_flux)
+        throw std::logic_error("CUDA topology publication requires a staged AMR flux plan");
+    if(impl_->next_retirement_fence==0)
+        throw std::overflow_error("CUDA retirement fence counter exhausted");
+    const DeviceRetirementFence fence{impl_->next_retirement_fence};
+    impl_->next_retirement_fence=impl_->next_retirement_fence==std::numeric_limits<std::uint64_t>::max()
+        ?0:impl_->next_retirement_fence+1;
+    prepare_store_publication(selected.transaction,fence);
+}
+
+void CudaBackend::publish_prepared_topology_store_transaction(
+    backend::BackendTopologyStoreTransaction& transaction) noexcept
+{
+    auto* selected=dynamic_cast<CudaTopologyStoreTransaction*>(&transaction);
+    if(!selected)std::terminate();
+    publish_prepared_store_transaction(std::move(selected->transaction));
+}
+
+void CudaBackend::finish_topology_store_retirement(
+    backend::BackendTopologyStoreTransaction& transaction) noexcept
+{
+    auto* selected=dynamic_cast<CudaTopologyStoreTransaction*>(&transaction);
+    if(!selected || !selected->transaction.impl_
+        || selected->transaction.impl_->owner.get()!=impl_.get()
+        || !selected->transaction.impl_->consumed
+        || !selected->transaction.impl_->publication_fence.value)std::terminate();
+    const auto fence=selected->transaction.impl_->publication_fence;
+    try {
+        if(!retirement_ready(fence))std::terminate();
+        complete_store_retirement(fence);
+        selected->transaction.impl_->publication_fence={};
+    } catch(...) {std::terminate();}
+}
+
 void CudaBackend::publish_topology_store_transaction(
     std::unique_ptr<backend::BackendTopologyStoreTransaction> transaction)
 {
-    if (!transaction)
-        throw std::invalid_argument("topology store transaction is null");
-    auto& selected = require_cuda_topology_transaction(*transaction);
-    if (!selected.transaction.impl_
-        || !selected.transaction.impl_->amr_flux)
-        throw std::logic_error(
-            "CUDA topology publication requires a staged AMR flux plan");
-    if (impl_->next_retirement_fence == 0) {
-        throw std::overflow_error("CUDA retirement fence counter exhausted");
-    }
-    const DeviceRetirementFence fence{impl_->next_retirement_fence};
-    impl_->next_retirement_fence = impl_->next_retirement_fence
-        == std::numeric_limits<std::uint64_t>::max()
-        ? 0 : impl_->next_retirement_fence + 1;
-    publish_store_transaction(
-        std::move(selected.transaction), fence);
-    // Visibility has changed, so no recoverable exception may escape.  The
-    // concrete publication above synchronized the recorded event first;
-    // failure here is an internal invariant or device-lifetime failure.
-    try {
-        if (!retirement_ready(fence)) std::terminate();
-        complete_store_retirement(fence);
-    } catch (...) {
-        std::terminate();
-    }
+    if(!transaction)throw std::invalid_argument("topology store transaction is null");
+    prepare_topology_store_publication(*transaction);
+    publish_prepared_topology_store_transaction(*transaction);
+    finish_topology_store_retirement(*transaction);
 }
 
 } // namespace arch::cuda

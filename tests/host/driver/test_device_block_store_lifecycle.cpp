@@ -530,6 +530,40 @@ void test_successful_publish_and_retirement_identity()
             "retirement lost the original device arenas");
 }
 
+void test_prepared_publication_preserves_old_namespace()
+{
+    const std::vector<DeviceStoreEntry> initial{entry(91,31,1901,2001,1)};
+    DeviceBlockStoreLifecycle store(initial);
+    const auto old=access(handle(91,31),1901);
+    for(int mode=0;mode<3;++mode) {
+        const amr::AmrPlanScope scope{static_cast<std::uint64_t>(701+mode),{31},{32}};
+        const auto next=proposal(92,32,1902+mode);
+        auto candidate=store.prepare(scope,std::span(&next,1));
+        const DeviceRetirementFence fence{static_cast<std::uint64_t>(801+mode)};
+        store.prepare_publication(candidate,fence,[&](auto entries) {
+            require(entries.size()==1&&store.contains(old),"preparation exposed candidate");
+        });
+        require(store.contains(old)&&store.active_epoch()==amr::TopologyEpoch{31}
+            &&!store.has_retirement(fence),"prepared publication retired accepted storage");
+        require_rejected([&]{store.prepare_publication(candidate,fence,[](auto){});},
+            "duplicate publication preparation was accepted");
+        if(mode==0)store.abort(std::move(candidate));
+        else if(mode==1)continue; // Prepared candidate RAII is an ordinary abort.
+        else {
+            DeviceBlockStoreLifecycle::Candidate moved(std::move(candidate));
+            store.publish_prepared(std::move(moved));
+            require(!store.contains(old)&&store.contains(access(next.handle,next.storage.value))
+                &&store.has_retirement(fence),"prepared publication did not switch namespace");
+            bool released=false;
+            store.complete_retirement(fence,[&](auto entries) noexcept {
+                released=entries.size()==1&&entries.front()==initial.front();
+            });
+            require(released&&!store.has_retirement(fence),"prepared publication lost delayed retirement");
+        }
+    }
+    require(!store.has_staged_transaction(),"prepared transaction stranded ownership");
+}
+
 } // namespace
 
 int main()
@@ -543,6 +577,7 @@ int main()
         test_moved_candidate_queries_both_namespaces();
         test_throwing_finalizer_keeps_both_indices_consistent();
         test_successful_publish_and_retirement_identity();
+        test_prepared_publication_preserves_old_namespace();
         std::cout << "device block store lifecycle contract passed\n";
         return 0;
     } catch (const std::exception& error) {

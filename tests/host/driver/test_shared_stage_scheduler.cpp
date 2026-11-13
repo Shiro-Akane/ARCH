@@ -2311,7 +2311,7 @@ void test_production_lane_fingerprints_and_authority_absence()
     // Logical UIDs now travel in the native ownership packet. Restrict this
     // invariant to registration witnesses instead of banning wire identities
     // everywhere in DriverRegrid.
-    const auto ownership_begin=driver_regrid.find("void DriverRuntime::migrate_host_leaf(");
+    const auto ownership_begin=driver_regrid.find("void DriverRuntime::migrate_leaf(");
     const auto ownership_registration=driver_regrid.find(
         "const auto witness=scheduler_clock.next_publication();",ownership_begin);
     const auto ownership_ready=driver_regrid.find("transaction->mark_ready();",ownership_registration);
@@ -2325,8 +2325,9 @@ void test_production_lane_fingerprints_and_authority_absence()
                && completed_device.find("handle.uid.value") == std::string::npos
                && ownership_ledger.find("handle.uid.value") == std::string::npos
                && source_occurrences(ownership_ledger,"scheduler_clock.next_publication()")==1
-               && source_occurrences(ownership_ledger,"register_block(handle,witness.version,witness.completion)")==1
-               && source_occurrences(ownership_ledger,"witness.version,witness.completion);")==2,
+               && source_occurrences(ownership_ledger,"register_block(handle,witness.version,witness.completion,side)")==1
+               && source_occurrences(ownership_ledger,"witness.version,witness.completion);")==1
+               && ownership_ledger.find("publish_ghost({handle,StateSlot::Current},side,")!=std::string::npos,
            "registration batch witnesses never depend on handle identity");
     expect(driver.find("scheduler_clock =") == std::string::npos,
            "Driver never resets persistent scheduler clock");

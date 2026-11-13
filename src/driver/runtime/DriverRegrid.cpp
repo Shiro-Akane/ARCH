@@ -84,17 +84,17 @@ struct RegridSourceBackup {
 } // namespace
 
 /** One accepted leaf uses the same transaction and packet path as a family. */
-void DriverRuntime::migrate_host_leaf(amr::AmrEndpoint source,int destination_rank,
+void DriverRuntime::migrate_leaf(amr::AmrEndpoint source,int destination_rank,
     const std::function<void(LeafTransferPhase)>& observer)
 {
-    migrate_host_leaves(std::span<const amr::AmrEndpoint>(&source,1),destination_rank,observer);
+    migrate_leaves(std::span<const amr::AmrEndpoint>(&source,1),destination_rank,observer);
 }
 
 /** Explicit ownership preparation for the existing level-one/two regrid.
  * Colocation and numerical coarsening are separate accepted transactions:
  * a later regrid veto retains the successfully published ownership.
  */
-bool DriverRuntime::coalesce_host_siblings(amr::LogicalBlockKey parent,int destination_rank,
+bool DriverRuntime::coalesce_siblings(amr::LogicalBlockKey parent,int destination_rank,
     const std::function<void(LeafTransferPhase)>& observer)
 {
 #if ARCH_MPI_ENABLED
@@ -131,7 +131,7 @@ bool DriverRuntime::coalesce_host_siblings(amr::LogicalBlockKey parent,int desti
         parent.logical_x1,parent.logical_x2,parent.logical_x3,
         static_cast<std::uint64_t>(destination_rank),
         static_cast<std::uint64_t>(config.amr.lrefinemax)});
-    migrate_host_leaves(sources,destination_rank,observer);
+    migrate_leaves(sources,destination_rank,observer);
     return !sources.empty();
 #else
     (void)parent;(void)destination_rank;(void)observer;
@@ -139,13 +139,13 @@ bool DriverRuntime::coalesce_host_siblings(amr::LogicalBlockKey parent,int desti
 #endif
 }
 
-/** Move accepted Host leaves in one original ownership transaction.
+/** Move accepted leaves in one original ownership transaction.
  * Native fields (including ghosts and all three slots) travel as binary64 bits.
  * Only sender/receiver allocate a reusable single-leaf packet; the original pool
  * owns all candidate storage. No source is retired until every packet and rank
  * has completed validation and the common publication has been acknowledged.
  */
-void DriverRuntime::migrate_host_leaves(std::span<const amr::AmrEndpoint> sources, int destination_rank,
+void DriverRuntime::migrate_leaves(std::span<const amr::AmrEndpoint> sources, int destination_rank,
     const std::function<void(LeafTransferPhase)>& observer)
 {
 #if ARCH_MPI_ENABLED
@@ -158,13 +158,16 @@ void DriverRuntime::migrate_host_leaves(std::span<const amr::AmrEndpoint> source
     std::vector<int> senders, source_ids, target_ids;
     std::vector<std::array<std::uint64_t,21>> identities;
     state::StateVersion accepted{};
+    const auto side=compute_backend?ExecutionSide::Device:ExecutionSide::Host;
     prepare([&] {
         if (size<2 || rank!=amr_ctrl.tree->PartitionRank()
-            || size!=amr_ctrl.tree->PartitionSize() || compute_backend || hydro_attempt_
+            || size!=amr_ctrl.tree->PartitionSize() || hydro_attempt_
             || config.grid.geometry!="cartesian" || config.physics.burn.use_burn
             || config.physics.diffusion.use_diffusion || config.physics.gravity.type!="none"
             || bc_handler.has_user() || !distributed_hydro_topology())
-            throw std::logic_error("ownership transfer requires quiescent Cartesian Host Hydro");
+            throw std::logic_error("ownership transfer requires quiescent Cartesian Hydro");
+        if(compute_backend && !compute_backend->supports_dynamic_topology_store())
+            throw std::logic_error("ownership transfer backend lacks transactional storage");
         topology_registry.validate_committed_snapshot(observe_topology());
         if (destination_rank<0 || destination_rank>=size || stage_handles.empty())
             throw std::invalid_argument("ownership transfer requires valid nonempty ranks");
@@ -196,7 +199,7 @@ void DriverRuntime::migrate_host_leaves(std::span<const amr::AmrEndpoint> source
         accepted=current_interior_version();
         for (auto h:stage_handles)
             residency_ledger->require_readable({h,StateSlot::Current},
-                {ExecutionSide::Host,accepted,true,true});
+                {side,accepted,true,true});
         amr_ctrl.flux_register.RequireOwnershipTransferBoundary();
         // Borrowed callback attachments are not transportable process identities.
         for (int id:amr_ctrl.tree->GetActiveBlocks())
@@ -212,7 +215,8 @@ void DriverRuntime::migrate_host_leaves(std::span<const amr::AmrEndpoint> source
         sources.size(),static_cast<std::uint64_t>(destination_rank),accepted.value,
         scheduler_clock.last_token(),scheduler_clock.last_version(),
         static_cast<std::uint64_t>(ctrl.step_count),std::bit_cast<std::uint64_t>(ctrl.dt_old),
-        next_amr_transaction_id,static_cast<std::uint64_t>(config.grid.amr_max_blocks)};
+        next_amr_transaction_id,static_cast<std::uint64_t>(config.grid.amr_max_blocks),
+        static_cast<std::uint64_t>(side)};
     agree(batch);
     prepare([&] {
         identities.reserve(sources.size());
@@ -249,6 +253,10 @@ void DriverRuntime::migrate_host_leaves(std::span<const amr::AmrEndpoint> source
     // Per slot: cell count, species count, seven field lengths, repair row length.
     std::array<std::uint64_t,30> layout{};
     std::vector<std::uint64_t> packet;
+    std::array<FluidState,3> source_slots;
+    std::vector<backend::StorageGeneration> storage;
+    std::unique_ptr<backend::BackendTopologyStoreTransaction> device_transaction;
+    bool published=false;
     try {
         prepare([&] {
             std::vector<int> outgoing;
@@ -296,8 +304,18 @@ void DriverRuntime::migrate_host_leaves(std::span<const amr::AmrEndpoint> source
                     const auto& block=amr_ctrl.pool->GetBlock(source_id);
                     if (block.refine_flag!=0)
                         throw std::logic_error("ownership transfer requires no pending refinement decision");
+                    if(compute_backend) {
+                        for(std::size_t slot=0;slot<slots.size();++slot)
+                            source_slots[slot]=block.*slots[slot];
+                        std::array transfers{host_transfer_view(source_slots[0]),
+                            host_transfer_view(source_slots[1]),host_transfer_view(source_slots[2])};
+                        const auto it=std::find(stage_handles.begin(),stage_handles.end(),sources[index].handle);
+                        if(it==stage_handles.end())throw std::logic_error("ownership source has no local Device lease");
+                        compute_backend->read_ownership_slots(
+                            backend_access(static_cast<std::size_t>(it-stage_handles.begin()),StateSlot::Current),transfers);
+                    }
                     for (std::size_t slot=0;slot<slots.size();++slot) {
-                        const auto& state=block.*slots[slot];
+                        const auto& state=compute_backend?source_slots[slot]:block.*slots[slot];
                         const auto cells=static_cast<std::size_t>(block.grid.GetTotalSize());
                         if (state.block_total_size_!=static_cast<int>(cells)
                             || state.GetNumSpecies()!=specs.count())
@@ -338,8 +356,9 @@ void DriverRuntime::migrate_host_leaves(std::span<const amr::AmrEndpoint> source
                 if (rank==sender) {
                     auto out=std::copy(identity.begin(),identity.end(),packet.begin());
                     out=std::copy(layout.begin(),layout.end(),out);
-                    for (auto member:slots) {
-                        const auto& state=amr_ctrl.pool->GetBlock(source_id).*member;
+                    for (std::size_t slot=0;slot<slots.size();++slot) {
+                        const auto& state=compute_backend?source_slots[slot]
+                            :amr_ctrl.pool->GetBlock(source_id).*slots[slot];
                         for (auto field:regrid_fields)
                             for (double value:state.*field) *out++=std::bit_cast<std::uint64_t>(value);
                         const auto& repair=state.stage_repairs;
@@ -409,12 +428,36 @@ void DriverRuntime::migrate_host_leaves(std::span<const amr::AmrEndpoint> source
             prepared->CompleteOwnershipMigration();
             prepared->ActivateForFinalization(proposed_global);
             notify(LeafTransferPhase::TopologyActivated);
+            if(compute_backend) {
+                std::vector<backend::BackendTopologyBinding> bindings,incoming;
+                std::vector<backend::BackendStateAccess> old;
+                for(std::size_t i=0;i<stage_handles.size();++i)
+                    old.push_back(backend_access(i,StateSlot::Current));
+                for(std::size_t i=0;i<handles.size();++i) {
+                    auto& block=amr_ctrl.pool->GetBlock(amr_ctrl.tree->GetActiveBlocks()[i]);
+                    const auto generation=storage_generation_issuer.issue();
+                    storage.push_back(generation);
+                    bindings.push_back({&block,handles[i],generation,&bc_handler.logical_plan(block.grid),
+                        bc_handler.hydro_physical_faces(*amr_ctrl.tree,block)});
+                    if(std::find(target_ids.begin(),target_ids.end(),amr_ctrl.tree->GetActiveBlocks()[i])!=target_ids.end())
+                        incoming.push_back(bindings.back());
+                }
+                device_transaction=compute_backend->begin_topology_store_transaction(transaction->scope(),bindings);
+                const auto flux=amr::build_amr_flux_topology_plan(*amr_ctrl.pool,
+                    amr_ctrl.tree->GetActiveBlocks(),handles,config.grid.dim,specs.count(),
+                    &amr_ctrl.tree->GetRootGrid(),rank,size);
+                const auto reflux=amr::build_amr_reflux_topology_plan(*amr_ctrl.pool,flux);
+                compute_backend->stage_amr_flux_plan(*device_transaction,flux,reflux);
+                compute_backend->stage_ownership_slots(*device_transaction,old,incoming);
+                compute_backend->prepare_topology_store_publication(*device_transaction);
+                notify(LeafTransferPhase::DevicePrepared);
+            }
             // Ghost values are unchanged because this transaction changes only ownership.
             const auto witness=scheduler_clock.next_publication();
             ledger=std::make_unique<StateResidencyLedger>(candidate->reconciliation().epoch);
             for (auto handle:handles) {
-                ledger->register_block(handle,witness.version,witness.completion);
-                ledger->publish_ghost({handle,StateSlot::Current},ExecutionSide::Host,
+                ledger->register_block(handle,witness.version,witness.completion,side);
+                ledger->publish_ghost({handle,StateSlot::Current},side,
                     witness.version,witness.completion);
             }
             transaction->mark_ready();
@@ -426,18 +469,26 @@ void DriverRuntime::migrate_host_leaves(std::span<const amr::AmrEndpoint> source
                     [](const auto&) {return 0;},
                     [](const auto&,int&) {},
                     [&](int&&) noexcept {
+                        if(compute_backend) {
+                            compute_backend->publish_prepared_topology_store_transaction(*device_transaction);
+                            backend_storage.swap(storage);
+                        }
                         prepared->PublishNoexcept();
                         stage_handles.swap(handles);
                         residency_ledger.swap(ledger);
                         amr_ctrl.PublishActiveHandlesNoexcept(stage_handles);
+                        published=true;
                     });
             },[&](std::exception_ptr failure) {
                 prepare([&] {if (failure) std::rethrow_exception(failure);});
             });
         // Publication is noexcept on every rank; old sender stays alive through acknowledgement.
         check(MPI_Barrier(MPI_COMM_WORLD));
+        if(compute_backend)compute_backend->finish_topology_store_retirement(*device_transaction);
         prepared->ReleaseRetiredNoexcept();
     } catch (...) {
+        if(published)std::terminate();
+        device_transaction.reset();
         if (prepared) prepared->AbortNoexcept();
         // All prior transport has completed. Preserve monotonic identities after rejection.
         std::array<std::uint64_t,3> local{next_amr_transaction_id,scheduler_clock.last_token(),scheduler_clock.last_version()},high{};

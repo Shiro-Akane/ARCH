@@ -39,7 +39,7 @@ using Side = state::ExecutionSide;
 constexpr std::array slots{Slot::Current, Slot::Next, Slot::Scratch};
 constexpr std::array members{&amr::Block::fluid_state, &amr::Block::state_next, &amr::Block::state_scratch};
 int rank = 0, checks = 0, rejections = 0;
-bool mixed = false, flux_mode = false, macro_mode = false;
+bool mixed = false, flux_mode = false, macro_mode = false, ownership_mode = false;
 dispatch::TimeIntegratorId macro_method=dispatch::TimeIntegratorId::Euler;
 std::uint64_t boundary_h2d = 0, boundary_d2h = 0, observed_device_used = 0;
 void require(bool ok, const char* message) { if (!ok) throw std::runtime_error(message); }
@@ -69,7 +69,7 @@ SimConfig config_for(int dim, bool periodic) {
 }
 cuda::CudaLaunchConfig launch(const SimConfig& c) {
     using namespace dispatch;
-    return cuda::make_cuda_launch_config({FluxId::Hllc,(flux_mode||macro_mode)?ReconstructionId::Pcm:ReconstructionId::Ppm,LimiterId::MinMod,
+    return cuda::make_cuda_launch_config({FluxId::Hllc,(flux_mode||macro_mode||ownership_mode)?ReconstructionId::Pcm:ReconstructionId::Ppm,LimiterId::MinMod,
         macro_method,EosId::Ideal,NetworkId::None,OdeSolverId::None,
         LinearSolverId::None,DiffusionIntegratorId::None},c);
 }
@@ -196,7 +196,7 @@ struct Run {
         return control;
     }
     Run(int dim,int n,bool periodic,bool distributed)
-        :config(config_for(dim,periodic)),eos(1.4,populate(n)),control(12,dim),
+        :config(config_for(dim,periodic)),eos(1.4,populate(n)),control(ownership_mode&&distributed?6:12,dim),
          bc(config),controller(config,RunState{}),
          runtime(initialize_control(distributed,n),bc,config,species,controller) {
         bc.bind(eos,species);
@@ -877,6 +877,131 @@ void run_macro(int n,bool periodic) {
         <<" species="<<n<<" periodic="<<periodic<<" accepted_steps=16 rollback_cases=15"<<std::endl;
 }
 
+// Ownership snapshots include all three resident slots and allocation padding.
+// The independent serial CPU oracle continues to check accepted Hydro evolution.
+using OwnershipImage=std::vector<std::uint64_t>;
+OwnershipImage ownership_image(Run& run,std::size_t index) {
+    const auto& b=run.control.pool->GetBlock(run.control.tree->GetActiveBlocks()[index]);
+    std::array copies{b.fluid_state,b.state_next,b.state_scratch};
+    std::array views{view(copies[0]),view(copies[1]),view(copies[2])};
+    run.runtime.backend()->read_ownership_slots(run.runtime.backend_access(index,Slot::Current),views);
+    OwnershipImage result;
+    for(auto& copy:copies)for(auto* field:fields(copy))
+        for(double value:*field)result.push_back(std::bit_cast<std::uint64_t>(value));
+    return result;
+}
+amr::AmrEndpoint ownership_endpoint(Run& run,int owner) {
+    amr::AmrEndpoint endpoint{{2,1,2,0,0},{}};
+    if(rank==owner) {
+        const auto& ids=run.control.tree->GetActiveBlocks();
+        for(std::size_t i=0;i<ids.size();++i) {
+            const auto& b=run.control.pool->GetBlock(ids[i]);
+            if(b.level==1&&b.logical_x1==2&&b.logical_x2==0)endpoint.handle=run.runtime.handles()[i];
+        }
+    }
+    std::array<std::uint64_t,2> wire{endpoint.handle.uid.value,endpoint.handle.epoch.value};
+    MPI_Bcast(wire.data(),2,MPI_UINT64_T,owner,MPI_COMM_WORLD);
+    endpoint.handle={{wire[0]},{wire[1]}};return endpoint;
+}
+void run_ownership(int n,bool periodic) {
+    Run actual(2,n,periodic,true);Reference reference(2,n,periodic);
+    actual.reset(0);reference.reset(0);actual.refresh();reference.ensure_fluid_ghosts(Slot::Current);
+    actual.runtime.prepare_device_flux_plans();
+    DeviceMacro device(actual);HostMacro host(reference);
+    const auto initial=macro_compare(actual,reference);
+    const auto step=[&] {
+        const double dt=device.step();host.step(dt);
+        const auto totals=macro_compare(actual,reference);
+        if(periodic)for(std::size_t f=0;f<totals.size();++f)
+            require(std::abs(totals[f]-initial[f])<=2.e-11L+2.e-12L*std::abs(initial[f]),
+                "ownership periodic conservation failed");
+    };
+    step();
+    using Phase=driver::DriverRuntime::LeafTransferPhase;
+    for(auto phase:{Phase::Reserved,Phase::FieldReceived,Phase::TopologyActivated,
+            Phase::DevicePrepared,Phase::ReadyToPublish}) {
+        const auto endpoint=ownership_endpoint(actual,1);
+        const auto old_handles=actual.runtime.handles();
+        const auto ids=actual.control.tree->GetActiveBlocks();
+        auto context=actual.runtime.stage_context();
+        const auto ledger=context.ledger.snapshot_metadata(Side::Device);
+        const auto flux=actual.control.flux_register.snapshot_host();
+        const auto controller=actual.controller;
+        std::vector<OwnershipImage> before;
+        std::vector<backend::BackendStateAccess> old_accesses;
+        std::vector<std::array<FluidState,3>> mirrors;
+        for(std::size_t i=0;i<ids.size();++i) {
+            before.push_back(ownership_image(actual,i));
+            old_accesses.push_back(actual.runtime.backend_access(i,Slot::Current));
+            auto& b=actual.control.pool->GetBlock(ids[i]);
+            mirrors.push_back({b.fluid_state,b.state_next,b.state_scratch});
+        }
+        rejected([&] {
+            actual.runtime.migrate_leaf(endpoint,0,[&](Phase got) {
+                if(got==phase && rank==(phase==Phase::FieldReceived?0:1))
+                    throw std::runtime_error("injected ownership preparation failure");
+            });
+        });
+        require(actual.runtime.handles()==old_handles&&actual.control.tree->GetActiveBlocks()==ids,
+            "ownership rejection changed topology");
+        require(context.ledger.metadata_snapshot_matches(ledger),"ownership rejection changed residency");
+        require(actual.control.flux_register.host_snapshot_matches(flux),"ownership rejection changed flux");
+        require(actual.controller.t_current==controller.t_current&&actual.controller.step_count==controller.step_count,
+            "ownership rejection changed physical time");
+        for(std::size_t i=0;i<ids.size();++i) {
+            require(ownership_image(actual,i)==before[i],"ownership rollback changed resident slot bits");
+            require(actual.runtime.backend()->contains(old_accesses[i]),"ownership rollback invalidated old lease");
+            auto& b=actual.control.pool->GetBlock(ids[i]);
+            for(int slot=0;slot<3;++slot) {
+                auto a=fields(b.*members[slot]),e=fields(mirrors[i][slot]);
+                for(std::size_t f=0;f<7;++f) {
+                    require(a[f]->size()==e[f]->size(),"ownership rollback changed Host shape");
+                    for(std::size_t j=0;j<a[f]->size();++j)
+                        require(same((*a[f])[j],(*e[f])[j]),"ownership rollback changed Host mirror");
+                }
+            }
+        }
+        const auto store=static_cast<cuda::CudaBackend*>(actual.runtime.backend())->store_snapshot();
+        require(store.active_blocks==ids.size()&&store.staged_blocks==0&&store.retirement_batches==0
+            &&actual.control.pool->GetNumReservedBlocks()==0,"ownership rejection retained candidate resources");
+        // Same Runtime: retry out and back, then advance without reseeding.
+        for(int owner:{1,0}) {
+            const auto source=ownership_endpoint(actual,owner);
+            OwnershipImage packet;
+            std::vector<OwnershipImage> survivors;
+            for(std::size_t i=0;i<actual.runtime.handles().size();++i) {
+                survivors.push_back(ownership_image(actual,i));
+                if(actual.runtime.handles()[i]==source.handle)packet=survivors.back();
+            }
+            int count=packet.size();MPI_Bcast(&count,1,MPI_INT,owner,MPI_COMM_WORLD);
+            packet.resize(count);MPI_Bcast(packet.data(),count,MPI_UINT64_T,owner,MPI_COMM_WORLD);
+            const auto handles=actual.runtime.handles();
+            std::vector<backend::BackendStateAccess> stale;
+            for(std::size_t i=0;i<handles.size();++i)stale.push_back(actual.runtime.backend_access(i,Slot::Current));
+            actual.runtime.migrate_leaf(source,1-owner);
+            for(const auto access:stale)require(!actual.runtime.backend()->contains(access),
+                "ownership publication retained stale Device lease");
+            for(std::size_t i=0;i<actual.runtime.handles().size();++i) {
+                const auto handle=actual.runtime.handles()[i];
+                const auto value=ownership_image(actual,i);
+                if(handle.uid==source.handle.uid)require(value==packet,"ownership received slots differ bitwise");
+                else {
+                    const auto it=std::find_if(handles.begin(),handles.end(),[&](auto h){return h.uid==handle.uid;});
+                    require(it!=handles.end()&&value==survivors[it-handles.begin()],
+                        "ownership survivor slots differ bitwise");
+                }
+            }
+            const auto accepted=static_cast<cuda::CudaBackend*>(actual.runtime.backend())->store_snapshot();
+            require(accepted.staged_blocks==0&&accepted.retirement_batches==0
+                &&accepted.active_blocks==actual.runtime.handles().size(),"ownership retained old Device storage");
+            macro_compare(actual,reference);
+        }
+        step();
+    }
+    if(!rank)std::cout<<"ownership PASS method="<<static_cast<int>(macro_method)<<" species="<<n
+        <<" periodic="<<periodic<<" accepted_transfers=10 rejected_phases=5 accepted_steps=6"<<std::endl;
+}
+
 }
 int main(int argc,char** argv) {
     int provided=0;MPI_Init_thread(&argc,&argv,MPI_THREAD_FUNNELED,&provided);
@@ -888,11 +1013,14 @@ int main(int argc,char** argv) {
         if(!ready){if(!rank)std::cout<<"SKIP no CUDA device\n";MPI_Finalize();return 77;}
         flux_mode=argc==2&&std::string(argv[1])=="--flux";
         macro_mode=argc==2&&std::string(argv[1])=="--macro";
-        mixed=macro_mode||flux_mode||(argc==2&&std::string(argv[1])=="--mixed");
-        if(macro_mode)for(auto method:{dispatch::TimeIntegratorId::Euler,dispatch::TimeIntegratorId::Rk2,
+        ownership_mode=argc==2&&std::string(argv[1])=="--ownership";
+        mixed=ownership_mode||macro_mode||flux_mode||(argc==2&&std::string(argv[1])=="--mixed");
+        if(macro_mode||ownership_mode)for(auto method:{dispatch::TimeIntegratorId::Euler,dispatch::TimeIntegratorId::Rk2,
                 dispatch::TimeIntegratorId::Rk3}) {
             macro_method=method;
-            for(int species:{1,4,37})for(bool periodic:{false,true})run_macro(species,periodic);
+            for(int species:{1,4,37})for(bool periodic:{false,true}) {
+                if(ownership_mode)run_ownership(species,periodic);else run_macro(species,periodic);
+            }
         }
         else if(flux_mode)for(int species:{1,4,37})for(bool periodic:{false,true})run_flux(species,periodic);
         else if(mixed)for(int species:{1,4,37})for(bool periodic:{false,true})run(2,species,periodic);
@@ -904,7 +1032,8 @@ int main(int argc,char** argv) {
             <<" h2d_including_metadata="<<all[3*r]<<" d2h="<<all[3*r+1]
             <<" observed_device_used_including_test_and_contexts="<<all[3*r+2]<<std::endl;
         if(!rank) {
-            if(macro_mode)std::cout<<"PASS CUDA MPI macro layouts=18 comparisons="<<checks;
+            if(ownership_mode)std::cout<<"PASS CUDA MPI ownership layouts=18 comparisons="<<checks;
+            else if(macro_mode)std::cout<<"PASS CUDA MPI macro layouts=18 comparisons="<<checks;
             else if(flux_mode)std::cout<<"PASS CUDA MPI flux layouts=6 weighted_stages=24 flux_reflux_checks="<<checks;
             else std::cout<<"PASS CUDA MPI Runtime mixed="<<mixed<<" layouts="<<(mixed?6:18)
                 <<" full_state_checks="<<checks;
