@@ -326,7 +326,7 @@ def main():
     original = (root / "simulation/Sod/Sod.par").read_text()
     report["rejections"] = []
     for name, changes in {
-        "amr": {"lrefinemax": 1},
+        "amr-level": {"lrefinemax": 4},
         "empty-rank": {"nblockx1": 1},
         "checkpoint-shard": {"restart": "true", "restart_file": "rank-0/state.h5"},
         "cuda-unavailable": {"compute_backend": "cuda", "cuda_device": 2147483647},

@@ -79,7 +79,7 @@ public:
     enum class LeafTransferPhase { Reserved, FieldReceived, TopologyActivated, DevicePrepared, ReadyToPublish };
     void migrate_leaf(amr::AmrEndpoint source, int destination_rank,
         const std::function<void(LeafTransferPhase)>& observer = {});
-    /** Atomically colocate a complete level-one/two sibling family. Call perform_regrid
+    /** Atomically colocate a complete qualified sibling family. Call perform_regrid
      * separately to apply the original indicators and restriction. Returns false
      * for an already colocated family, preserving its epoch and accepted state.
      */

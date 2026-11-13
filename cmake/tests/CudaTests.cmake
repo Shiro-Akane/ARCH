@@ -103,6 +103,15 @@ if(ARCH_ENABLE_MPI)
         set_tests_properties(mpi_cuda_root_startup_${ranks} PROPERTIES
             SKIP_RETURN_CODE 77 TIMEOUT 1800 PROCESSORS ${ranks} LABELS "mpi;cuda"
             ENVIRONMENT "OMP_NUM_THREADS=1;OMP_DYNAMIC=FALSE")
+        foreach(dimension IN ITEMS 1 2)
+            add_test(NAME mpi_cuda_root_depth_d${dimension}_${ranks}
+                COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${ranks}
+                    ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_cuda_mpi_runtime> ${MPIEXEC_POSTFLAGS}
+                    --root-depth ${dimension} 3)
+            set_tests_properties(mpi_cuda_root_depth_d${dimension}_${ranks} PROPERTIES
+                SKIP_RETURN_CODE 77 TIMEOUT 2400 PROCESSORS ${ranks} LABELS "mpi;cuda"
+                ENVIRONMENT "OMP_NUM_THREADS=1;OMP_DYNAMIC=FALSE")
+        endforeach()
         add_test(NAME mpi_cuda_checkpoint_${ranks}
             COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${ranks}
                 ${MPIEXEC_PREFLAGS} $<TARGET_FILE:arch_cuda_mpi_runtime> ${MPIEXEC_POSTFLAGS}

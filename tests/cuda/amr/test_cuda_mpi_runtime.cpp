@@ -52,7 +52,8 @@ using Side = state::ExecutionSide;
 constexpr std::array slots{Slot::Current, Slot::Next, Slot::Scratch};
 constexpr std::array members{&amr::Block::fluid_state, &amr::Block::state_next, &amr::Block::state_scratch};
 int rank = 0, ranks = 2, checks = 0, rejections = 0;
-bool root_mode = false, io_mode = false;
+bool root_mode = false, io_mode = false, root_extension = false;
+int root_dimension = 2, root_max_level = 2;
 std::string io_directory;
 bool mixed = false, flux_mode = false, macro_mode = false, ownership_mode = false, regrid_mode = false;
 dispatch::TimeIntegratorId macro_method=dispatch::TimeIntegratorId::Euler;
@@ -75,7 +76,8 @@ SimConfig config_for(int dim, bool periodic) {
     c.grid.x1_min=0.;c.grid.x1_max=root_mode?double(c.grid.nblockx1):3.;c.grid.x2_min=0.;c.grid.x2_max=2.;c.grid.x3_min=0.;c.grid.x3_max=2.;
     c.grid.amr_max_blocks=12;c.amr.lrefinemin=0;c.amr.lrefinemax=mixed?1:0;
     if(regrid_mode) {
-        c.grid.amr_max_blocks=root_mode?64*ranks:48;c.amr.lrefinemax=2;
+        c.grid.amr_max_blocks=root_mode?(root_max_level>2?128:64)*ranks:48;
+        c.amr.lrefinemax=root_mode?root_max_level:2;
         c.amr.refine_threshold=.02;c.amr.derefine_threshold=.001;
         c.amr.refine_on_rho=true;
         c.amr.refine_on_p=c.amr.refine_on_temp=c.amr.refine_on_velx=c.amr.refine_on_vely=false;
@@ -191,11 +193,13 @@ struct Reference {
             handles.push_back({{i+1},{1}});
         if(regrid_mode) {
             regrid_registry=std::make_unique<topology::TopologyIdentityRegistry>(
-                topology::TopologyDomainBounds{2,{static_cast<unsigned>(config.grid.nblockx1),1,1},2},0,1);
+                topology::TopologyDomainBounds{dim,{static_cast<unsigned>(config.grid.nblockx1),
+                    static_cast<unsigned>(std::max(1,config.grid.nblockx2)),
+                    static_cast<unsigned>(std::max(1,config.grid.nblockx3))},config.amr.lrefinemax},0,1);
             std::vector<topology::TopologyObservation> observations;
             for(int id:control.tree->GetActiveBlocks()) {
                 const auto& b=control.pool->GetBlock(id);
-                observations.push_back({id,{2,b.level,b.logical_x1,b.logical_x2,b.logical_x3},0});
+                observations.push_back({id,{dim,b.level,b.logical_x1,b.logical_x2,b.logical_x3},0});
             }
             auto candidate=regrid_registry->stage_adoption(observations);
             handles=candidate.reconciliation().handles_in_observation_order;
@@ -943,7 +947,7 @@ amr::AmrEndpoint ownership_endpoint(Run& run,int owner,amr::LogicalBlockKey key=
         const auto& ids=run.control.tree->GetActiveBlocks();
         for(std::size_t i=0;i<ids.size();++i) {
             const auto& b=run.control.pool->GetBlock(ids[i]);
-            if(amr::LogicalBlockKey{2,b.level,b.logical_x1,b.logical_x2,b.logical_x3}==key)
+            if(amr::LogicalBlockKey{run.config.grid.dim,b.level,b.logical_x1,b.logical_x2,b.logical_x3}==key)
                 endpoint.handle=run.runtime.handles()[i];
         }
     }
@@ -1089,7 +1093,7 @@ bool serial_device_regrid_reference(Reference& reference,std::unique_ptr<HostMac
     std::vector<topology::TopologyObservation> observations;
     for(int id:prepared.proposed_active_blocks()) {
         const auto& b=reference.control.pool->GetBlock(id);
-        observations.push_back({id,{2,b.level,b.logical_x1,b.logical_x2,b.logical_x3},0});
+        observations.push_back({id,{reference.config.grid.dim,b.level,b.logical_x1,b.logical_x2,b.logical_x3},0});
     }
     auto& registry=*reference.regrid_registry;
     auto candidate=registry.stage_reconciliation(observations);
@@ -1265,7 +1269,7 @@ void run_regrid(int n,bool periodic) {
 // Match Driver startup: real partitioned roots, deferred Host refinement,
 // initial Device upload, then resident evolution/regrids with intervening output reads.
 void run_root(int n,bool periodic) {
-    Run actual(2,n,periodic,true);Reference reference(2,n,periodic);
+    Run actual(root_dimension,n,periodic,true);Reference reference(root_dimension,n,periodic);
     seed_device_regrid(actual,reference);
     auto host=std::make_unique<HostMacro>(reference);
     int host_changes=0;
@@ -1290,24 +1294,85 @@ void run_root(int n,bool periodic) {
             &&!store.retirement_batches&&actual.control.pool->GetNumReservedBlocks()==0,
             "root-start Device lifecycle retained resources");
     };
+    int local_maximum=0,maximum_level=0;
+    for(int id:actual.control.tree->GetActiveBlocks())
+        local_maximum=std::max(local_maximum,actual.control.pool->GetBlock(id).level);
+    mpi::check(MPI_Allreduce(&local_maximum,&maximum_level,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD));
+    require(maximum_level==root_max_level,"root fixture did not reach the requested deepest level");
+    if(root_extension) {
+        std::array<int,3> coordinates{-1,-1,-1};
+        if(rank==1)for(int id:actual.control.tree->GetActiveBlocks()) {
+            const auto& block=actual.control.pool->GetBlock(id);
+            if(block.level==root_max_level) {
+                coordinates={int(block.logical_x1),int(block.logical_x2),int(block.logical_x3)};break;
+            }
+        }
+        mpi::check(MPI_Bcast(coordinates.data(),3,MPI_INT,1,MPI_COMM_WORLD));
+        require(coordinates[0]>=0,"deep root fixture has no deepest leaf on rank one");
+        const amr::LogicalBlockKey moved{root_dimension,root_max_level,
+            std::uint32_t(coordinates[0]),std::uint32_t(coordinates[1]),std::uint32_t(coordinates[2])};
+        const amr::LogicalBlockKey parent{root_dimension,root_max_level-1,
+            moved.logical_x1/2,moved.logical_x2/2,moved.logical_x3/2};
+        const auto endpoint=ownership_endpoint(actual,1,moved);
+        const auto handles=actual.runtime.handles();
+        const auto ids=actual.control.tree->GetActiveBlocks();
+        const auto time=actual.controller.t_current,old_dt=actual.controller.dt_old;
+        const auto step=actual.controller.step_count;
+        auto context=actual.runtime.stage_context();
+        const auto ledger=context.ledger.snapshot_metadata(Side::Device);
+        std::vector<OwnershipImage> images;
+        std::vector<backend::BackendStateAccess> accesses;
+        for(std::size_t i=0;i<handles.size();++i) {
+            images.push_back(ownership_image(actual,i));
+            accesses.push_back(actual.runtime.backend_access(i,Slot::Current));
+        }
+        bool reached=false;
+        rejected([&] {
+            try {
+                actual.runtime.migrate_leaf(endpoint,0,[&](driver::DriverRuntime::LeafTransferPhase phase) {
+                    if(rank==1 && phase==driver::DriverRuntime::LeafTransferPhase::ReadyToPublish) {
+                        reached=true;throw std::runtime_error("injected deepest-leaf ownership rejection");
+                    }
+                });
+            } catch(const std::exception& error) {
+                std::cout<<"deepest-leaf rejected rank="<<rank<<" reason="<<error.what()<<std::endl;
+                throw;
+            }
+        });
+        if(rank==1)require(reached,"deepest-leaf rollback did not reach publication boundary");
+        require(actual.runtime.handles()==handles && actual.control.tree->GetActiveBlocks()==ids,
+            "deepest-leaf rollback changed topology");
+        require(context.ledger.metadata_snapshot_matches(ledger),"deepest-leaf rollback changed residency");
+        require(actual.controller.step_count==step && same(actual.controller.t_current,time)
+            && same(actual.controller.dt_old,old_dt),"deepest-leaf rollback changed physical time");
+        for(std::size_t i=0;i<handles.size();++i) {
+            require(ownership_image(actual,i)==images[i],"deepest-leaf rollback changed resident slots");
+            require(actual.runtime.backend()->contains(accesses[i]),"deepest-leaf rollback invalidated old lease");
+        }
+        check();
+        actual.runtime.migrate_leaf(endpoint,0);check();
+        require(actual.runtime.coalesce_siblings(parent,1),"deepest family was not colocated");check();
+    }
     int device_changes=0;
-    for(int cycle=0;cycle<4;++cycle) {
+    for(int cycle=0;cycle<root_max_level+2;++cycle) {
         const double dt=device.step();host->step(dt);check();
         actual.runtime.materialize_current_for_host();
-        actual.config.amr.refine_threshold=reference.config.amr.refine_threshold=(cycle==1||cycle==2)?.9:.02;
-        actual.config.amr.derefine_threshold=reference.config.amr.derefine_threshold=(cycle==1||cycle==2)?.8:.001;
+        const bool coarsen=cycle>=1 && cycle<=root_max_level;
+        actual.config.amr.refine_threshold=reference.config.amr.refine_threshold=coarsen?.9:.02;
+        actual.config.amr.derefine_threshold=reference.config.amr.derefine_threshold=coarsen?.8:.001;
         const bool changed=actual.runtime.perform_regrid(actual.controller.step_count,actual.controller.t_current);
         require(changed==serial_device_regrid_reference(reference,host,actual.controller.t_current),
             "resident root-start regrid differs from serial selection");
         device_changes+=changed;check();
-        if(cycle==2)require(reference.handles.size()==static_cast<std::size_t>(actual.config.grid.nblockx1),
+        if(cycle==root_max_level)require(reference.handles.size()==static_cast<std::size_t>(actual.config.grid.nblockx1),
             "root-start coarsening did not restore the whole root mesh");
     }
     const double dt=device.step();host->step(dt);check();
-    require(device_changes>=3,"root-start did not exercise refine/coarsen evolution");
+    require(device_changes>=root_max_level+1,"root-start did not exercise refine/coarsen evolution");
     if(!rank)std::cout<<"root PASS ranks="<<ranks<<" method="<<static_cast<int>(macro_method)
         <<" species="<<n<<" periodic="<<periodic<<" initial_host_regrids="<<host_changes
-        <<" device_regrids="<<device_changes<<" accepted_steps=5"<<std::endl;
+        <<" dimension="<<root_dimension<<" max_level="<<maximum_level
+        <<" device_regrids="<<device_changes<<" accepted_steps="<<root_max_level+3<<std::endl;
 }
 
 // Exact native interiors, independent of restored UID/pool ordering and ghosts.
@@ -1505,8 +1570,14 @@ int main(int argc,char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);int size=0;MPI_Comm_size(MPI_COMM_WORLD,&size);ranks=size;
     io_mode=argc==3&&(std::string(argv[1])=="--io"||std::string(argv[1])=="--io-smoke");
     if(io_mode)io_directory=argv[2];
-    root_mode=io_mode||(argc==2&&(std::string(argv[1])=="--root"||std::string(argv[1])=="--root-smoke"));
+    root_extension=argc==4&&(std::string(argv[1])=="--root-depth"||std::string(argv[1])=="--root-depth-smoke");
+    root_mode=io_mode||root_extension||(argc==2&&(std::string(argv[1])=="--root"||std::string(argv[1])=="--root-smoke"));
     try {
+        if(root_extension) {
+            root_dimension=std::stoi(argv[2]);root_max_level=std::stoi(argv[3]);
+            require(root_dimension>=1&&root_dimension<=2&&root_max_level>=1&&root_max_level<=3,
+                "root-depth witness requires dimension one or two and maximum level one to three");
+        }
         require((size==2||(root_mode&&size==4))&&provided>=MPI_THREAD_FUNNELED,"test requires two or four qualified FUNNELED ranks");
         int devices=0;const int local=cudaGetDeviceCount(&devices)==cudaSuccess&&devices>0?1:0;
         int ready=0;MPI_Allreduce(&local,&ready,1,MPI_INT,MPI_MIN,MPI_COMM_WORLD);
@@ -1536,7 +1607,7 @@ int main(int argc,char** argv) {
             });
         }
         if(io_mode&&std::string(argv[1])=="--io-smoke"){macro_method=dispatch::TimeIntegratorId::Rk2;run_io(4,true,true);}
-        else if(root_mode&&std::string(argv[1])=="--root-smoke")run_root(1,false);
+        else if(root_mode&&(std::string(argv[1])=="--root-smoke"||std::string(argv[1])=="--root-depth-smoke"))run_root(1,false);
         else if(regrid_mode&&std::string(argv[1])=="--regrid-smoke")run_regrid(1,false);
         else if(macro_mode||ownership_mode||regrid_mode)for(auto method:{dispatch::TimeIntegratorId::Euler,dispatch::TimeIntegratorId::Rk2,
                 dispatch::TimeIntegratorId::Rk3}) {

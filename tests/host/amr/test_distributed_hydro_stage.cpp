@@ -1289,11 +1289,11 @@ void runtime_ripple_cases() {
         compare(actual,reference);
         a.step(2);serial_reference_step(*b,2);compare(actual,reference);++failures;
     }
-    // The native entry's increased limit is bounded; level three stays closed.
+    // The native entry's increased limit is bounded; level four stays closed.
     {
         Fixture actual(2,rank,ranks,true,false,rank==0?9:21);
         seed_regrid_wave(actual,30);actual.config.amr.lrefinemax=2;
-        RuntimeRun a(actual);RegridWitness before(a);actual.config.amr.lrefinemax=3;
+        RuntimeRun a(actual);RegridWitness before(a);actual.config.amr.lrefinemax=4;
         bool rejected=false;try {runtime_regrid(a);}catch(const std::exception&) {rejected=true;}
         require(rejected,"ripple accepted an unqualified maximum level");before.check(a);
         actual.config.amr.lrefinemax=2;require(runtime_regrid(a),"bounded ripple controls could not retry");
@@ -1465,7 +1465,7 @@ void runtime_level_two_sibling_cases(int repetitions) {
         if(fault==20)actual.config.grid.amr_max_blocks=29;
         if(fault==21)requested.level=-1;
         if(fault==22)requested.level=2;
-        if(fault==23)actual.config.amr.lrefinemax=3;
+        if(fault==23)actual.config.amr.lrefinemax=4;
         if(fault==24)requested.logical_x1=4;
         if(fault==25)requested.logical_x2=2;
         if(fault==26)requested.logical_x1=std::numeric_limits<std::uint32_t>::max();

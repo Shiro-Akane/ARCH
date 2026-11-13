@@ -118,7 +118,7 @@ void DriverRuntime::migrate_leaf(amr::AmrEndpoint source,int destination_rank,
     migrate_leaves(std::span<const amr::AmrEndpoint>(&source,1),destination_rank,observer);
 }
 
-/** Explicit ownership preparation for the existing level-one/two regrid.
+/** Explicit ownership preparation for the existing bounded distributed regrid.
  * Colocation and numerical coarsening are separate accepted transactions:
  * a later regrid veto retains the successfully published ownership.
  */
@@ -131,15 +131,16 @@ bool DriverRuntime::coalesce_siblings(amr::LogicalBlockKey parent,int destinatio
     std::vector<amr::AmrEndpoint> sources;
     prepare([&] {
         if (size<2 || rank!=amr_ctrl.tree->PartitionRank()
-            || size!=amr_ctrl.tree->PartitionSize() || config.grid.dim!=2
-            || parent.dimension!=2 || parent.level<0 || parent.level>1 || parent.logical_x3!=0
-            || config.amr.lrefinemin!=0 || config.amr.lrefinemax<1 || config.amr.lrefinemax>2
+            || size!=amr_ctrl.tree->PartitionSize() || config.grid.dim<1 || config.grid.dim>2
+            || parent.dimension!=config.grid.dim || parent.level<0 || parent.logical_x3!=0
+            || (config.grid.dim==1 && parent.logical_x2!=0)
+            || config.amr.lrefinemin!=0 || config.amr.lrefinemax<1 || config.amr.lrefinemax>3
             || parent.level>=config.amr.lrefinemax
             || destination_rank<0 || destination_rank>=size)
-            throw std::invalid_argument("sibling colocation requires a level-one/two two-dimensional family");
+            throw std::invalid_argument("sibling colocation requires a qualified one- or two-dimensional family");
         const auto& root=amr_ctrl.tree->GetRootGrid();
         const auto cells_x=static_cast<std::uint64_t>(root.nblockx1)<<parent.level;
-        const auto cells_y=static_cast<std::uint64_t>(root.nblockx2)<<parent.level;
+        const auto cells_y=static_cast<std::uint64_t>(config.grid.dim>=2?root.nblockx2:1)<<parent.level;
         constexpr auto child_limit=(std::numeric_limits<std::uint32_t>::max()-1)/2;
         if (parent.logical_x1>=cells_x || parent.logical_x2>=cells_y
             || parent.logical_x1>child_limit || parent.logical_x2>child_limit)
@@ -147,9 +148,10 @@ bool DriverRuntime::coalesce_siblings(amr::LogicalBlockKey parent,int destinatio
         for (const auto& leaf:topology_registry.blocks())
             if (leaf.logical.level>config.amr.lrefinemax)
                 throw std::invalid_argument("sibling level limit is below the accepted topology");
-        // Exact four child lookups also reject a missing or already coarse family.
-        for (std::uint32_t y=0;y<2;++y) for (std::uint32_t x=0;x<2;++x) {
-            const amr::LogicalBlockKey key{2,parent.level+1,
+        // Exact child lookups also reject a missing or already coarse family.
+        const std::uint32_t children_y=config.grid.dim>=2?2:1;
+        for (std::uint32_t y=0;y<children_y;++y) for (std::uint32_t x=0;x<2;++x) {
+            const amr::LogicalBlockKey key{config.grid.dim,parent.level+1,
                 2*parent.logical_x1+x,2*parent.logical_x2+y,0};
             const auto handle=topology_registry.handle_for(key);
             if (topology_registry.owner_for(key)!=destination_rank) sources.push_back({key,handle});
@@ -634,12 +636,12 @@ bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_r
     prepare([&] {
         if(size<2 || rank!=amr_ctrl.tree->PartitionRank() || size!=amr_ctrl.tree->PartitionSize()
             || hydro_attempt_ || config.grid.geometry!="cartesian"
-            || config.grid.dim!=2 || config.amr.lrefinemin!=0
-            || config.amr.lrefinemax<1 || config.amr.lrefinemax>2
+            || config.grid.dim<1 || config.grid.dim>2 || config.amr.lrefinemin!=0
+            || config.amr.lrefinemax<1 || config.amr.lrefinemax>3
             || config.physics.burn.use_burn || config.physics.diffusion.use_diffusion
             || config.physics.gravity.type!="none" || config.amr.refine_on_jeans
             || jeans_repair_only || bc_handler.has_user())
-            throw std::logic_error("distributed regrid requires Cartesian Hydro with maximum level one or two");
+            throw std::logic_error("distributed regrid requires one- or two-dimensional Cartesian Hydro with maximum level one to three");
         if(step!=ctrl.step_count || !std::isfinite(time) || time!=ctrl.t_current
             || next_amr_transaction_id==std::numeric_limits<std::uint64_t>::max())
             throw std::invalid_argument("distributed regrid is not at the accepted controller boundary");
@@ -654,7 +656,7 @@ bool DriverRuntime::execute_distributed_regrid(int step,double time,bool jeans_r
         amr_ctrl.flux_register.RequireOwnershipTransferBoundary();
         std::map<amr::LogicalBlockKey,int> family_owner;
         for(const auto& leaf:topology_registry.blocks()) {
-            if(leaf.logical.level>2 || leaf.logical.level>config.amr.lrefinemax)
+            if(leaf.logical.level>3 || leaf.logical.level>config.amr.lrefinemax)
                 throw std::logic_error("distributed regrid level limit is below the accepted topology");
             if(leaf.logical.level>0) {
                 const amr::LogicalBlockKey parent{leaf.logical.dimension,leaf.logical.level-1,

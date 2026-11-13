@@ -337,6 +337,13 @@ jobs:
             --reference "$PWD/build-ci/mpi/OFF/bin/ARCH" \
             --candidate "$PWD/build-ci/mpi/ON/bin/ARCH" --backend cpu --smoke \
             --evidence "$PWD/build-ci/mpi/amr" --mpiexec "$(command -v mpiexec)"
+          for dimension in 1 2; do
+            python3 -B tests/integration/test_mpi_amr.py \
+              --reference "$PWD/build-ci/mpi/OFF/bin/ARCH" \
+              --candidate "$PWD/build-ci/mpi/ON/bin/ARCH" --backend cpu --smoke \
+              --dimension "$dimension" --max-level 3 \
+              --evidence "$PWD/build-ci/mpi/amr-d${dimension}-level3" --mpiexec "$(command -v mpiexec)"
+          done
           python3 -B tests/integration/test_mpi_startup.py \
             --candidate "$PWD/build-ci/mpi/ON/bin/ARCH" \
             --evidence "$PWD/build-ci/mpi/startup" --mpiexec "$(command -v mpiexec)"

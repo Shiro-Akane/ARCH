@@ -2,7 +2,7 @@
 
 [Local tests](../../tests/README.md) · [中文测试指南](../../tests/README.zh-CN.md#github-持续集成)
 
-[ci.yml](ci.yml) runs on pull requests targeting `main` and pushes to `main` or `compute/optim`. Jobs use disposable GitHub-hosted Ubuntu machines and read-only repository permissions. A newer revision cancels the older run for the same event and branch or pull request.
+[ci.yml](ci.yml) runs on manual workflow dispatch, pull requests targeting `main` and pushes to `main` or `compute/optim`. Jobs use disposable GitHub-hosted Ubuntu machines and read-only repository permissions. A newer revision cancels the older run for the same event and branch or pull request.
 
 ## Jobs
 
@@ -11,7 +11,8 @@
 | Tooling | Workflow syntax, shared-implementation/header audit, maintained documentation links, and `python3 -B tests/tooling` |
 | CPU Release | ARCH and configured CPU tests with KLU, the complete non-Tooling CTest inventory, and the low-density physical matrix |
 | Studio and Host | Host fixture tools, locked Node dependencies, the complete `npm --silent test` suite, lint, and production assets with TypeScript checking |
-| CI required | Requires all three jobs to succeed; failed, cancelled or skipped jobs fail the aggregate |
+| MPI | Separate MPI ON/OFF applications, preflight, fixed-grid and dynamic AMR output/restart comparisons, and collective failure checks |
+| CI required | Requires all four jobs to succeed; failed, cancelled or skipped jobs fail the aggregate |
 
 `tooling_contracts` is the Python suite's local CTest entry. The CPU lane excludes its `tooling` label because the Tooling job runs it separately. `npm test` owns the Node file selection, TAP reporter and single file worker; its Host tests are included. `npm run build` includes `tsc --noEmit`.
 
@@ -48,4 +49,6 @@ Actions are pinned to full commits; the actionlint archive has a fixed checksum.
 
 The MPI job builds separate ON/OFF applications, checks the intended rank count through the shared execution preflight, exercises real 1/2/4-rank Host exchange/reductions, and compares 1D/2D/3D production output against the MPI-OFF application bit for bit. The existing fixtures also cover uneven partitions, tight pool capacity, rank input disagreement and unsupported startup modes. Auto-to-CPU selection is checked in both the query and an evolved trajectory. The MPI gate participates in CI required.
 
-The same job also runs a two-rank Cartesian 2D AMR trajectory, validates native checkpoint continuation, and rejects heterogeneous executable identities and incomplete or overlapping restart topologies even after their checksums are recomputed. MPI application admission is owned by ExecutionPreflight: fixed Cartesian 1D/2D/3D and dynamic Cartesian 2D levels 0..2, nonempty ranks, built-in boundaries, no source operators, and same-rank collection restart on a shared output filesystem.\n\nHosted runners may oversubscribe ranks for correctness. Their timings are not scaling evidence. Only diagnostics and small comparison summaries are uploaded, not HDF5, binaries or build trees. CUDA MPI is validated separately on the designated GPU server; this CPU job does not establish GPU, multi-GPU or multi-node acceptance. See the [application integration record](../../docs/development/MPI-GPU-AMR-20261112.zh-CN.md).
+The same job also runs two-rank Cartesian 1D/2D AMR trajectories through level 3, validates native checkpoint continuation, and rejects heterogeneous executable identities and incomplete or overlapping restart topologies even after their checksums are recomputed. MPI application admission is owned by ExecutionPreflight: fixed Cartesian 1D/2D/3D and dynamic Cartesian 1D/2D levels 0..3, nonempty ranks, built-in boundaries, no source operators, and same-rank collection restart on a shared output filesystem.
+
+Hosted runners may oversubscribe ranks for correctness. Their timings are not scaling evidence. Only diagnostics and small comparison summaries are uploaded, not HDF5, binaries or build trees. CUDA MPI is validated separately on the designated GPU server; this CPU job does not establish GPU, multi-GPU or multi-node acceptance. See the [application integration record](../../docs/development/MPI-GPU-AMR-20261112.zh-CN.md).

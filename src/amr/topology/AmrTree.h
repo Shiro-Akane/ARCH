@@ -262,12 +262,12 @@ public:
     void InitRootGrid(const SimConfig& config, int n_species) {
         if (partition_size_ > 1 && ((config.grid.dim < 1 || config.grid.dim > 3)
             || config.grid.geometry != "cartesian"
-            || (config.amr.lrefinemax != 0 && (config.grid.dim != 2
-                || config.amr.lrefinemin != 0 || config.amr.lrefinemax > 2))
+            || (config.amr.lrefinemax != 0 && (config.grid.dim > 2
+                || config.amr.lrefinemin != 0 || config.amr.lrefinemax > 3))
             || config.grid.nblockx1 < partition_size_
             || ((config.grid.x1l_boundary_type == "periodic")
                 != (config.grid.x1r_boundary_type == "periodic"))))
-            throw std::invalid_argument("MPI root partition requires Cartesian fixed grid or 2-D level-zero-to-two AMR, paired periodic faces and at least one block per rank");
+            throw std::invalid_argument("MPI root partition requires Cartesian fixed grid or 1-D/2-D level-zero-to-three AMR, paired periodic faces and at least one block per rank");
         root_begin_ = static_cast<int>(static_cast<std::int64_t>(config.grid.nblockx1)
             * partition_rank_ / partition_size_);
         root_end_ = static_cast<int>(static_cast<std::int64_t>(config.grid.nblockx1)

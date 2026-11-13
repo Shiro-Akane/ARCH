@@ -1,0 +1,3957 @@
+{
+  "state": "local-acceptance-passed",
+  "phase": "A4 Cartesian 1D/2D levels 0..3 application integration",
+  "source_base": "67acd3f915d4db9f0b1dd6dd9e033c5819bb7352",
+  "branch": "MPI/gpu-amr-integration",
+  "server_evidence": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113",
+  "plans": {
+    "native": {
+      "phase": "A4 dimensional/depth extension",
+      "baseline": "67acd3f915d4db9f0b1dd6dd9e033c5819bb7352",
+      "branch": "MPI/gpu-amr-integration",
+      "status": "native 1D/2D depth-three patch applied; application preflight unchanged pending native acceptance",
+      "first_scope": "Cartesian1D and2D level0..3,min0,nonemptyranks;3DAMR remains guarded until native edge/corner acceptance",
+      "constraints": [
+        "no mathematical implementation or tolerance changes",
+        "original Runtime/MemoryPool/DeviceBlockStore only",
+        "same-rank shared-filesystem restart",
+        "keep negative,rollback,capacity,andfieldchecks"
+      ],
+      "next_after_first_scope": [
+        "3D mixed-level face/edge/corner validation",
+        "capacity-aware family placement",
+        "empty-rank lifecycle",
+        "additional EOS consumers",
+        "distinct-GPU/multinode hardware acceptance"
+      ]
+    },
+    "application": {
+      "baseline": "A3 frozen original CPU MPI OFF 69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145",
+      "first": "GPU 1D/2D level3 12-step smoke, source identity and bitwise restart",
+      "then": "CPU/GPU 54-case level3 matrices for each dimension, 1D level1/2 boundary smoke, existing 2D level2 regression",
+      "long": "1D and2D level3 512-step periodic 4rank comparison after matrix acceptance",
+      "hardware": "single H100-20C; no distinct-GPU or multinode claim",
+      "resource_gate": "measure smoke data before matrix; retain original field and conservation thresholds"
+    }
+  },
+  "ctest_suites": [
+    {
+      "suite": "native-release-regression-1",
+      "tests": 22,
+      "seconds": 395.29582300000004,
+      "junit_sha256": "22b43ef982a40ddd309d05784ca9700f6216ba0da680aeb5b58f63f6b14dcf13",
+      "native_witnesses": [
+        "PASS CUDA MPI Runtime mixed=0 layouts=18 full_state_checks=252 collective_rejections=59",
+        "PASS CUDA MPI Runtime mixed=1 layouts=6 full_state_checks=102 collective_rejections=41",
+        "PASS CUDA MPI flux layouts=6 weighted_stages=24 flux_reflux_checks=54 collective_rejections=198",
+        "PASS CUDA MPI macro layouts=18 comparisons=306 collective_rejections=270",
+        "PASS CUDA MPI ownership layouts=18 comparisons=306 collective_rejections=90",
+        "PASS CUDA MPI regrid comparisons=234 collective_rejections=1026",
+        "PASS CUDA MPI root ranks=2 comparisons=180 collective_rejections=0",
+        "PASS CUDA MPI root ranks=2 comparisons=270 collective_rejections=18",
+        "PASS CUDA MPI root ranks=2 comparisons=270 collective_rejections=18",
+        "PASS CUDA MPI checkpoint ranks=2 comparisons=270 collective_rejections=16",
+        "PASS CUDA MPI root ranks=4 comparisons=180 collective_rejections=0",
+        "PASS CUDA MPI root ranks=4 comparisons=270 collective_rejections=18",
+        "PASS CUDA MPI root ranks=4 comparisons=270 collective_rejections=18",
+        "PASS CUDA MPI checkpoint ranks=4 comparisons=270 collective_rejections=16"
+      ]
+    },
+    {
+      "suite": "native-debug-regression-1",
+      "tests": 22,
+      "seconds": 1139.4054580000002,
+      "junit_sha256": "ee7831df47e10d1307d38e8490347d6ae61b3c44ad6ede38d5698c42b394a38c",
+      "native_witnesses": [
+        "PASS CUDA MPI Runtime mixed=0 layouts=18 full_state_checks=252 collective_rejections=59",
+        "PASS CUDA MPI Runtime mixed=1 layouts=6 full_state_checks=102 collective_rejections=41",
+        "PASS CUDA MPI flux layouts=6 weighted_stages=24 flux_reflux_checks=54 collective_rejections=198",
+        "PASS CUDA MPI macro layouts=18 comparisons=306 collective_rejections=270",
+        "PASS CUDA MPI ownership layouts=18 comparisons=306 collective_rejections=90",
+        "PASS CUDA MPI regrid comparisons=234 collective_rejections=1026",
+        "PASS CUDA MPI root ranks=2 comparisons=180 collective_rejections=0",
+        "PASS CUDA MPI root ranks=2 comparisons=270 collective_rejections=18",
+        "PASS CUDA MPI root ranks=2 comparisons=270 collective_rejections=18",
+        "PASS CUDA MPI checkpoint ranks=2 comparisons=270 collective_rejections=16",
+        "PASS CUDA MPI root ranks=4 comparisons=180 collective_rejections=0",
+        "PASS CUDA MPI root ranks=4 comparisons=270 collective_rejections=18",
+        "PASS CUDA MPI root ranks=4 comparisons=270 collective_rejections=18",
+        "PASS CUDA MPI checkpoint ranks=4 comparisons=270 collective_rejections=16"
+      ]
+    },
+    {
+      "suite": "build-gpu-release-regression-1",
+      "tests": 11,
+      "seconds": 35.130925,
+      "junit_sha256": "0c0a059b50f5c9a9cd8837a52e7e747dbe4353cbcace321e93203877575923bc",
+      "native_witnesses": []
+    },
+    {
+      "suite": "build-gpu-debug-regression-1",
+      "tests": 11,
+      "seconds": 221.12208900000005,
+      "junit_sha256": "06fa5ff0eb817bc9ce36b3593f38f935d0f189d68cdc338b505259cd1000052f",
+      "native_witnesses": []
+    },
+    {
+      "suite": "build-gpu-release-serial-regression-1",
+      "tests": 8,
+      "seconds": 4.65405454,
+      "junit_sha256": "d743d15b1b9e37bfb3ecea1c646e6fca3067bded3d788934b86b17d325e8010f",
+      "native_witnesses": []
+    },
+    {
+      "suite": "build-gpu-debug-serial-regression-1",
+      "tests": 8,
+      "seconds": 27.5744217,
+      "junit_sha256": "dd0e3bbecda27a0dc874bb339e73518f7a81232c8fd6a38f6b07c01aced51bca",
+      "native_witnesses": []
+    },
+    {
+      "suite": "cuda-serial-regression-1",
+      "tests": 6,
+      "seconds": 5.38024594,
+      "junit_sha256": "c1e635de0f180fce4489452695a0a87ee726d6bafbcce785fe0d3332b92477a4",
+      "native_witnesses": []
+    }
+  ],
+  "ctest_count": 88,
+  "application_amr": [
+    {
+      "name": "app-cpu-debug-smoke-d1-l3-1-data",
+      "cases": 1,
+      "scope": "Cartesian 1-D level 0..3, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 4,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 8.890457814381136e-18,
+      "max_steps": 12,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug/bin/ARCH",
+          "sha256": "bd4d3175f221591c46562142f6630b5c8a9faf5a695908857b7e6e04e575ce11"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "e49d3065e59f94d6f9a6a17dc2a9433e7a981ee0aee95563afbacb53c4422c19"
+    },
+    {
+      "name": "app-cpu-debug-smoke-d2-l3-1-data",
+      "cases": 1,
+      "scope": "Cartesian 2-D level 0..3, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 4,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 3.5236570605778894e-17,
+      "max_steps": 12,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug/bin/ARCH",
+          "sha256": "bd4d3175f221591c46562142f6630b5c8a9faf5a695908857b7e6e04e575ce11"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "b5157dc6e1b2c86dedb43db01dc59990a36937bcb59f3be9d409d04cda3bdf71"
+    },
+    {
+      "name": "app-cpu-long-d1-l3-1-data",
+      "cases": 1,
+      "scope": "Cartesian 1-D level 0..3, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 17,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 4.588343593958655e-16,
+      "max_steps": 512,
+      "distinct_topologies": 4,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cpu",
+          "sha256": "11fb635ab268b532affe4f408cd4824197b1964bb203e451c78e786200791108"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "872cb9faba0e36ab718139635cb1e65e586428a5157d9be20ccf6fcaac7627c2"
+    },
+    {
+      "name": "app-cpu-long-d2-l3-1-data",
+      "cases": 1,
+      "scope": "Cartesian 2-D level 0..3, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 17,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 4.0549161250957866e-17,
+      "max_steps": 512,
+      "distinct_topologies": 3,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cpu",
+          "sha256": "11fb635ab268b532affe4f408cd4824197b1964bb203e451c78e786200791108"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "1f81e3f0e21984721c26a4d3b1a15506645e7bebc6150f453afb68b3a5c25bfe"
+    },
+    {
+      "name": "app-cpu-matrix-d1-l3-1-data",
+      "cases": 54,
+      "scope": "Cartesian 1-D level 0..3, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 378,
+      "bitwise_continuations": 54,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 2.862293735361732e-17,
+      "max_steps": 24,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cpu",
+          "sha256": "11fb635ab268b532affe4f408cd4824197b1964bb203e451c78e786200791108"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "403819d6c63dfa823cedf06e50c0c003bacc9bc491b57f6fb5b121c4b79d2404"
+    },
+    {
+      "name": "app-cpu-matrix-d2-l3-1-data",
+      "cases": 54,
+      "scope": "Cartesian 2-D level 0..3, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 378,
+      "bitwise_continuations": 54,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 8.782037597132586e-17,
+      "max_steps": 24,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cpu",
+          "sha256": "11fb635ab268b532affe4f408cd4824197b1964bb203e451c78e786200791108"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "098f372ba7c42e9425f5f97e0a6ed0e135b59f7a52e35be2deeddff435fc841e"
+    },
+    {
+      "name": "app-cpu-smoke-d1-l1-compat-1-data",
+      "cases": 1,
+      "scope": "Cartesian 1-D level 0..1, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 4,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 2.7538735181131813e-17,
+      "max_steps": 12,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cpu",
+          "sha256": "11fb635ab268b532affe4f408cd4824197b1964bb203e451c78e786200791108"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "1627bb956204ac159d1d18af8d5b9cfe56df020c85054de8bd87def2dc441318"
+    },
+    {
+      "name": "app-cpu-smoke-d1-l2-compat-1-data",
+      "cases": 1,
+      "scope": "Cartesian 1-D level 0..2, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 4,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 9.540979117872439e-18,
+      "max_steps": 12,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cpu",
+          "sha256": "11fb635ab268b532affe4f408cd4824197b1964bb203e451c78e786200791108"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "38d2d586c0d801039a8ecb3ae85904246509396749ac3ceded6fb283e370b6c0"
+    },
+    {
+      "name": "app-cpu-smoke-d2-l2-compat-1-data",
+      "cases": 1,
+      "scope": "Cartesian 2-D level 0..2, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 4,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 1.9081958235744878e-17,
+      "max_steps": 12,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cpu",
+          "sha256": "11fb635ab268b532affe4f408cd4824197b1964bb203e451c78e786200791108"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "70abdf1c199df0fd27cdd5669a0ea80d2de6061cef2447c1cf39dffda7723a6b"
+    },
+    {
+      "name": "app-cuda-debug-smoke-d1-l3-1-data",
+      "cases": 1,
+      "scope": "Cartesian 1-D level 0..3, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 4,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 8.890457814381136e-18,
+      "max_steps": 12,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi/build-mpi-cuda-debug/bin/ARCH",
+          "sha256": "100d34c7490073f4276e6306391adfdaf53d43a0e2b94099ad3fd77d47ff620d"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "38ead2b45e67c69231e7ff49f4a03f35af06063f784bac6f8e5bea1a67c0d612"
+    },
+    {
+      "name": "app-cuda-debug-smoke-d2-l3-1-data",
+      "cases": 1,
+      "scope": "Cartesian 2-D level 0..3, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 4,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 3.5236570605778894e-17,
+      "max_steps": 12,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi/build-mpi-cuda-debug/bin/ARCH",
+          "sha256": "100d34c7490073f4276e6306391adfdaf53d43a0e2b94099ad3fd77d47ff620d"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "5446ad34814e20c1e5dc77597c9ff2dd4ce77bfec823270a1f1f114059cdf79c"
+    },
+    {
+      "name": "app-cuda-long-d1-l3-1-data",
+      "cases": 1,
+      "scope": "Cartesian 1-D level 0..3, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 17,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 4.588343593958655e-16,
+      "max_steps": 512,
+      "distinct_topologies": 4,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cuda",
+          "sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "3ce8c49c806aec17a74e490da6cf84d74f6e8ef9e548a00fe30228a1b1514a1b"
+    },
+    {
+      "name": "app-cuda-long-d2-l3-1-data",
+      "cases": 1,
+      "scope": "Cartesian 2-D level 0..3, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 17,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 4.0549161250957866e-17,
+      "max_steps": 512,
+      "distinct_topologies": 3,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cuda",
+          "sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "f9d7b2e0fe6f448c0fda43ac4619cd97b382cf425c9038797f468a478474e222"
+    },
+    {
+      "name": "app-cuda-matrix-d1-l3-1-data",
+      "cases": 54,
+      "scope": "Cartesian 1-D level 0..3, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 378,
+      "bitwise_continuations": 54,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 2.862293735361732e-17,
+      "max_steps": 24,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cuda",
+          "sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "b5c787e64544813d25d188b2d1b508686d618a389e10bfaa22f134e2f3fd0b55"
+    },
+    {
+      "name": "app-cuda-matrix-d2-l3-1-data",
+      "cases": 54,
+      "scope": "Cartesian 2-D level 0..3, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 378,
+      "bitwise_continuations": 54,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 8.782037597132586e-17,
+      "max_steps": 24,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cuda",
+          "sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "6c6cf523fbcc86b284ebe26b9bb00931f3def326a464317f7c0b1b1dc28eb7dd"
+    },
+    {
+      "name": "app-cuda-smoke-d1-l1-1-data",
+      "cases": 1,
+      "scope": "Cartesian 1-D level 0..1, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 4,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 2.7538735181131813e-17,
+      "max_steps": 12,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cuda",
+          "sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "8f16e86b6f43cc0d092277f0ce94c1b5f7cbaf5fd519c95af9ac4f2ae34f665a"
+    },
+    {
+      "name": "app-cuda-smoke-d1-l2-1-data",
+      "cases": 1,
+      "scope": "Cartesian 1-D level 0..2, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 4,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 9.540979117872439e-18,
+      "max_steps": 12,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cuda",
+          "sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "6c25a6b246bd54004c72f6bd741f64fb5735bdbf82883dadcdf642ba4090dc5f"
+    },
+    {
+      "name": "app-cuda-smoke-d1-l3-1-data",
+      "cases": 1,
+      "scope": "Cartesian 1-D level 0..3, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 4,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 8.890457814381136e-18,
+      "max_steps": 12,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cuda",
+          "sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "816580f4d2e402469cfb42f413ad4b30e682fb3e5f156a4c0c1f8f944a4614f9"
+    },
+    {
+      "name": "app-cuda-smoke-d2-l2-compat-1-data",
+      "cases": 1,
+      "scope": "Cartesian 2-D level 0..2, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 4,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 1.9081958235744878e-17,
+      "max_steps": 12,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cuda",
+          "sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "67114103ae6cfb6f4fa85d48a5c5afc74f37b0033f95af4534bcad15c522290c"
+    },
+    {
+      "name": "app-cuda-smoke-d2-l3-1-data",
+      "cases": 1,
+      "scope": "Cartesian 2-D level 0..3, same-rank checkpoint continuation",
+      "checkpoint_comparisons": 4,
+      "bitwise_continuations": 1,
+      "maximum_scaled_field_error": 0.0,
+      "maximum_periodic_conservation_drift": 3.5236570605778894e-17,
+      "max_steps": 12,
+      "distinct_topologies": 1,
+      "binary_identities": {
+        "candidate": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cuda",
+          "sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070"
+        },
+        "reference": {
+          "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+          "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+        }
+      },
+      "summary_sha256": "1b1a2068a93683c5771aacbdf8e5f11dac43c7a2989f29230afa2a7c8e7196d6"
+    }
+  ],
+  "application_cases": 232,
+  "application_checkpoint_comparisons": 1628,
+  "fixed_grid": [
+    {
+      "name": "cpu-fixed-1",
+      "report": {
+        "baseline_sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145",
+        "candidate_sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070",
+        "cases": [
+          {
+            "case": "Sod-Euler-HLLC",
+            "ranks": 1,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.015621798437273437,
+            "cells": 112
+          },
+          {
+            "case": "Sod-Euler-HLLC",
+            "ranks": 2,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.015621798437273437,
+            "cells": 112
+          },
+          {
+            "case": "Sod-Euler-HLLC",
+            "ranks": 4,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.015621798437273437,
+            "cells": 112
+          },
+          {
+            "case": "Sod-RK2-HLLC",
+            "ranks": 1,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.015695836880643764,
+            "cells": 112
+          },
+          {
+            "case": "Sod-RK2-HLLC",
+            "ranks": 2,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.015695836880643764,
+            "cells": 112
+          },
+          {
+            "case": "Sod-RK2-HLLC",
+            "ranks": 4,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.015695836880643764,
+            "cells": 112
+          },
+          {
+            "case": "Sod-RK2-HLLC",
+            "ranks": 2,
+            "omp_threads": 2,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.015695836880643764,
+            "cells": 112
+          },
+          {
+            "case": "Sod-RK2-HLLC",
+            "ranks": 2,
+            "requested_backend": "auto",
+            "cuda_visible": false,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.015695836880643764,
+            "cells": 112
+          },
+          {
+            "case": "Sod-RK3-HLL",
+            "ranks": 1,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.015756004964136087,
+            "cells": 112
+          },
+          {
+            "case": "Sod-RK3-HLL",
+            "ranks": 2,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.015756004964136087,
+            "cells": 112
+          },
+          {
+            "case": "Sod-RK3-HLL",
+            "ranks": 4,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.015756004964136087,
+            "cells": 112
+          },
+          {
+            "case": "SmoothAdvection-RK2-HLLC",
+            "ranks": 1,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.009225364125473947,
+            "cells": 112
+          },
+          {
+            "case": "SmoothAdvection-RK2-HLLC",
+            "ranks": 2,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.009225364125473947,
+            "cells": 112
+          },
+          {
+            "case": "SmoothAdvection-RK2-HLLC",
+            "ranks": 4,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.009225364125473947,
+            "cells": 112
+          },
+          {
+            "case": "SmoothAdvection-RK3-Roe",
+            "ranks": 1,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.009225364103603608,
+            "cells": 112
+          },
+          {
+            "case": "SmoothAdvection-RK3-Roe",
+            "ranks": 2,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.009225364103603608,
+            "cells": 112
+          },
+          {
+            "case": "SmoothAdvection-RK3-Roe",
+            "ranks": 4,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.009225364103603608,
+            "cells": 112
+          },
+          {
+            "case": "Sod-RK2-HLLC-reflecting",
+            "ranks": 1,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.011847974860846868,
+            "cells": 112
+          },
+          {
+            "case": "Sod-RK2-HLLC-reflecting",
+            "ranks": 2,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.011847974860846868,
+            "cells": 112
+          },
+          {
+            "case": "Sod-RK2-HLLC-reflecting",
+            "ranks": 4,
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.011847974860846868,
+            "cells": 112
+          },
+          {
+            "case": "Sod-Euler-HLLC",
+            "ranks": 5,
+            "global_pool_capacity": 8,
+            "rank_pool_capacities": [
+              1,
+              1,
+              2,
+              1,
+              3
+            ],
+            "snapshots": 17,
+            "fields": [
+              "DENS",
+              "ENER",
+              "ENTR",
+              "PRES",
+              "SodGas",
+              "TEMP",
+              "VELX",
+              "cell_measure",
+              "coordinate",
+              "coordinate_y",
+              "coordinate_z"
+            ],
+            "bitwise_equal": true,
+            "final_time": 0.015621798437273437,
+            "cells": 112
+          }
+        ],
+        "mpiexec": [
+          "mpiexec"
+        ],
+        "rejections": [
+          {
+            "case": "amr-level",
+            "returncode": 1
+          },
+          {
+            "case": "empty-rank",
+            "returncode": 1
+          },
+          {
+            "case": "checkpoint-shard",
+            "returncode": 1
+          },
+          {
+            "case": "cuda-unavailable",
+            "returncode": 1
+          },
+          {
+            "case": "one-sided-periodic",
+            "returncode": 1
+          },
+          {
+            "case": "rank-input-mismatch",
+            "returncode": 1
+          },
+          {
+            "case": "one-rank-missing-input",
+            "returncode": 1
+          }
+        ]
+      },
+      "sha256": "f3d5f32f8ec0f786d121879f44b07b1d2c2b1f48f034c80399670202fdc0f460"
+    },
+    {
+      "name": "cpu-multidim-1",
+      "report": {
+        "state": "passed",
+        "cases": [
+          {
+            "case": "Sedov-2d-RK3-HLLC-axis0-outflow",
+            "root_shape": [
+              5,
+              3,
+              1
+            ],
+            "steps": 16,
+            "global_pool_capacity": 16,
+            "comparisons": [
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.005869616845701766,
+                "cells": 3840,
+                "elapsed_seconds": 3.6017267550341785
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.005869616845701766,
+                "cells": 3840,
+                "elapsed_seconds": 3.574908432085067,
+                "pool_capacities": [
+                  6,
+                  10
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.005869616845701766,
+                "cells": 3840,
+                "elapsed_seconds": 3.69932311703451,
+                "pool_capacities": [
+                  3,
+                  3,
+                  3,
+                  7
+                ]
+              },
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.005869616845701766,
+                "cells": 3840,
+                "elapsed_seconds": 0.504866078030318
+              }
+            ]
+          },
+          {
+            "case": "Sedov-3d-RK3-HLLC-axis0-outflow",
+            "root_shape": [
+              5,
+              3,
+              2
+            ],
+            "steps": 16,
+            "global_pool_capacity": 31,
+            "comparisons": [
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.0019590324419938156,
+                "cells": 122880,
+                "elapsed_seconds": 12.60943214315921
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.0019590324419938156,
+                "cells": 122880,
+                "elapsed_seconds": 12.474485436920077,
+                "pool_capacities": [
+                  12,
+                  19
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.0019590324419938156,
+                "cells": 122880,
+                "elapsed_seconds": 9.084369804011658,
+                "pool_capacities": [
+                  6,
+                  6,
+                  6,
+                  13
+                ]
+              },
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.0019590324419938156,
+                "cells": 122880,
+                "elapsed_seconds": 12.228405314963311
+              }
+            ]
+          },
+          {
+            "case": "Sedov-2d-RK2-HLLC-axis0-reflecting",
+            "root_shape": [
+              5,
+              3,
+              1
+            ],
+            "steps": 16,
+            "global_pool_capacity": 16,
+            "comparisons": [
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.0061172373022754896,
+                "cells": 3840,
+                "elapsed_seconds": 3.6221145258750767
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.0061172373022754896,
+                "cells": 3840,
+                "elapsed_seconds": 3.1958304399158806,
+                "pool_capacities": [
+                  6,
+                  10
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.0061172373022754896,
+                "cells": 3840,
+                "elapsed_seconds": 3.674826913047582,
+                "pool_capacities": [
+                  3,
+                  3,
+                  3,
+                  7
+                ]
+              },
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.0061172373022754896,
+                "cells": 3840,
+                "elapsed_seconds": 0.19199067004956305
+              }
+            ]
+          },
+          {
+            "case": "SmoothAdvection-2d-RK2-HLLC-axis1-periodic",
+            "root_shape": [
+              5,
+              3,
+              1
+            ],
+            "steps": 16,
+            "global_pool_capacity": 16,
+            "comparisons": [
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.009626710873563963,
+                "cells": 3840,
+                "elapsed_seconds": 3.4632791269104928
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.009626710873563963,
+                "cells": 3840,
+                "elapsed_seconds": 3.708126583136618,
+                "pool_capacities": [
+                  6,
+                  10
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.009626710873563963,
+                "cells": 3840,
+                "elapsed_seconds": 3.6545129970181733,
+                "pool_capacities": [
+                  3,
+                  3,
+                  3,
+                  7
+                ]
+              },
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.009626710873563963,
+                "cells": 3840,
+                "elapsed_seconds": 0.18957238807342947
+              }
+            ]
+          },
+          {
+            "case": "SmoothAdvection-3d-RK3-HLLC-axis1-periodic",
+            "root_shape": [
+              5,
+              3,
+              2
+            ],
+            "steps": 16,
+            "global_pool_capacity": 31,
+            "comparisons": [
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.008229523665197924,
+                "cells": 122880,
+                "elapsed_seconds": 8.251733693992719
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.008229523665197924,
+                "cells": 122880,
+                "elapsed_seconds": 8.41529872897081,
+                "pool_capacities": [
+                  12,
+                  19
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.008229523665197924,
+                "cells": 122880,
+                "elapsed_seconds": 7.271361600141972,
+                "pool_capacities": [
+                  6,
+                  6,
+                  6,
+                  13
+                ]
+              },
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.008229523665197924,
+                "cells": 122880,
+                "elapsed_seconds": 6.940690997056663
+              }
+            ]
+          },
+          {
+            "case": "SmoothAdvection-2d-RK3-Roe-axis2-periodic",
+            "root_shape": [
+              5,
+              3,
+              1
+            ],
+            "steps": 16,
+            "global_pool_capacity": 16,
+            "comparisons": [
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.01104627955952364,
+                "cells": 3840,
+                "elapsed_seconds": 3.0541351069696248
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.01104627955952364,
+                "cells": 3840,
+                "elapsed_seconds": 3.70741867297329,
+                "pool_capacities": [
+                  6,
+                  10
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.01104627955952364,
+                "cells": 3840,
+                "elapsed_seconds": 3.771518090972677,
+                "pool_capacities": [
+                  3,
+                  3,
+                  3,
+                  7
+                ]
+              },
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.01104627955952364,
+                "cells": 3840,
+                "elapsed_seconds": 0.3908538541290909
+              }
+            ]
+          },
+          {
+            "case": "SmoothAdvection-3d-RK3-HLL-axis3-periodic",
+            "root_shape": [
+              5,
+              3,
+              2
+            ],
+            "steps": 16,
+            "global_pool_capacity": 31,
+            "comparisons": [
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.009856793474182179,
+                "cells": 122880,
+                "elapsed_seconds": 11.055010381853208
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.009856793474182179,
+                "cells": 122880,
+                "elapsed_seconds": 9.195328980917111,
+                "pool_capacities": [
+                  12,
+                  19
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.009856793474182179,
+                "cells": 122880,
+                "elapsed_seconds": 7.655068238964304,
+                "pool_capacities": [
+                  6,
+                  6,
+                  6,
+                  13
+                ]
+              },
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.009856793474182179,
+                "cells": 122880,
+                "elapsed_seconds": 7.63737123995088
+              }
+            ]
+          }
+        ],
+        "rejections": [
+          {
+            "case": "unpaired-y",
+            "exit_code": 1
+          },
+          {
+            "case": "unpaired-z",
+            "exit_code": 1
+          },
+          {
+            "case": "pool-smaller-than-global-grid",
+            "exit_code": 1
+          }
+        ],
+        "binaries": {
+          "baseline": {
+            "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+            "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+          },
+          "mpi": {
+            "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cuda",
+            "sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070"
+          },
+          "serial": {
+            "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+            "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+          }
+        },
+        "scope": "single-host cpu Cartesian fixed grid; correctness, not scaling",
+        "concurrent_candidate_lanes": 4,
+        "mpiexec_arguments": [
+          "--bind-to",
+          "none"
+        ]
+      },
+      "sha256": "609c572ea7b302b7bee79b856cda43f3f04dd9e158bb75748e7e5d1dc06535d1"
+    },
+    {
+      "name": "cuda-multidim-1",
+      "report": {
+        "state": "passed",
+        "cases": [
+          {
+            "case": "Sod-1d-RK3-HLLC-axis0-outflow",
+            "root_shape": [
+              5,
+              1,
+              1
+            ],
+            "steps": 16,
+            "global_pool_capacity": 6,
+            "comparisons": [
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SodGas",
+                  "TEMP",
+                  "VELX",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "maximum_scaled_error": 0.0,
+                "gate": "2e-13 * max(1, abs(a), abs(b))",
+                "final_time": 0.02117840691224479,
+                "cells": 80,
+                "elapsed_seconds": 2.252330493880436
+              },
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SodGas",
+                  "TEMP",
+                  "VELX",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.02117840691224479,
+                "cells": 80,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "SodGas",
+                    "TEMP",
+                    "VELX",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.02117840691224479,
+                  "cells": 80
+                },
+                "elapsed_seconds": 3.6074279160238802
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SodGas",
+                  "TEMP",
+                  "VELX",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.02117840691224479,
+                "cells": 80,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "SodGas",
+                    "TEMP",
+                    "VELX",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.02117840691224479,
+                  "cells": 80
+                },
+                "elapsed_seconds": 4.444095802027732,
+                "pool_capacities": [
+                  2,
+                  4
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SodGas",
+                  "TEMP",
+                  "VELX",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.02117840691224479,
+                "cells": 80,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "SodGas",
+                    "TEMP",
+                    "VELX",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.02117840691224479,
+                  "cells": 80
+                },
+                "elapsed_seconds": 5.643536536023021,
+                "pool_capacities": [
+                  1,
+                  1,
+                  1,
+                  3
+                ]
+              }
+            ]
+          },
+          {
+            "case": "Sedov-2d-RK3-HLLC-axis0-outflow",
+            "root_shape": [
+              5,
+              3,
+              1
+            ],
+            "steps": 16,
+            "global_pool_capacity": 16,
+            "comparisons": [
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "maximum_scaled_error": 0.0,
+                "gate": "2e-13 * max(1, abs(a), abs(b))",
+                "final_time": 0.005869616845701766,
+                "cells": 3840,
+                "elapsed_seconds": 2.156830040970817
+              },
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.005869616845701766,
+                "cells": 3840,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "SedovGas",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.005869616845701766,
+                  "cells": 3840
+                },
+                "elapsed_seconds": 3.7582829578313977
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.005869616845701766,
+                "cells": 3840,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "SedovGas",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.005869616845701766,
+                  "cells": 3840
+                },
+                "elapsed_seconds": 4.756139523116872,
+                "pool_capacities": [
+                  6,
+                  10
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.005869616845701766,
+                "cells": 3840,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "SedovGas",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.005869616845701766,
+                  "cells": 3840
+                },
+                "elapsed_seconds": 5.9689738161396235,
+                "pool_capacities": [
+                  3,
+                  3,
+                  3,
+                  7
+                ]
+              }
+            ]
+          },
+          {
+            "case": "Sedov-3d-RK3-HLLC-axis0-outflow",
+            "root_shape": [
+              5,
+              3,
+              2
+            ],
+            "steps": 16,
+            "global_pool_capacity": 31,
+            "comparisons": [
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "maximum_scaled_error": 0.0,
+                "gate": "2e-13 * max(1, abs(a), abs(b))",
+                "final_time": 0.0019590324419938156,
+                "cells": 122880,
+                "elapsed_seconds": 3.2546370557975024
+              },
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.0019590324419938156,
+                "cells": 122880,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "SedovGas",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "VELZ",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.0019590324419938156,
+                  "cells": 122880
+                },
+                "elapsed_seconds": 5.244217236991972
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.0019590324419938156,
+                "cells": 122880,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "SedovGas",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "VELZ",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.0019590324419938156,
+                  "cells": 122880
+                },
+                "elapsed_seconds": 8.117779345950112,
+                "pool_capacities": [
+                  12,
+                  19
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.0019590324419938156,
+                "cells": 122880,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "SedovGas",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "VELZ",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.0019590324419938156,
+                  "cells": 122880
+                },
+                "elapsed_seconds": 9.364565744064748,
+                "pool_capacities": [
+                  6,
+                  6,
+                  6,
+                  13
+                ]
+              }
+            ]
+          },
+          {
+            "case": "Sedov-2d-RK2-HLLC-axis0-reflecting",
+            "root_shape": [
+              5,
+              3,
+              1
+            ],
+            "steps": 16,
+            "global_pool_capacity": 16,
+            "comparisons": [
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "maximum_scaled_error": 0.0,
+                "gate": "2e-13 * max(1, abs(a), abs(b))",
+                "final_time": 0.0061172373022754896,
+                "cells": 3840,
+                "elapsed_seconds": 2.108812821097672
+              },
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.0061172373022754896,
+                "cells": 3840,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "SedovGas",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.0061172373022754896,
+                  "cells": 3840
+                },
+                "elapsed_seconds": 3.9183600209653378
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.0061172373022754896,
+                "cells": 3840,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "SedovGas",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.0061172373022754896,
+                  "cells": 3840
+                },
+                "elapsed_seconds": 4.555703334044665,
+                "pool_capacities": [
+                  6,
+                  10
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "SedovGas",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.0061172373022754896,
+                "cells": 3840,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "SedovGas",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.0061172373022754896,
+                  "cells": 3840
+                },
+                "elapsed_seconds": 5.717961753020063,
+                "pool_capacities": [
+                  3,
+                  3,
+                  3,
+                  7
+                ]
+              }
+            ]
+          },
+          {
+            "case": "SmoothAdvection-2d-RK2-HLLC-axis1-periodic",
+            "root_shape": [
+              5,
+              3,
+              1
+            ],
+            "steps": 16,
+            "global_pool_capacity": 16,
+            "comparisons": [
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "maximum_scaled_error": 0.0,
+                "gate": "2e-13 * max(1, abs(a), abs(b))",
+                "final_time": 0.009626710873563963,
+                "cells": 3840,
+                "elapsed_seconds": 1.7545833690091968
+              },
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.009626710873563963,
+                "cells": 3840,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.009626710873563963,
+                  "cells": 3840
+                },
+                "elapsed_seconds": 3.9298030838835984
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.009626710873563963,
+                "cells": 3840,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.009626710873563963,
+                  "cells": 3840
+                },
+                "elapsed_seconds": 4.664082424947992,
+                "pool_capacities": [
+                  6,
+                  10
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.009626710873563963,
+                "cells": 3840,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.009626710873563963,
+                  "cells": 3840
+                },
+                "elapsed_seconds": 5.754110489040613,
+                "pool_capacities": [
+                  3,
+                  3,
+                  3,
+                  7
+                ]
+              }
+            ]
+          },
+          {
+            "case": "SmoothAdvection-3d-RK3-HLLC-axis1-periodic",
+            "root_shape": [
+              5,
+              3,
+              2
+            ],
+            "steps": 16,
+            "global_pool_capacity": 31,
+            "comparisons": [
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "maximum_scaled_error": 0.0,
+                "gate": "2e-13 * max(1, abs(a), abs(b))",
+                "final_time": 0.008229523665197924,
+                "cells": 122880,
+                "elapsed_seconds": 3.2478608889505267
+              },
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.008229523665197924,
+                "cells": 122880,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "VELZ",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.008229523665197924,
+                  "cells": 122880
+                },
+                "elapsed_seconds": 4.769920786144212
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.008229523665197924,
+                "cells": 122880,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "VELZ",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.008229523665197924,
+                  "cells": 122880
+                },
+                "elapsed_seconds": 7.541342057054862,
+                "pool_capacities": [
+                  12,
+                  19
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.008229523665197924,
+                "cells": 122880,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "VELZ",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.008229523665197924,
+                  "cells": 122880
+                },
+                "elapsed_seconds": 8.447315483819693,
+                "pool_capacities": [
+                  6,
+                  6,
+                  6,
+                  13
+                ]
+              }
+            ]
+          },
+          {
+            "case": "SmoothAdvection-2d-RK3-Roe-axis2-periodic",
+            "root_shape": [
+              5,
+              3,
+              1
+            ],
+            "steps": 16,
+            "global_pool_capacity": 16,
+            "comparisons": [
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "maximum_scaled_error": 0.0,
+                "gate": "2e-13 * max(1, abs(a), abs(b))",
+                "final_time": 0.01104627955952364,
+                "cells": 3840,
+                "elapsed_seconds": 1.906582779949531
+              },
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.01104627955952364,
+                "cells": 3840,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.01104627955952364,
+                  "cells": 3840
+                },
+                "elapsed_seconds": 3.513970575062558
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.01104627955952364,
+                "cells": 3840,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.01104627955952364,
+                  "cells": 3840
+                },
+                "elapsed_seconds": 4.405804879032075,
+                "pool_capacities": [
+                  6,
+                  10
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.01104627955952364,
+                "cells": 3840,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.01104627955952364,
+                  "cells": 3840
+                },
+                "elapsed_seconds": 6.009160252055153,
+                "pool_capacities": [
+                  3,
+                  3,
+                  3,
+                  7
+                ]
+              }
+            ]
+          },
+          {
+            "case": "SmoothAdvection-3d-RK3-HLL-axis3-periodic",
+            "root_shape": [
+              5,
+              3,
+              2
+            ],
+            "steps": 16,
+            "global_pool_capacity": 31,
+            "comparisons": [
+              {
+                "lane": "serial",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "maximum_scaled_error": 0.0,
+                "gate": "2e-13 * max(1, abs(a), abs(b))",
+                "final_time": 0.009856793474182179,
+                "cells": 122880,
+                "elapsed_seconds": 3.1414145270828158
+              },
+              {
+                "lane": "mpi-1",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.009856793474182179,
+                "cells": 122880,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "VELZ",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.009856793474182179,
+                  "cells": 122880
+                },
+                "elapsed_seconds": 4.721279088174924
+              },
+              {
+                "lane": "mpi-2",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.009856793474182179,
+                "cells": 122880,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "VELZ",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.009856793474182179,
+                  "cells": 122880
+                },
+                "elapsed_seconds": 7.559693597955629,
+                "pool_capacities": [
+                  12,
+                  19
+                ]
+              },
+              {
+                "lane": "mpi-4",
+                "snapshots": 5,
+                "fields": [
+                  "DENS",
+                  "ENER",
+                  "ENTR",
+                  "PRES",
+                  "TEMP",
+                  "VELX",
+                  "VELY",
+                  "VELZ",
+                  "cell_measure",
+                  "coordinate",
+                  "coordinate_y",
+                  "coordinate_z"
+                ],
+                "bitwise_equal": true,
+                "final_time": 0.009856793474182179,
+                "cells": 122880,
+                "cpu_reference": {
+                  "snapshots": 5,
+                  "fields": [
+                    "DENS",
+                    "ENER",
+                    "ENTR",
+                    "PRES",
+                    "TEMP",
+                    "VELX",
+                    "VELY",
+                    "VELZ",
+                    "cell_measure",
+                    "coordinate",
+                    "coordinate_y",
+                    "coordinate_z"
+                  ],
+                  "maximum_scaled_error": 0.0,
+                  "gate": "2e-13 * max(1, abs(a), abs(b))",
+                  "final_time": 0.009856793474182179,
+                  "cells": 122880
+                },
+                "elapsed_seconds": 8.515699619892985,
+                "pool_capacities": [
+                  6,
+                  6,
+                  6,
+                  13
+                ]
+              }
+            ]
+          }
+        ],
+        "rejections": [
+          {
+            "case": "unpaired-y",
+            "exit_code": 1
+          },
+          {
+            "case": "unpaired-z",
+            "exit_code": 1
+          },
+          {
+            "case": "pool-smaller-than-global-grid",
+            "exit_code": 1
+          }
+        ],
+        "binaries": {
+          "baseline": {
+            "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cpu-mpi-off",
+            "sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145"
+          },
+          "mpi": {
+            "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/frozen-binaries-1/ARCH-cuda",
+            "sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070"
+          },
+          "serial": {
+            "path": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-launch-20261113/frozen-binaries-1/ARCH-cuda-mpi-off",
+            "sha256": "425e939eb32e9e6474752c5b70fc82df7187cda6b2426920da0bfcc7ec297c2a"
+          }
+        },
+        "scope": "single-host cuda Cartesian fixed grid; correctness, not scaling",
+        "concurrent_candidate_lanes": 1,
+        "mpiexec_arguments": [
+          "--bind-to",
+          "none"
+        ]
+      },
+      "sha256": "76bf4e43112f2d570aeada954bc7596f38e7dceb316a7e811b9c205982c176c2"
+    }
+  ],
+  "startup_negative": {
+    "candidate_sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070",
+    "alternate_sha256": "e8e276db136b99925370afbfa28e2c39ee557b6015965e48a6d85764def54ea6",
+    "rejections": [
+      {
+        "case": "executable",
+        "returncode": 1,
+        "seconds": 3.1766022520605475,
+        "reason": "different executable, problem or parameter contents",
+        "output_acquired": false
+      },
+      {
+        "case": "auto-device",
+        "returncode": 1,
+        "seconds": 2.926299988059327,
+        "reason": "effective configuration, EOS or resolved backend differs",
+        "output_acquired": false
+      },
+      {
+        "case": "explicit-device",
+        "returncode": 1,
+        "seconds": 2.625410025008023,
+        "reason": "CUDA runtime unavailable",
+        "output_acquired": false
+      }
+    ],
+    "status": "passed"
+  },
+  "restart_integrity_negative": {
+    "status": "passed",
+    "cases": [
+      {
+        "case": "missing-leaf",
+        "returncode": 1,
+        "seconds": 2.625816219020635,
+        "errors": [
+          "[Fatal Error] distributed root coverage is incomplete",
+          "[Fatal Error] distributed root coverage is incomplete"
+        ]
+      },
+      {
+        "case": "outside-domain",
+        "returncode": 1,
+        "seconds": 3.1806083410046995,
+        "errors": [
+          "[Fatal Error] neighbor leaf outside global domain",
+          "\u0000[Fatal Error] MPI peer rejected preparation"
+        ]
+      },
+      {
+        "case": "overlapping-ancestor",
+        "returncode": 1,
+        "seconds": 2.9273440989200026,
+        "errors": [
+          "[Fatal Error] distributed leaves overlap or leave a gap",
+          "[Fatal Error] distributed leaves overlap or leave a gap"
+        ]
+      },
+      {
+        "case": "duplicate-owner",
+        "returncode": 1,
+        "seconds": 2.626260006101802,
+        "errors": [
+          "[Fatal Error] topology snapshot has duplicate logical identity",
+          "[Fatal Error] topology snapshot has duplicate logical identity"
+        ]
+      },
+      {
+        "case": "rank-count",
+        "returncode": 1,
+        "seconds": 3.0823421170935035,
+        "errors": [
+          "[Fatal Error] Checkpoint collection kind/rank count differs from launch",
+          "[Fatal Error] Checkpoint collection kind/rank count differs from launch",
+          "\u0000[Fatal Error] Checkpoint collection kind/rank count differs from launch"
+        ]
+      }
+    ],
+    "original_manifest_sha256": "943e521d6d7c0da5ed15f3a529a2f1273315a1d7a8cebcab268fef0b77078267",
+    "candidate_sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070"
+  },
+  "tooling": {
+    "code": 0,
+    "finished": 1794552509.3392768,
+    "python": "/usr/bin/python3",
+    "prefix": "/home/ubuntu/projects/ARCH-mpi-toolchain/tooling/prefix"
+  },
+  "tooling_tests": 629,
+  "preflight_methods": 20,
+  "application_identity_readback": [
+    {
+      "series": "app-cpu-debug-smoke-d1-l3-1-data",
+      "cases": 1,
+      "published_shards_checked": 14,
+      "checkpoint_domain_bounds_checked": 9,
+      "passed": true
+    },
+    {
+      "series": "app-cpu-debug-smoke-d2-l3-1-data",
+      "cases": 1,
+      "published_shards_checked": 14,
+      "checkpoint_domain_bounds_checked": 9,
+      "passed": true
+    },
+    {
+      "series": "app-cpu-long-d1-l3-1-data",
+      "cases": 1,
+      "published_shards_checked": 117,
+      "checkpoint_domain_bounds_checked": 42,
+      "passed": true
+    },
+    {
+      "series": "app-cpu-long-d2-l3-1-data",
+      "cases": 1,
+      "published_shards_checked": 117,
+      "checkpoint_domain_bounds_checked": 42,
+      "passed": true
+    },
+    {
+      "series": "app-cpu-matrix-d1-l3-1-data",
+      "cases": 54,
+      "published_shards_checked": 1998,
+      "checkpoint_domain_bounds_checked": 918,
+      "passed": true
+    },
+    {
+      "series": "app-cpu-matrix-d2-l3-1-data",
+      "cases": 54,
+      "published_shards_checked": 1998,
+      "checkpoint_domain_bounds_checked": 918,
+      "passed": true
+    },
+    {
+      "series": "app-cpu-smoke-d1-l1-compat-1-data",
+      "cases": 1,
+      "published_shards_checked": 14,
+      "checkpoint_domain_bounds_checked": 9,
+      "passed": true
+    },
+    {
+      "series": "app-cpu-smoke-d1-l2-compat-1-data",
+      "cases": 1,
+      "published_shards_checked": 14,
+      "checkpoint_domain_bounds_checked": 9,
+      "passed": true
+    },
+    {
+      "series": "app-cpu-smoke-d2-l2-compat-1-data",
+      "cases": 1,
+      "published_shards_checked": 14,
+      "checkpoint_domain_bounds_checked": 9,
+      "passed": true
+    },
+    {
+      "series": "app-cuda-debug-smoke-d1-l3-1-data",
+      "cases": 1,
+      "published_shards_checked": 14,
+      "checkpoint_domain_bounds_checked": 9,
+      "passed": true
+    },
+    {
+      "series": "app-cuda-debug-smoke-d2-l3-1-data",
+      "cases": 1,
+      "published_shards_checked": 14,
+      "checkpoint_domain_bounds_checked": 9,
+      "passed": true
+    },
+    {
+      "series": "app-cuda-long-d1-l3-1-data",
+      "cases": 1,
+      "published_shards_checked": 117,
+      "checkpoint_domain_bounds_checked": 42,
+      "passed": true
+    },
+    {
+      "series": "app-cuda-long-d2-l3-1-data",
+      "cases": 1,
+      "published_shards_checked": 117,
+      "checkpoint_domain_bounds_checked": 42,
+      "passed": true
+    },
+    {
+      "series": "app-cuda-matrix-d1-l3-1-data",
+      "cases": 54,
+      "published_shards_checked": 1998,
+      "checkpoint_domain_bounds_checked": 918,
+      "passed": true
+    },
+    {
+      "series": "app-cuda-matrix-d2-l3-1-data",
+      "cases": 54,
+      "published_shards_checked": 1998,
+      "checkpoint_domain_bounds_checked": 918,
+      "passed": true
+    },
+    {
+      "series": "app-cuda-smoke-d1-l1-1-data",
+      "cases": 1,
+      "published_shards_checked": 14,
+      "checkpoint_domain_bounds_checked": 9,
+      "passed": true
+    },
+    {
+      "series": "app-cuda-smoke-d1-l2-1-data",
+      "cases": 1,
+      "published_shards_checked": 14,
+      "checkpoint_domain_bounds_checked": 9,
+      "passed": true
+    },
+    {
+      "series": "app-cuda-smoke-d1-l3-1-data",
+      "cases": 1,
+      "published_shards_checked": 14,
+      "checkpoint_domain_bounds_checked": 9,
+      "passed": true
+    },
+    {
+      "series": "app-cuda-smoke-d2-l2-compat-1-data",
+      "cases": 1,
+      "published_shards_checked": 14,
+      "checkpoint_domain_bounds_checked": 9,
+      "passed": true
+    },
+    {
+      "series": "app-cuda-smoke-d2-l3-1-data",
+      "cases": 1,
+      "published_shards_checked": 14,
+      "checkpoint_domain_bounds_checked": 9,
+      "passed": true
+    }
+  ],
+  "application_source_manifest_readback": [
+    {
+      "binary_sha256": "69a61d041a20f7c846d688051a2dd6379a6ff64fe6e0cee5c5dfb28257982145",
+      "entries": 433,
+      "reference_revision": "67acd3f915d4db9f0b1dd6dd9e033c5819bb7352",
+      "mismatches": []
+    },
+    {
+      "binary_sha256": "bd4d3175f221591c46562142f6630b5c8a9faf5a695908857b7e6e04e575ce11",
+      "entries": 433,
+      "reference_revision": "current candidate production source",
+      "mismatches": []
+    },
+    {
+      "binary_sha256": "11fb635ab268b532affe4f408cd4824197b1964bb203e451c78e786200791108",
+      "entries": 433,
+      "reference_revision": "current candidate production source",
+      "mismatches": []
+    },
+    {
+      "binary_sha256": "100d34c7490073f4276e6306391adfdaf53d43a0e2b94099ad3fd77d47ff620d",
+      "entries": 525,
+      "reference_revision": "current candidate production source",
+      "mismatches": []
+    },
+    {
+      "binary_sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070",
+      "entries": 525,
+      "reference_revision": "current candidate production source",
+      "mismatches": []
+    }
+  ],
+  "source_sha256": {
+    ".github/workflows/ci.yml": "193acd61154a6aa5cc522f5ce3ceb7e6ffe6dd024cc9da46e3ecef767d158e4b",
+    "cmake/tests/CudaTests.cmake": "aec80f809b9728c60cef736b4ab07e17139af27aa5b9761a4364fa6c0be86c1e",
+    "src/amr/topology/AmrTree.h": "0a5ca0ef3ae2ffe44d5c493ad27fa9ad13ad257f37f21461256b218c13f91522",
+    "src/driver/dispatch/ExecutionPreflight.cpp": "d3d83c6f145e2e04604fb69f9288fe1fa32a6481099feaaedcdc8d8440096248",
+    "src/driver/runtime/DriverRegrid.cpp": "bb9c9e74d7c5e33f72efc98c172af41927ad60534225ad0be5fb1a3f463f4465",
+    "src/driver/runtime/DriverRuntime.h": "11b60f1e031d286081af7ab42b6ca4a0771f720947bcc4295aa9433367bfec61",
+    "tests/api/inspection/test_mpi_preflight.py": "a3136041cafbefb471846f0f89dc9ee14c8c4f5788fe307383ca3f2ca82fccdb",
+    "tests/cuda/amr/test_cuda_mpi_runtime.cpp": "7d62de53258d2a9dba07b684509a39f5addbe7be8c04c83eeda3804457f1d819",
+    "tests/host/amr/test_distributed_hydro_stage.cpp": "e45f3446843bd85183a00832e6fc8e26ac8fb0252f0a3eb853dc57fbde163702",
+    "tests/integration/test_mpi_amr.py": "65463a9f0b13b5c840ca629eb15fda80de59f36ea3caab9a02638161fbac6671",
+    "tests/integration/test_mpi_fixed_grid.py": "0c2f4e02507933f59e459c8d028744057b48a39c43e1271785290abcf80ff009"
+  },
+  "data_archive": {
+    "status": "verified",
+    "archive": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/application-native-data.tar.gz",
+    "archive_bytes": 764970897,
+    "archive_sha256": "5690f5518f2b194884d756dc9fbcb691ba93d83fb2dcb19fd83f3f240c7ba8f7",
+    "files": 39034,
+    "logical_bytes": 10809198118,
+    "members_verified": 39034,
+    "largest_restore": {
+      "source": "/home/ubuntu/projects/ARCH-mpi-evidence-gpu-amr-dimensions-20261113/startup-failures-1-data/identity-marker-ARCH",
+      "member": "applications/startup-failures-1-data/identity-marker-ARCH",
+      "bytes": 207427958,
+      "sha256": "e8e276db136b99925370afbfa28e2c39ee557b6015965e48a6d85764def54ea6"
+    },
+    "restore_sha256": "e8e276db136b99925370afbfa28e2c39ee557b6015965e48a6d85764def54ea6",
+    "seconds": 182.47084175003693,
+    "source_files_retained": true
+  },
+  "development_failures": [
+    {
+      "log": "native-smoke-d1-r2-1.log",
+      "kind": "fixture failure",
+      "reason": "Deep migration rejected before injected publication failure; no production output or accepted migration."
+    },
+    {
+      "log": "native-smoke-d1-r2-2.log",
+      "kind": "fixture failure diagnosed",
+      "reason": "ownership_endpoint helper hardcoded dimension2 and sent a zero handle for dimension1; uses actual Run configuration after correction. Native transaction correctly rejected stale endpoint; rollback witness now additionally reports actual rejection reason."
+    }
+  ],
+  "validation_builds": [
+    {
+      "build": "build-gpu-release",
+      "binaries": {
+        "arch_checkpoint_compatibility": {
+          "bytes": 549464,
+          "sha256": "4839ca785cb64fa4369ad1f4aa881a7cf86985f26962b7a11e532ad8df04ea4c"
+        },
+        "arch_device_block_store_lifecycle": {
+          "bytes": 84000,
+          "sha256": "7610ddf347b6db683ef84a45e7d12021d34b474b34987cd0e4272864bd27d403"
+        },
+        "arch_distributed_hydro_stage": {
+          "bytes": 1571656,
+          "sha256": "2dd8b246ff81bfec41ff10c42634229217fe5d3b60d67ad73ef455d43c07e70b"
+        },
+        "arch_flux_reflux_exchange": {
+          "bytes": 567416,
+          "sha256": "c9aaaa75435c8ce1deee6d0027d9c12974d25dcb5580e558fcc5d7f92714d150"
+        },
+        "arch_output_collection": {
+          "bytes": 122304,
+          "sha256": "1af4bc8cbe565e616c98b20762b3c996c115cb536b3e8961547493d7514cd525"
+        },
+        "arch_runtime_probe_capabilities": {
+          "bytes": 79176,
+          "sha256": "eaff1759e7a48aeb4281b19892baef921324606e57a628a95f4d6ad560e41236"
+        },
+        "arch_shared_stage_scheduler": {
+          "bytes": 599080,
+          "sha256": "c7e08a63364240736030f2ae4222236934b03a79e767ec0d56a707618142d1e5"
+        },
+        "arch_state_residency": {
+          "bytes": 110760,
+          "sha256": "acaba0c1c3b10460443b9aa4638e9a0b88ce7cbca3488c2d4973deb3670181b9"
+        },
+        "bin/ARCH": {
+          "bytes": 9167976,
+          "sha256": "11fb635ab268b532affe4f408cd4824197b1964bb203e451c78e786200791108"
+        }
+      },
+      "configuration": {
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
+        "ARCH_ENABLE_CUDA": "OFF",
+        "ARCH_ENABLE_MPI": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/ubuntu/projects/ARCH-mpi/build-gpu-release/bin",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_COMPILER": "/home/ubuntu/projects/ARCH-mpi-toolchain/env/bin/x86_64-conda-linux-gnu-c++",
+        "CMAKE_EXE_LINKER_FLAGS": ""
+      },
+      "cache_sha256": "2b85af5b86b9f5d7c9098ea8ec95712039fb618bda40e29529873d39fde49c2c"
+    },
+    {
+      "build": "build-gpu-release-serial",
+      "binaries": {
+        "arch_checkpoint_compatibility": {
+          "bytes": 549464,
+          "sha256": "bf93dfab9e67724d7f08d34f32b79c4e8b7cf408130b8491bc7e695119a37f88"
+        },
+        "arch_device_block_store_lifecycle": {
+          "bytes": 84000,
+          "sha256": "85ee507f5c610cc813bd1153adb04e77d808b8e01b840c037b241b1865f2f145"
+        },
+        "arch_distributed_hydro_stage": {
+          "bytes": 1140640,
+          "sha256": "da95576f843ae7dc71b3b7842f8927433e60f103c6543a4166398238c40bc8f2"
+        },
+        "arch_flux_reflux_exchange": {
+          "bytes": 467160,
+          "sha256": "0ea9422400fa9eb6d1b8418005e34327f2637c835379a9a6dae80579ed897a25"
+        },
+        "arch_output_collection": {
+          "bytes": 122304,
+          "sha256": "7834a24e08375a1d776c366094c107f90fd9060a16f3ac6697a7414d23c267e6"
+        },
+        "arch_runtime_probe_capabilities": {
+          "bytes": 79176,
+          "sha256": "8b22ac415b3bcf206347b72b1136e67d30b17c42efafa4656e153d5a089be85a"
+        },
+        "arch_shared_stage_scheduler": {
+          "bytes": 599080,
+          "sha256": "d5251c574844a6a1ce24cba59064727f69e68d6499922628b46c662b67d9545e"
+        },
+        "arch_state_residency": {
+          "bytes": 110760,
+          "sha256": "9777083f64193bcd29393d3dc4c265c15411d6615e56cf15060d2eb9f1d8b2f4"
+        },
+        "bin/ARCH": {
+          "bytes": 8910392,
+          "sha256": "a97eb1ae8e2e1a930ac293d0a00788a975371b4943f40778a869720dfdaf7e72"
+        }
+      },
+      "configuration": {
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
+        "ARCH_ENABLE_CUDA": "OFF",
+        "ARCH_ENABLE_MPI": "OFF",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/ubuntu/projects/ARCH-mpi/build-gpu-release-serial/bin",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_COMPILER": "/home/ubuntu/projects/ARCH-mpi-toolchain/env/bin/x86_64-conda-linux-gnu-c++",
+        "CMAKE_EXE_LINKER_FLAGS": ""
+      },
+      "cache_sha256": "d8c50a948b3cc31c3168d238b76b1f7fa85405aad332373ed43a9692987460e9"
+    },
+    {
+      "build": "build-gpu-debug",
+      "binaries": {
+        "arch_checkpoint_compatibility": {
+          "bytes": 8223240,
+          "sha256": "812ef67dac011a04ab6cb52322cc6dbe5955db48776d96af885d82751077374b"
+        },
+        "arch_device_block_store_lifecycle": {
+          "bytes": 1026280,
+          "sha256": "12cb6f71563adc6c190806a803a0e6794f3673839142e185fedeaa24b901dd69"
+        },
+        "arch_distributed_hydro_stage": {
+          "bytes": 22376728,
+          "sha256": "869848bcc773bd082fdd34909db020d8d6b1b62066dff607254a661fca481393"
+        },
+        "arch_flux_reflux_exchange": {
+          "bytes": 6931360,
+          "sha256": "cc445621a0a520f8cae044efde54415a8854d6b658fddb34275a85376e88bac3"
+        },
+        "arch_output_collection": {
+          "bytes": 2231744,
+          "sha256": "a1dc62f6b0c67594bdc879c1c2290aeaba5c528f66b856ce84fe7e2841c68e76"
+        },
+        "arch_runtime_probe_capabilities": {
+          "bytes": 600112,
+          "sha256": "1ffc0b13dddc4c3bdbeccff85d8800e71de2a3f6fffb1a56ab7b1b5150ad3dfa"
+        },
+        "arch_shared_stage_scheduler": {
+          "bytes": 6043120,
+          "sha256": "c9e1e2ad40f930ddfa3cd5d03b4b64e924352d8b552943650595e72dec89c8be"
+        },
+        "arch_state_residency": {
+          "bytes": 472200,
+          "sha256": "889fac9144963a63aa6227e4ec25e86c0bc2d6445316ff77b5ee9d22ca97bf2f"
+        },
+        "bin/ARCH": {
+          "bytes": 125798504,
+          "sha256": "bd4d3175f221591c46562142f6630b5c8a9faf5a695908857b7e6e04e575ce11"
+        }
+      },
+      "configuration": {
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
+        "ARCH_ENABLE_CUDA": "OFF",
+        "ARCH_ENABLE_MPI": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug/bin",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "/home/ubuntu/projects/ARCH-mpi-toolchain/env/bin/x86_64-conda-linux-gnu-c++",
+        "CMAKE_EXE_LINKER_FLAGS": ""
+      },
+      "cache_sha256": "eb78040c27f2206894d0d607cd937b6fb6c9d488083d9da1b1908750234a83f2"
+    },
+    {
+      "build": "build-gpu-debug-serial",
+      "binaries": {
+        "arch_checkpoint_compatibility": {
+          "bytes": 8196608,
+          "sha256": "d35e45a70de3e9bc07843b072220d4efe67271f6182bdf9c519fd6c34399d3f4"
+        },
+        "arch_device_block_store_lifecycle": {
+          "bytes": 1026288,
+          "sha256": "271bb62c4b866c40807cf4d85f41f7855d6e34b0a54ed3035fbfa060f6e5ae26"
+        },
+        "arch_distributed_hydro_stage": {
+          "bytes": 19300840,
+          "sha256": "7b4a5696eaca2c21aa71cbf8b83e0ee5ba8a61bc3d6605b7759c5b3d79e45682"
+        },
+        "arch_flux_reflux_exchange": {
+          "bytes": 6345560,
+          "sha256": "a0b67cc37b51b653e5797fbad97293d7e317c22cf7d6814af8324b6cdfeae2e3"
+        },
+        "arch_output_collection": {
+          "bytes": 2218632,
+          "sha256": "88ea30aa116641b075f1338338946cc8eb4c09ba03da5487e601bffb753b5647"
+        },
+        "arch_runtime_probe_capabilities": {
+          "bytes": 600120,
+          "sha256": "8f8d38d33e1aa11a16a250344809f8a769aa9eadd20738b68ff9dc2f8584a5d6"
+        },
+        "arch_shared_stage_scheduler": {
+          "bytes": 6043128,
+          "sha256": "906622940662cfbac970dfd343b76ffb5a7ac8d9a42835fc098c7f2d12897500"
+        },
+        "arch_state_residency": {
+          "bytes": 472208,
+          "sha256": "356d123f643beeccb53874bee2e4dd25d5b7fa4b9809f7b72482afeff24154f4"
+        },
+        "bin/ARCH": {
+          "bytes": 120977264,
+          "sha256": "9365e2c479ca0a6de13ddb106811d0fa0152aca83f40c02219d252020d09da70"
+        }
+      },
+      "configuration": {
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
+        "ARCH_ENABLE_CUDA": "OFF",
+        "ARCH_ENABLE_MPI": "OFF",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/ubuntu/projects/ARCH-mpi/build-gpu-debug-serial/bin",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "/home/ubuntu/projects/ARCH-mpi-toolchain/env/bin/x86_64-conda-linux-gnu-c++",
+        "CMAKE_EXE_LINKER_FLAGS": ""
+      },
+      "cache_sha256": "31842085dcba270128ff1c245ef8495f69e8c72ef874eada4988d7044bff86ed"
+    },
+    {
+      "build": "build-mpi-cuda-release",
+      "binaries": {
+        "arch_checkpoint_compatibility": {
+          "bytes": 534320,
+          "sha256": "c3bb0c71bdb956bf81e76e7481f8e6746db77cda3dccc5678c63e265a0bfcf96"
+        },
+        "arch_cuda_amr_exchange": {
+          "bytes": 198780392,
+          "sha256": "ecfa84e0c01a6c0bee44246d3f8674c6c4d016126202265fab2a6d51e6d53664"
+        },
+        "arch_cuda_mpi_runtime": {
+          "bytes": 200510888,
+          "sha256": "d6f53ea1dea4dab87c2d8cbb00168007cc2c487bbad2416c47751ac57e14cb86"
+        },
+        "arch_cuda_regrid_transaction": {
+          "bytes": 199385200,
+          "sha256": "f7f5bd729492e8c77bb97bcbf0018ffb5cc29962e4c6e8111f69a619d8e6c354"
+        },
+        "arch_cuda_store_lifecycle": {
+          "bytes": 198650064,
+          "sha256": "e0b953cd9fe194b5aac8b12552b2fd23039ede053bae9f7434a878cb1c3b7a93"
+        },
+        "arch_device_block_store_lifecycle": {
+          "bytes": 83624,
+          "sha256": "28c76663410e81fccd26b0ee69ea931382f0ac7611cf6a1597cf8b33cd7b4c77"
+        },
+        "arch_output_collection": {
+          "bytes": 122016,
+          "sha256": "4dcc98a1a3ae721650e9f1e00d95c07c5f2fb0d10424510ab849181a5d8395a0"
+        },
+        "arch_runtime_probe_capabilities": {
+          "bytes": 79408,
+          "sha256": "a40740ba78183c7a48173b1cb3e5229b8f141855438296b3267daeff3f038446"
+        },
+        "arch_shared_stage_scheduler": {
+          "bytes": 599408,
+          "sha256": "bccd43e51593777cf8182bb90bdc2fa079ee69470df17b9d12d5a52855f3b7bc"
+        },
+        "bin/ARCH": {
+          "bytes": 207427912,
+          "sha256": "833590c0a41c0220ec512eeccefa5221410f15a758b5a08a3dca52e31c816070"
+        }
+      },
+      "configuration": {
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_MPI": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/ubuntu/projects/ARCH-mpi/build-mpi-cuda-release/bin",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CUDA_ARCHITECTURES": "90",
+        "CMAKE_CUDA_COMPILER": "/home/ubuntu/projects/.envs/arch/bin/nvcc",
+        "CMAKE_CXX_COMPILER": "/home/ubuntu/projects/.envs/arch/bin/x86_64-conda-linux-gnu-c++",
+        "CMAKE_EXE_LINKER_FLAGS": ""
+      },
+      "cache_sha256": "7eca190b7b7f5f7f7f6e4b305d141f0f212f3a1899c95c0d11ee65cc35244218"
+    },
+    {
+      "build": "build-mpi-cuda-debug",
+      "binaries": {
+        "arch_checkpoint_compatibility": {
+          "bytes": 8125640,
+          "sha256": "a79149bd0a5b1f945cfff76d57effbc5756405cb97c251da32afe89fb2037232"
+        },
+        "arch_cuda_amr_exchange": {
+          "bytes": 219393040,
+          "sha256": "0bfc7a0d4191bf628de721817382e444343e903a357f5ba4fc1b027dcb7fc1ad"
+        },
+        "arch_cuda_mpi_runtime": {
+          "bytes": 245753648,
+          "sha256": "a2d0a3f056a853b70a76c91a73685b704ee2fcef66946898a9b4e6e887a7d02a"
+        },
+        "arch_cuda_regrid_transaction": {
+          "bytes": 232417824,
+          "sha256": "23e28cbe02172e8572f7d99772eea5fa677fe8e9b2ce79069573075a9b0ae9bc"
+        },
+        "arch_cuda_store_lifecycle": {
+          "bytes": 216993360,
+          "sha256": "2a60430b29420de8673e639505419eb6adab64541a8a4b87d56b1e1bf1565035"
+        },
+        "arch_device_block_store_lifecycle": {
+          "bytes": 1004016,
+          "sha256": "67d4923503ae35702b479769de901bb73a4541cc809b824ba9240d9e7c951dff"
+        },
+        "arch_output_collection": {
+          "bytes": 2184584,
+          "sha256": "f8a3091d5444ee26586ec8073ff3242388994d16266899687d214de0ed882e78"
+        },
+        "arch_runtime_probe_capabilities": {
+          "bytes": 602936,
+          "sha256": "5547d1bc8ffa5f3ffc82f00e6bc56d0d74b85e0ada609e2ddd5f55d12bd90364"
+        },
+        "arch_shared_stage_scheduler": {
+          "bytes": 5994152,
+          "sha256": "57a4b13447d95ad68264a5addfacfc18568235637e10444fc6e4cce86e12f2ff"
+        },
+        "bin/ARCH": {
+          "bytes": 339358856,
+          "sha256": "100d34c7490073f4276e6306391adfdaf53d43a0e2b94099ad3fd77d47ff620d"
+        }
+      },
+      "configuration": {
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_MPI": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/ubuntu/projects/ARCH-mpi/build-mpi-cuda-debug/bin",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CUDA_ARCHITECTURES": "90",
+        "CMAKE_CUDA_COMPILER": "/home/ubuntu/projects/.envs/arch/bin/nvcc",
+        "CMAKE_CXX_COMPILER": "/home/ubuntu/projects/.envs/arch/bin/x86_64-conda-linux-gnu-c++",
+        "CMAKE_EXE_LINKER_FLAGS": ""
+      },
+      "cache_sha256": "864aaadf04f32c2c5ab17842433dfe0ff937681b4a2091ad84174dab812fa304"
+    },
+    {
+      "build": "build-mpi-cuda-serial-check",
+      "binaries": {
+        "arch_cuda_amr_exchange": {
+          "bytes": 198719112,
+          "sha256": "63e84a6c1c5d94c9d7b091902097237c5a5e9377f7326d57cc84c7dbc9d10532"
+        },
+        "arch_cuda_regrid_transaction": {
+          "bytes": 199217072,
+          "sha256": "94041470301b8ac0d2487e10b450dc3ec95132a1a9f7c3e9c8b11b17f9becfff"
+        },
+        "arch_cuda_store_lifecycle": {
+          "bytes": 198645968,
+          "sha256": "bd7486c3997ca08d0953e8660ad10f20c391cc62d25eae35bd7bb05af8765db1"
+        },
+        "arch_device_block_store_lifecycle": {
+          "bytes": 83624,
+          "sha256": "8a2581f8fcdac7d8dee1c7f2f6e6243191c4a8befaceff27f83f641f997cab1a"
+        },
+        "arch_runtime_probe_capabilities": {
+          "bytes": 79408,
+          "sha256": "79adbbaf65e4def665d49d54bfd89b041f0726cef70a660ea86b75cb5dd2c7c4"
+        },
+        "arch_shared_stage_scheduler": {
+          "bytes": 599408,
+          "sha256": "a31a7dbb1a2d374f8d60977a85db31e5ccceef776ab41d5a411859d0d40e9abb"
+        },
+        "bin/ARCH": {
+          "bytes": 207069432,
+          "sha256": "fada03988b164051b2c3f2f38dd8d5e3799a7ba89ee92a0d6f0ed7f8ed34d071"
+        }
+      },
+      "configuration": {
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "2",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_MPI": "OFF",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/ubuntu/projects/ARCH-mpi/build-mpi-cuda-serial-check/bin",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CUDA_ARCHITECTURES": "90",
+        "CMAKE_CUDA_COMPILER": "/home/ubuntu/projects/.envs/arch/bin/nvcc",
+        "CMAKE_CXX_COMPILER": "/home/ubuntu/projects/.envs/arch/bin/x86_64-conda-linux-gnu-c++",
+        "CMAKE_EXE_LINKER_FLAGS": "-L/home/ubuntu/projects/ARCH-mpi-toolchain/env/lib -Wl,-rpath,/home/ubuntu/projects/ARCH-mpi-toolchain/env/lib"
+      },
+      "cache_sha256": "eb62b0657ae7c00f6723ef21de390dcdfcd6b6b775e9979e092e950790ca4b2a"
+    }
+  ],
+  "scope_note": "One H100 shared by ranks. No 3D AMR, multi-GPU, multi-node, scaling, sanitizer or power-loss claim. No math, physical tolerances or acceptance thresholds changed.",
+  "publication_note": "Exact commit CI and remote ref verification are recorded separately in server publication.json; hosted CI is CPU only."
+}

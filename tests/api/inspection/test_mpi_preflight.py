@@ -85,7 +85,9 @@ class MpiPreflight(unittest.TestCase):
         for changes in ({"chk_dstep": 1}, {"chk_dt": 0.1},
                         {"restart": "true", "restart_file": "saved.collection"},
                         {"nblockx2": 2, "lrefinemax": 1, "max_blocks": 512},
-                        {"nblockx2": 2, "lrefinemax": 2, "max_blocks": 512}):
+                        {"nblockx2": 2, "lrefinemax": 2, "max_blocks": 512},
+                        {"nblockx2": 2, "lrefinemax": 3, "max_blocks": 1024},
+                        *({"lrefinemax": level, "max_blocks": 512} for level in (1, 2, 3))):
             with self.subTest(changes=changes):
                 dynamic = "nblockx2" in changes
                 self.query(parameters(AMR_BASE if dynamic else BASE, changes),
@@ -105,10 +107,10 @@ class MpiPreflight(unittest.TestCase):
 
     def test_rejected_queries_match_real_startup(self):
         cases = {
-            "amr": {"lrefinemax": 1},
+            "amr": {"lrefinemin": 1, "lrefinemax": 1},
             "empty-rank": {"nblockx1": 1},
             "pool": {"max_blocks": 6},
-            "amr-level": {"nblockx2": 2, "lrefinemax": 3},
+            "amr-level": {"nblockx2": 2, "lrefinemax": 4},
             "amr-3d": {"nblockx2": 1, "nblockx3": 1, "lrefinemax": 1},
             "restart-shard": {"restart": "true", "restart_file": "rank-0/state.h5"},
             "output-name": {"base_name": "../escape"},

@@ -31,9 +31,9 @@ void validate_mpi_launch(const SimConfig& config, int ranks)
 #endif
     if (config.grid.dim < 1 || config.grid.dim > 3 || config.grid.geometry != "cartesian")
         throw std::invalid_argument("MPI requires Cartesian 1-D/2-D/3-D geometry");
-    if(config.amr.lrefinemin!=0 || config.amr.lrefinemax<0 || config.amr.lrefinemax>2
-        || (config.amr.lrefinemax>0 && config.grid.dim!=2))
-        throw std::invalid_argument("MPI AMR requires Cartesian 2-D with level 0..2 and lrefinemin=0");
+    if(config.amr.lrefinemin!=0 || config.amr.lrefinemax<0 || config.amr.lrefinemax>3
+        || (config.amr.lrefinemax>0 && config.grid.dim>2))
+        throw std::invalid_argument("MPI AMR requires Cartesian 1-D/2-D with level 0..3 and lrefinemin=0");
     if(config.amr.refine_on_jeans)
         throw std::invalid_argument("MPI Jeans refinement is unsupported");
     if (config.grid.nblockx1 < ranks)

@@ -41,8 +41,13 @@ def checkpoints(directory):
 def state(path):
     manifest, shards = published_shards(path) if path.is_dir() else (None, [path])
     keys, fields, clocks, repairs = [], {name: [] for name in FIELDS}, [], []
+    dimensions = []
     for shard in shards:
         with h5py.File(shard) as file:
+            dimension = int(file.attrs["dim"])
+            assert dimension in (1, 2, 3), "invalid checkpoint dimension"
+            dimensions.append(dimension)
+            cells_per_block = 16 ** dimension
             clock = (int(file.attrs["step_count"] if "step_count" in file.attrs else file.attrs["step"]),
                      float(file.attrs["time"]), float(file.attrs["dt_old"]))
             clocks.append(clock)
@@ -53,9 +58,9 @@ def state(path):
             for name in FIELDS:
                 value = file["Data/" + name][:]
                 if name in ("X", "rhoX"):
-                    value = value.reshape(-1, blocks, 256).transpose(1, 0, 2)
+                    value = value.reshape(-1, blocks, cells_per_block).transpose(1, 0, 2)
                 else:
-                    value = value.reshape(blocks, 256)
+                    value = value.reshape(blocks, cells_per_block)
                 fields[name].append(value)
             repairs.append(file["state_repairs"][:])
             if manifest:
@@ -64,6 +69,7 @@ def state(path):
                 assert np.float64(clock[1]).view(np.uint64) == int(manifest["time_bits"])
                 assert int(manifest["index"]) == int(file.attrs["chk_index"])
     assert len(set(clocks)) == 1 and len(keys) == len(set(keys))
+    assert len(set(dimensions)) == 1, "shard dimensions differ"
     # Reject overlapping ancestors; the exact volume check also rejects gaps.
     owned = set(keys)
     for level, x, y, z in keys:
@@ -74,10 +80,11 @@ def state(path):
     values = {name: np.concatenate(parts, axis=0)[order] for name, parts in fields.items()}
     assert all(np.all(np.isfinite(value)) for value in values.values())
     return {"keys": [keys[i] for i in order], "fields": values, "clock": clocks[0],
-            "repairs": np.sum(repairs, axis=0)}
+            "repairs": np.sum(repairs, axis=0), "dimension": dimensions[0]}
 
 
 def compare(left, right, exact=False):
+    assert left["dimension"] == right["dimension"], "checkpoint dimension differs"
     assert left["keys"] == right["keys"], "accepted leaf topology differs"
     assert left["clock"] == right["clock"], "physical clock differs"
     worst = 0.
@@ -97,8 +104,12 @@ def compare(left, right, exact=False):
 
 
 def totals(value, root_x, root_y):
-    volume = np.array([1. / (root_x * root_y * 256 * 4 ** key[0]) for key in value["keys"]], dtype=np.longdouble)
-    assert abs(float(np.sum(volume * 256)) - 1.) <= 2.e-14, "leaf domain has a gap"
+    dimension = value["dimension"]
+    cells_per_block = 16 ** dimension
+    root_blocks = root_x * root_y
+    volume = np.array([1. / (root_blocks * cells_per_block * 2 ** (dimension * key[0]))
+                       for key in value["keys"]], dtype=np.longdouble)
+    assert abs(float(np.sum(volume * cells_per_block)) - 1.) <= 2.e-14, "leaf domain has a gap"
     fields = value["fields"]
     result = [np.sum(fields[name].astype(np.longdouble) * volume[:, None])
               for name in ("rho", "mom_u", "mom_v", "mom_w", "eng")]
@@ -114,18 +125,21 @@ def main():
     parser.add_argument("--backend", choices=("cpu", "cuda"), required=True)
     parser.add_argument("--evidence", type=Path, required=True)
     parser.add_argument("--mpiexec", required=True)
+    parser.add_argument("--dimension", type=int, choices=(1, 2), default=2)
+    parser.add_argument("--max-level", type=int, choices=(1, 2, 3), default=2)
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--smoke", action="store_true")
     mode.add_argument("--long", action="store_true")
     args = parser.parse_args()
     args.evidence.mkdir(parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[2]
+    problem = "Sod" if args.dimension == 1 else "Sedov"
     report = {"state": "running", "backend": args.backend, "cases": [],
               "binaries": {name: {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
                            for name, path in (("candidate", args.candidate), ("reference", args.reference))},
               "arithmetic_gate": "2e-13 * max(1, abs(a), abs(b))",
               "periodic_conservation_gate": "2e-11 absolute + 2e-12 relative",
-              "scope": "Cartesian 2-D level 0..2, same-rank checkpoint continuation"}
+               "scope": f"Cartesian {args.dimension}-D level 0..{args.max_level}, same-rank checkpoint continuation"}
     def save():
         (args.evidence / "summary.json").write_text(json.dumps(report, indent=2) + "\n")
     def execute(label, case_dir, source, binary, backend, ranks, changes=None):
@@ -134,7 +148,7 @@ def main():
         text = parameters(source, {"compute_backend": backend, "out_dir": lane / "output", **(changes or {})})
         par = lane / "run.par"
         par.write_text(text)
-        command = ([args.mpiexec, "-n", str(ranks)] if ranks > 1 else []) + [str(binary), "Sedov", str(par)]
+        command = ([args.mpiexec, "-n", str(ranks)] if ranks > 1 else []) + [str(binary), problem, str(par)]
         started = time.monotonic()
         with (lane / "run.log").open("w") as log:
             child = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
@@ -153,16 +167,18 @@ def main():
             for reconstruction in ("pcm", "muscl", "ppm")
             for boundary in ("outflow", "periodic", "reflecting") for ranks in (2, 4)])
         for method, reconstruction, boundary, ranks in cases:
-            name = f"Sedov-{method}-{reconstruction}-{boundary}-r{ranks}"
+            name = f"{problem}-{method}-{reconstruction}-{boundary}-r{ranks}"
             case_dir = args.evidence / name
             case_dir.mkdir()
             steps = 512 if args.long else 12 if args.smoke else 24
             output_stride = 32 if args.long else 4
-            root_x, root_y = 7, 2
-            source = parameters((root / "simulation/Sedov/Sedov.par").read_text(), {
-                "nblockx1": root_x, "nblockx2": root_y, "nblockx3": 0, "max_blocks": 512,
-                "center_x": 3. / 7.,
-                "lrefinemin": 0, "lrefinemax": 2, "refine_threshold": 0.05, "derefine_threshold": 0.01,
+            root_x, root_y = 7, 1 if args.dimension == 1 else 2
+            source = parameters((root / f"simulation/{problem}/{problem}.par").read_text(), {
+                "nblockx1": root_x, "nblockx2": 0 if args.dimension == 1 else root_y,
+                "nblockx3": 0, "max_blocks": 1024 if args.max_level == 3 else 512,
+                **({"center_x": 3. / 7.} if args.dimension == 2 else {}),
+                "lrefinemin": 0, "lrefinemax": args.max_level,
+                "refine_threshold": 0.05, "derefine_threshold": 0.01,
                 "regrid_interval": 2, "max_steps": steps, "tmax": 100., "time_integrator": method,
                 "reconstruct": reconstruction, "plt_dt": -1, "plt_dstep": output_stride,
                 "chk_dt": -1, "chk_dstep": output_stride,
@@ -181,7 +197,7 @@ def main():
             distinct_topologies = len({tuple(value["keys"]) for value in actual_states})
             if args.long:
                 assert distinct_topologies > 1, "long run did not change the initial leaf topology"
-            assert max(key[0] for value in actual_states for key in value["keys"]) == 2, "no level-two evolution"
+            assert max(key[0] for value in actual_states for key in value["keys"]) == args.max_level, "requested deepest level was not reached"
             for value in actual_states:
                 totals(value, root_x, root_y)
             conservation = []
